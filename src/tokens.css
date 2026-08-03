@@ -200,17 +200,51 @@
      groups separated by 10px with 8px inside them are not two groups — they are
      one group with a wobble. The ratio is the whole mechanism, so it is
      asserted: each tier must be at least twice the one below it. That single
-     rule is what stops the scale drifting back into needing lines. */
-  --gap-tight: var(--space-4); /* a thing sitting ON what it introduces */
-  --gap-within: var(--space-8); /* between items of one group */
-  --gap-between: var(--space-24); /* between groups — 3x within */
-  --gap-section: var(--space-64); /* between sections — where a rule used to be */
+     rule is what stops the scale drifting back into needing lines.
+
+     --- [s], the rhythm unit ---
+     The floor. AT LEAST ONE [s] SITS BETWEEN ANY TWO ELEMENTS. Nothing that
+     separates two things is allowed below it, and that is asserted.
+
+     A floor rather than a default because the failure it prevents is one-sided.
+     Too much air between two elements is a judgement you can disagree with; too
+     little is a rendering fault — the eye reads the pair as one object and the
+     structure of the page quietly disappears. With no borders left to recover
+     it, there is nothing to fall back on. So the system fixes the small end and
+     leaves the large end to taste.
+
+     Everything else counts in whole units of [s]. Gaps stack: one unit is the
+     minimum, two units is a stronger break, four is a section. Counting beats a
+     scale of adjectives because a reader can see the count — a doubled gap is
+     recognisably double, where "loose" versus "relaxed" is not recognisably
+     anything.
+
+     This is the base. Further stacking rules build on it later; they will only
+     ever ADD units, never go below one.
+
+     --gap-tight is the single value under [s], and it is not a separation. A
+     label and the field it names are one control, not two elements, and a thing
+     sitting ON what it introduces has no gap to be minimum about. If a value
+     under [s] is ever wanted between two real elements, the answer is that they
+     were one element all along.
+
+     The multiples are counted with an `x`, not with a bare number, because
+     --space-2 is already taken: it is the 2px rung, and the rungs are named for
+     their pixel count. --space-x2 is two UNITS; --space-2 is two PIXELS. One
+     letter keeps a count from ever being read as a measurement. */
+  --space: var(--space-16); /* [s] — one unit */
+  --space-x2: var(--space-32); /* [s][s] */
+  --space-x3: var(--space-48);
+  --space-x4: var(--space-64);
+
+  --gap-tight: var(--space-4); /* below [s] on purpose — cohesion, not separation */
+  --gap-within: var(--space); /* between items of one group */
+  --gap-between: var(--space-x2); /* between groups */
+  --gap-section: var(--space-x4); /* between sections — where a rule used to be */
 
   /* --- Document rhythm ----------------------------------------------------
-     The prose axis. The grouping tiers above rank parts of an interface; these
-     two set the beat of a document you read from top to bottom.
-
-     The rule has one unit and one exception:
+     The prose axis, and it is the base rule with nothing added except one
+     stacking step:
 
          H1              a new top level heading
          [s]
@@ -226,16 +260,14 @@
          P
          [s]
 
-     Everything gets one unit. A new H1 gets two. That is the whole model, and
-     its simplicity is the point: a reader learns the beat in the first screen
-     and then reads the structure without looking at it.
+     Everything gets one unit, because one unit is the floor. A new H1 stacks a
+     second. That is the whole model, and its simplicity is the point: a reader
+     learns the beat in the first screen and then reads the structure without
+     looking at it.
 
-     --prose-gap-major is exactly twice --prose-gap, not approximately. The
-     doubled gap is the only signal that a new section starts, so a value that
-     merely looks bigger makes the section break a matter of opinion. The
-     equality is asserted. */
-  --prose-gap: var(--space-16); /* [s] */
-  --prose-gap-major: var(--space-32); /* [s][s] — exactly 2x */
+     No tokens of its own — .prose reads --space and --space-x2 directly. Two
+     names for one value is drift waiting to happen, and the [s] notation is
+     already the vocabulary. */
 
   /* --- Semantic: layout -------------------------------------------------- */
   --gutter: var(--space-20); /* viewport edge to content */

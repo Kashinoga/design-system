@@ -44,7 +44,7 @@
          running the full height of the window past chrome that never moves. -->
     <div class="docs-scroll">
       <main id="main" class="frame">
-      <section class="section stack" style="--stack-gap: var(--space-16)">
+      <section class="section stack" style="--stack-gap: var(--space)">
         <h1>Kashinoga Design System</h1>
         <p class="measure">
           Human interface guidelines for the web, and the CSS that implements them. One entry
@@ -58,7 +58,7 @@
       </section>
 
       <!-- ================================================================ -->
-      <section id="foundations" class="section stack" style="--stack-gap: var(--space-32)">
+      <section id="foundations" class="section stack" style="--stack-gap: var(--space-x2)">
         <h2>Foundations</h2>
 
         <div class="stack" style="--stack-gap: var(--gap-tight)">
@@ -99,9 +99,26 @@
             everything. <strong>Colour</strong> takes over when distance cannot carry it: no gap
             makes a word look pressable, and sticky chrome has no fixed distance to the content it
             must be told apart from, but a fill of its own separates it at any scroll offset.
-            <strong>A border</strong> only when the boundary <em>is</em> the content — the swatches
-            above are white on a white sheet and have nothing to show but their own edge, which no
-            fill can supply because the fill is the subject. That is the one border on this page.
+            <strong>A border</strong> only when the boundary <em>is</em> the content, and no fill
+            can supply an edge because the fill is the subject. The colour swatches above looked
+            like that case — white chips on a white sheet — until the card behind them was tinted
+            instead. There is no border anywhere on this page.
+          </p>
+
+          <h4>[s], the floor</h4>
+          <p class="measure sub">
+            At least one <code>[s]</code> sits between any two elements. Nothing that separates two
+            things may go below it. It is a floor and not a default because the failure is
+            one-sided: too much air is a judgement you can disagree with, but too little is a
+            rendering fault — the eye reads the pair as one object and the structure of the page
+            disappears. With no borders left to recover it, there is nothing to fall back on.
+          </p>
+          <p class="measure sub">
+            Everything else counts in whole units. <code>--space</code> is one unit;
+            <code>--space-x2</code> is two. The <code>x</code> matters:
+            <code>--space-2</code> is already the 2px rung, so a count could otherwise be read as a
+            measurement. <code>--gap-tight</code> is the one value below the floor, and it is not a
+            separation — a label and its field are one control, not two elements.
           </p>
 
           <h4>Grouping</h4>
@@ -134,9 +151,11 @@ H2       &lt;- one unit: a heading under a heading
 P
 [s]</code></pre>
           <p class="measure sub">
-            <code>--prose-gap-major</code> is <em>exactly</em> twice <code>--prose-gap</code>, not
-            approximately. The doubled gap is the only signal that a new section starts, so a value
-            that merely looks bigger would make the section break a matter of opinion.
+            <code>.prose</code> has no tokens of its own — it reads <code>--space</code> and
+            <code>--space-x2</code> directly, because two names for one value is drift waiting to
+            happen. The doubled gap is the only signal that a new section starts, so the multiple
+            is exact: a value that merely looks bigger would make the section break a matter of
+            opinion.
           </p>
 
           <h4>The scale</h4>
@@ -146,7 +165,7 @@ P
             <code>test/tokens.test.js</code>. Strides widen as the scale climbs, because a 2px
             difference is decisive at 8px and invisible at 64px; they may never narrow.
           </p>
-          <div id="scale" class="stack" style="--stack-gap: var(--space-4)"></div>
+          <div id="scale" class="stack" style="--stack-gap: var(--gap-within)"></div>
         </div>
       </section>
 
@@ -164,7 +183,7 @@ P
       <!-- ================================================================ -->
       <section id="principles" class="section stack">
         <h2>Principles</h2>
-        <ol class="measure stack" style="--stack-gap: var(--space-12)">
+        <ol class="measure stack" style="--stack-gap: var(--space)">
           <li>
             <strong>Say only what cannot be guessed.</strong> The audience is technical. Do not
             caption standard affordances; do document what the platform will not allow.

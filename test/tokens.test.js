@@ -56,6 +56,53 @@ test("the spacing scale is built on a 2px base and never narrows", () => {
   }
 });
 
+/* Follow an alias chain down to the rung it ends at: --gap-between -> --space-x2 ->
+   --space-32 -> 32. Written once because three tests need it, and because a
+   test that only reads one link of the chain silently stops checking the moment
+   somebody adds another. */
+function rungOf(name, seen = new Set()) {
+  assert.ok(!seen.has(name), `${name} is defined in terms of itself`);
+  seen.add(name);
+
+  const direct = tokens.match(new RegExp(`${name}:\\s*([\\d.]+)rem;`));
+  if (direct) return Number(direct[1]) * 16;
+
+  const alias = tokens.match(new RegExp(`${name}:\\s*var\\((--[\\w-]+)\\)`));
+  assert.ok(alias, `${name} must be a rem value or an alias, not a literal`);
+  return rungOf(alias[1], seen);
+}
+
+test("[s] is the floor: nothing that separates two elements is below it", () => {
+  /* The base rule of the whole spacing model. The failure it prevents is
+     one-sided: too much air is a judgement you can disagree with, too little is
+     a rendering fault, because the eye reads the pair as one object and the
+     structure of the page disappears. With no borders left to recover it, there
+     is nothing to fall back on. */
+  const s = rungOf("--space");
+  assert.equal(s > 0, true, "--space must resolve to a real value");
+
+  for (const tier of ["--gap-within", "--gap-between", "--gap-section"]) {
+    assert.ok(
+      rungOf(tier) >= s,
+      `${tier} is ${rungOf(tier)}px, below the [s] floor of ${s}px`,
+    );
+  }
+
+  /* The one value under the floor, and it is not a separation: a label and its
+     field are one control, not two elements. */
+  assert.ok(rungOf("--gap-tight") < s, "--gap-tight is meant to sit below [s]");
+});
+
+test("the [s] multiples are whole counts of the unit", () => {
+  /* Counting beats a scale of adjectives, because a reader can see the count —
+     a doubled gap is recognisably double. That only holds if the multiples are
+     exact. */
+  const s = rungOf("--space");
+  for (const [name, n] of [["--space-x2", 2], ["--space-x3", 3], ["--space-x4", 4]]) {
+    assert.equal(rungOf(name), s * n, `${name} must be exactly ${n} x [s]`);
+  }
+});
+
 test("each grouping tier is at least twice the one below it", () => {
   /* This is the rule that makes space work as a substitute for lines. Grouping
      by proximity only reads if the gaps are clearly unequal — two groups 10px
@@ -63,12 +110,7 @@ test("each grouping tier is at least twice the one below it", () => {
      wobble. Without this ratio the system quietly drifts back into needing
      borders to say what the spacing failed to. */
   const TIERS = ["--gap-tight", "--gap-within", "--gap-between", "--gap-section"];
-
-  const px = TIERS.map((tier) => {
-    const alias = tokens.match(new RegExp(`${tier}:\\s*var\\(--space-(\\d+)\\)`));
-    assert.ok(alias, `${tier} must resolve to a named rung, not a literal`);
-    return { tier, value: Number(alias[1]) };
-  });
+  const px = TIERS.map((tier) => ({ tier, value: rungOf(tier) }));
 
   for (let i = 1; i < px.length; i++) {
     assert.ok(
@@ -78,17 +120,19 @@ test("each grouping tier is at least twice the one below it", () => {
   }
 });
 
-test("the major prose gap is exactly twice the normal one", () => {
-  /* The doubled gap is the only signal that a new section starts. A value that
-     merely looks bigger makes the section break a matter of opinion, so this is
-     equality and not a ratio bound like the grouping tiers use. */
-  const rung = (name) => {
-    const m = tokens.match(new RegExp(`${name}:\\s*var\\(--space-(\\d+)\\)`));
-    assert.ok(m, `${name} must resolve to a named rung, not a literal`);
-    return Number(m[1]);
-  };
+test("the document rhythm has no tokens of its own", () => {
+  /* .prose reads --space and --space-x2 directly. Two names for one value is
+     drift waiting to happen, and the [s] notation is already the vocabulary.
+     This asserts the collapse held rather than a second pair creeping back in. */
+  const layout = src("layout.css");
 
-  assert.equal(rung("--prose-gap-major"), rung("--prose-gap") * 2);
+  assert.ok(/\.prose\s*>\s*\*\s*\+\s*\*/.test(layout), ".prose lost its base rule");
+  assert.match(layout, /\.prose\s*>\s*\*\s*\+\s*\*\s*\{\s*margin-block-start:\s*var\(--space\);/);
+  assert.equal(
+    /--prose-gap/.test(tokens + layout),
+    false,
+    "a separate prose token came back — use --space and --space-x2",
+  );
 });
 
 test("the layers that arrange things draw no lines", () => {

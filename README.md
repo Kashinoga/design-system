@@ -107,6 +107,17 @@ the two arms cannot fall out of step in a diff. A single percentage cannot tune 
 mix toward `--ink` moves in opposite directions on light and dark stock. Keep the arms in step by
 *effect*, never by matching the numbers.
 
+**At least one `[s]` sits between any two elements.** `--space` is that unit, and it is a *floor*,
+not a default. The failure it prevents is one-sided: too much air is a judgement you can disagree
+with, but too little is a rendering fault — the eye reads the pair as one object and the structure
+of the page disappears. With no borders left to recover it, there is nothing to fall back on. So
+the system fixes the small end and leaves the large end to taste.
+
+Everything else counts in whole units: `--space-x2`, `--space-x3`, `--space-x4`. The `x` is
+load-bearing — `--space-2` is already the 2px rung, so a count must never be readable as a
+measurement. `--gap-tight` is the single value below the floor, and it is not a separation: a label
+and its field are one control, not two elements.
+
 **The name of a spacing rung is its pixel count.** `--space-12` is 12px at a 16px root. A rung
 whose name lies is worse than no name, so the identity is machine-asserted rather than trusted.
 The base is `0.25rem`, not `0.2rem` — on a 0.2 scale only every fifth step is a whole pixel.

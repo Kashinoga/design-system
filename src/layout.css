@@ -68,11 +68,11 @@
    is why this uses adjacent siblings instead of a gap: a flex gap would also
    space the container's own edge, which the container's padding already owns. */
 .prose > * + * {
-  margin-block-start: var(--prose-gap);
+  margin-block-start: var(--space);
 }
 
 .prose > * + h1 {
-  margin-block-start: var(--prose-gap-major);
+  margin-block-start: var(--space-x2);
 }
 
 /* A heading directly under another heading is one unit, not two. The pair is a
@@ -83,7 +83,7 @@
    still take the doubled gap. :is() takes the specificity of its strongest
    argument, so this wins. */
 .prose > :is(h1, h2, h3, h4, h5, h6) + :is(h1, h2, h3, h4, h5, h6) {
-  margin-block-start: var(--prose-gap);
+  margin-block-start: var(--space);
 }
 
 /* --- Container query context --------------------------------------------

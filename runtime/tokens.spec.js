@@ -17,6 +17,7 @@ const SEMANTIC = [
   "--text-xs", "--text-sm", "--text-base", "--text-lg", "--text-xl", "--text-2xl",
   "--leading-tight", "--leading-body", "--weight-normal", "--weight-strong",
   "--measure", "--gutter", "--frame-max",
+  "--space", "--space-x2", "--space-x3", "--space-x4",
   "--gap-tight", "--gap-within", "--gap-between", "--gap-section",
   "--radius-sheet", "--radius-key",
   "--focus-ring-width", "--focus-ring-offset", "--focus-ring-color",
@@ -106,6 +107,40 @@ for (const width of [320, 480, 768, 900, 1024, 1280, 1440]) {
   });
 }
 
+test("[s] is the floor once the browser has resolved everything", async ({ page }) => {
+  /* The source test reads the alias chain in the file. This reads the pixels a
+     browser computed, which is the only way to catch a floor broken by a
+     media query, a container query, or a cascade layer overriding --space. */
+  const px = await page.evaluate(() => {
+    const probe = document.createElement("div");
+    document.body.append(probe);
+    const read = (t) => {
+      probe.style.width = `var(${t})`;
+      return parseFloat(getComputedStyle(probe).width);
+    };
+    const out = {
+      s: read("--space"),
+      tight: read("--gap-tight"),
+      within: read("--gap-within"),
+      between: read("--gap-between"),
+      section: read("--gap-section"),
+      multiples: [2, 3, 4].map((n) => read(`--space-x${n}`)),
+    };
+    probe.remove();
+    return out;
+  });
+
+  expect(px.s).toBeGreaterThan(0);
+  for (const tier of ["within", "between", "section"]) {
+    expect(px[tier], `--gap-${tier} must not fall below the [s] floor`).toBeGreaterThanOrEqual(px.s);
+  }
+
+  /* The one value under the floor — a label and its field are one control. */
+  expect(px.tight).toBeLessThan(px.s);
+
+  expect(px.multiples).toEqual([px.s * 2, px.s * 3, px.s * 4]);
+});
+
 test("the grouping tiers stay twice-apart once the browser has resolved them", async ({ page }) => {
   /* The source test checks the alias chain in the file. This checks the pixels
      a browser actually computed — the ratio is the entire mechanism by which
@@ -150,9 +185,8 @@ test("a document keeps the beat: one unit everywhere, two before a new H1", asyn
       };
     });
 
-    const unit = parseFloat(getComputedStyle(host).getPropertyValue("--prose-gap")) ;
     host.remove();
-    return { out, unit };
+    return { out };
   });
 
   /* The pattern straight from the model: H1>P, P>P, P>H1 (doubled), H1>H2
