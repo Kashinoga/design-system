@@ -5,10 +5,14 @@
  * is named here first. A value copied is a value that will drift.
  *
  * SCAFFOLD NOTE
- * The *structure* below is final; the *values* are neutral placeholders. The
- * Pixelite palette, faces and materials have not been migrated yet — see
- * _ARCHIVE/pixelite-design-system.md. Anything marked (placeholder) is expected
- * to be replaced wholesale, not edited in place.
+ * The *structure* below is final. Values marked (placeholder) are neutral
+ * stand-ins expected to be replaced wholesale, not edited in place — the
+ * Pixelite palette and materials have not been migrated yet, see
+ * _ARCHIVE/pixelite-design-system.md.
+ *
+ * The type stacks are NOT placeholders. Defaulting to the platform's own faces
+ * is the standing decision: the system should look native until something
+ * deliberately makes it look otherwise.
  *
  * Two tiers, and the distinction is load-bearing:
  *   PRIMITIVE  a raw value with no opinion   --grey-100, --space-16
@@ -60,13 +64,34 @@
   --ruby: light-dark(var(--ruby-light), var(--ruby-dark));
   --topaz: light-dark(var(--topaz-light), var(--topaz-dark));
 
-  /* --- Type: four faces, four jobs (placeholder stacks) -------------------
+  /* --- Type: four faces, four jobs ---------------------------------------
      The face names the job. A reader should be able to tell what kind of thing
-     they are looking at before reading it. No face may take a second job. */
-  --font-body: system-ui, sans-serif; /* all chrome, and body prose */
+     they are looking at before reading it. No face may take a second job.
+
+     Every stack defaults to a face the SYSTEM already provides. No webfont, no
+     @font-face, no network request, no FOUT — the first paint is the final
+     paint. A named face is an opt-in that replaces the head of a stack; it is
+     never the fallback, so a font that fails to load degrades to the platform's
+     own face rather than to whatever the browser picks last.
+
+     The ui-* generics resolve to the platform's real UI faces on WebKit and
+     Chromium. Firefox implements only system-ui, so the plain generic behind
+     each one catches it — and that generic is the user's own configured font,
+     which is still a system-provided face and arguably the more correct one. */
+     Native means the platform's UI face, and no platform sets its headings in a
+     serif — so --font-display defaults to the same stack as --font-body rather
+     than to ui-serif. The two are written out in full rather than aliased
+     because they are separate jobs that happen to agree right now; the moment a
+     document voice is wanted, --font-display becomes `ui-serif, serif` on one
+     line and nothing else in the system moves. A heading ladder is bought with
+     size and weight anyway, which base.css already does. */
+  --font-body: system-ui, ui-sans-serif, sans-serif; /* all chrome, and body prose */
+  --font-display: system-ui, ui-sans-serif, sans-serif; /* every heading H1–H6, blockquote */
   --font-mono: ui-monospace, monospace; /* source text only — never "technical" */
-  --font-display: georgia, serif; /* every heading level, H1–H6, and blockquote */
-  --font-numeral: var(--font-mono); /* numerals only — figures, counters, versions */
+  /* Numerals only — figures, counters, tallies, versions. Declared in full
+     rather than aliased to --font-mono: the two jobs are separate and will
+     diverge, and an alias would silently drag one along when the other moves. */
+  --font-numeral: ui-monospace, monospace;
 
   /* Type is not spacing. em units, measured heights and line pitch
      (font-size x line-height) are all exempt from the 4px scale below. */

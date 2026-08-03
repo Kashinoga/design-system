@@ -13,7 +13,9 @@ body {
   font-size: var(--text-base);
   line-height: var(--leading-body);
   font-weight: var(--weight-normal);
-  -webkit-font-smoothing: antialiased;
+  /* No -webkit-font-smoothing override. Forcing `antialiased` thins text away
+     from how the platform renders every other app on the screen, which is the
+     opposite of a native feel. The OS already knows how to draw its own face. */
 }
 
 /* --- Headings -------------------------------------------------------------

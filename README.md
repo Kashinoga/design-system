@@ -32,9 +32,8 @@ npm test        # source tests over the CSS — no browser, no deps
 
 `index.html` opens over `file://` too, but a local server is closer to how it ships.
 
-Both scripts need Node — it is not installed on this machine yet, so neither has been run.
-The system itself has no runtime dependency on it; Node is only for the docs server and the
-source tests.
+Both scripts need Node; the system itself has no runtime dependency on it. Node is only for the
+docs server and the source tests.
 
 ## Layout
 
@@ -72,6 +71,15 @@ mix toward `--ink` moves in opposite directions on light and dark stock. Keep th
 **The name of a spacing rung is its pixel count.** `--space-12` is 12px at a 16px root. A rung
 whose name lies is worse than no name, so the identity is machine-asserted rather than trusted.
 The base is `0.25rem`, not `0.2rem` — on a 0.2 scale only every fifth step is a whole pixel.
+
+**The type stacks default to the platform's own faces.** `system-ui`, `ui-sans-serif`,
+`ui-monospace` — no webfont, no `@font-face`, no network request, no flash of unstyled text. The
+first paint is the final paint, and the system looks native until something deliberately makes it
+look otherwise. Firefox implements only `system-ui`, so the plain generic behind each `ui-*` keyword
+catches it — and that generic is the user's own configured font, which is still a system face and
+arguably the more correct one. A named face, when one is wanted, replaces the *head* of a stack; it
+is never the fallback, so a font that fails to load degrades to the platform face rather than to
+whatever the browser picks last.
 
 **Logical properties throughout.** `block`/`inline`, not `top`/`left`, so a layout transposes with
 writing-mode instead of needing a mirrored stylesheet.
