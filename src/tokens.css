@@ -148,13 +148,25 @@
         inside that band. Eleven is taken from those five because it is ODD, and
         an odd measure is what lets the reading layout have a true centre.
 
-     5. THE READING LAYOUT — contents, text, notes:
+     5. THE READING LAYOUT — one apparatus column each side of the text:
 
             7  +  11  +  7  =  25 columns  =  1200
+            |      |      |
+            |      |      +-- LOCAL: this document. Contents, sidenotes,
+            |      |             citations, the figure that needs room.
+            |      +--------- the measure
+            +---------------- GLOBAL: the whole site. Navigation that is the
+                              same on every page.
 
         The large-format width is DERIVED here. It was not chosen and then
         divided down; it is what a centred 11-column measure with one apparatus
         column on each side adds up to.
+
+        The two flanks are reserved for the left global nav and the right local
+        nav. Neither exists yet; the geometry does, and it was not widened to
+        make room for them — 7 + 11 + 7 is what the derivation produced before
+        either was asked for, which is the good kind of coincidence. Whatever
+        lands in them inherits a whole-column edge for free.
 
      6. THE TIERS — each one adds a region, not a device:
 
@@ -185,11 +197,16 @@
   --width-large: 75rem; /* 1200 = 25 */
   --width-cap: 135rem; /* 2160 = 45 */
 
-  /* 16 = one [s]. An item grid inside a region keeps whole columns because 48
-     and 16 share a factor: four items in 1200 come out 288 each, three come out
-     389 and change, so the count that divides cleanly is the count to use. A gap
-     is part of the arithmetic, not a decoration applied afterwards. */
-  --column-gap: var(--space); /* 16 */
+  /* 20, chosen so the CAPPED count divides cleanly. Five tracks in 1200 come
+     out 224 each and five in 2160 come out 416 — both whole, and those are the
+     two tiers where a grid actually reaches its cap of five. At 16 the same
+     count gives 227.2. A gap is part of the arithmetic, not a decoration
+     applied afterwards.
+
+     No gap makes every count whole; 1fr distribution cannot promise that. The
+     one that must always hold is that tracks plus gaps sum to the container
+     exactly, and that is what the runtime test asserts. */
+  --column-gap: var(--space-20); /* 20 */
 
   /* Eleven columns — see step 4 of the derivation above. 528px, about 61
      characters, and odd so the reading layout can centre.

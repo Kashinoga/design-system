@@ -138,10 +138,44 @@
   gap: var(--row-gap, var(--gap-within));
 }
 
-/* --- Grid: as many columns as fit at the given minimum ------------------- */
+/* --- Grid: as many columns as fit, but never more than five --------------
+   An item grid is a flow, not a region division: it places as many things as
+   fit at a minimum size and the count falls out of the width. Left alone that
+   count keeps climbing — at the 2160 cap a 224px minimum fits eight across, and
+   eight is past the point where a row reads as a row. The eye stops taking it
+   in at a glance and starts scanning it like a table.
+
+   So there is a ceiling on the count as well as a floor on the size. The
+   arithmetic does it without a media query: force each track to be at least a
+   fifth of the available width, and auto-fit can never place a sixth.
+
+       max(--grid-min, (100% - 4 gaps) / 5)
+
+   Whichever is larger wins, so a large --grid-min still yields FEWER than five.
+   The cap only stops the count going up. */
+@property --grid-cols-max {
+  syntax: "*";
+  inherits: false;
+}
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min, 16rem), 100%), 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(
+      min(
+        max(
+          var(--grid-min, 16rem),
+          calc(
+            (100% - (var(--grid-cols-max, 5) - 1) * var(--grid-gap, var(--column-gap))) /
+              var(--grid-cols-max, 5)
+          )
+        ),
+        100%
+      ),
+      1fr
+    )
+  );
   gap: var(--grid-gap, var(--column-gap));
 }
 

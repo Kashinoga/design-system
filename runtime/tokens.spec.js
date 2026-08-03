@@ -387,14 +387,39 @@ test("an item grid fills its region on whole columns", async ({ page }) => {
   });
 
   expect(grid.count).toBeGreaterThan(1);
+
+  /* Never more than five. Eight across at the 2160 cap is past the point where
+     a row reads as a row — the eye stops taking it in and starts scanning it
+     like a table. The cap is arithmetic, not a media query: each track is at
+     least a fifth of the width, so auto-fit cannot place a sixth. */
+  expect(grid.count).toBeLessThanOrEqual(5);
+
+  /* Whole tracks at the tier the grid is designed for. No gap makes EVERY
+     count whole — 1fr distribution cannot promise that — so 20 is chosen to
+     divide the capped count of five: 224 at 1200, 416 at 2160. */
   for (const t of grid.tracks) {
-    expect(Number.isInteger(t), `column track ${t}px`).toBe(true);
+    expect(Number.isInteger(t), `column track ${t}px at a 1440 viewport`).toBe(true);
   }
 
-  /* The tracks and gaps must add up to the region exactly — a remainder is a
-     column that does not fit and a right edge that does not line up. */
+  /* This one must hold at every width and every count: tracks plus gaps sum to
+     the container exactly. A remainder is a right edge that does not line up. */
   const total = grid.tracks.reduce((a, b) => a + b, 0) + grid.gap * (grid.count - 1);
   expect(Math.round(total)).toBe(grid.width);
+});
+
+test("the item grid never exceeds five columns, at any width", async ({ page }) => {
+  /* The cap has to survive the widest tier, which is where it matters: at 2160
+     a 224px minimum would otherwise fit eight. */
+  for (const width of [1000, 1440, 2560]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/index.html");
+
+    const count = await page.evaluate(
+      () => getComputedStyle(document.querySelector("#swatches")).gridTemplateColumns.split(" ").length,
+    );
+
+    expect(count, `columns at a ${width}px viewport`).toBeLessThanOrEqual(5);
+  }
 });
 
 test("every line box in the type scale is a whole number of pixels", async ({ page }) => {
