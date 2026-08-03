@@ -121,8 +121,13 @@ function setScheme(mode) {
   root.dataset.scheme = mode;
   label.textContent = LABELS[mode];
   toggle.setAttribute("aria-pressed", String(mode !== "auto"));
-  /* light-dark() resolves against the used scheme — re-read after the swap. */
-  requestAnimationFrame(paintResolvedValues);
+  /* light-dark() resolves against the used scheme, so re-read after the swap —
+     but synchronously. getComputedStyle already forces a style flush, so the
+     new scheme is visible to it immediately. Deferring this to rAF bought
+     nothing and made the swatches empty for one frame, which is a real state
+     the page can be observed in: any reader fast enough to look before that
+     frame sees a table of blank values. */
+  paintResolvedValues();
 }
 
 toggle.addEventListener("click", () => {

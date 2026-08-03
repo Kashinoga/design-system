@@ -26,8 +26,10 @@ its own components:
 ## Run the docs
 
 ```
-npm run dev     # serves this directory; open index.html
-npm test        # source tests over the CSS — no browser, no deps
+npm run dev           # serves this directory; open index.html
+npm test              # source tests over the CSS — no browser, no deps
+npm run test:runtime  # runtime sweep in Chromium, Gecko and WebKit
+npm run test:all      # both
 ```
 
 `index.html` opens over `file://` too, but a local server is closer to how it ships.
@@ -48,8 +50,33 @@ src/
   utilities.css       single-purpose overrides, last layer, always win
 index.html            the documentation page
 docs.css  docs.js     styling and scripting for that page only — never shipped
-test/tokens.test.js   asserts the scale is honest and the layers are ordered
+test/tokens.test.js   source tests — the CSS read as text
+runtime/*.spec.js     runtime sweep — what a browser actually computed
+tools/serve.js        static server, standard library only, no dependency
 ```
+
+## Two kinds of test, and neither substitutes for the other
+
+`test/` reads the CSS **as text**: the scale is whole, comment markers balance, no component reads a
+primitive, the layer order precedes the imports. No browser, no dependencies, instant.
+
+`runtime/` reads what a browser **actually computed**. This exists because of a bug the source tests
+could not have caught: a stray comment marker made the parser discard the whole `--font-body`
+declaration, so the token was present in the file, spelled correctly, and resolved to nothing. The
+page still rendered. Only a browser knew — and only because someone looked at a screenshot.
+
+Both are the spec's "three things that keep it honest": a source test, a runtime sweep at several
+widths *including the middle ones* (at the extremes every `clamp()` is pinned to an end, so
+bounds-only checks pass on values that are fractional everywhere between), and an audit tool. The
+third is still missing.
+
+**Engine and OS are different axes, and confusing them wastes time.** Which *properties* exist is an
+engine question — `text-box-trim` is Chromium and WebKit, Gecko hasn't shipped it — and running all
+three engines locally answers it honestly. Which *fonts* exist and what glyphs they carry is an OS
+question. Font resolution comes from the platform, so WebKit-on-Windows renders Segoe UI and tells
+you nothing about Safari on a Mac. That's what `.github/workflows/runtime.yml` is for: the same
+suite on macOS, Windows and Linux runners. The macOS runner carries the genuine Apple font set,
+which is why this can't be a container job.
 
 ## The decisions
 

@@ -1,0 +1,55 @@
+name: runtime sweep
+
+# Fonts come from the operating system, not the browser engine. Running WebKit
+# on Windows says nothing about Safari on a Mac, because the glyphs are the
+# platform's. So the matrix is the point of this workflow: the same suite, on
+# three real operating systems, is the only way to learn what `system-ui` and
+# `ui-monospace` actually resolve to — and whether a numeral face answers to
+# `slashed-zero` — without owning three machines.
+#
+# The macOS runner carries the genuine Apple font set. No container can, which
+# is why this cannot be a Docker job.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  source:
+    # Text-level checks. No browser, so one OS is enough.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm test
+
+  runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npx playwright test
+
+      # The font reports live in the run log and in the HTML report. Keep the
+      # report even on success — a passing run still carries the answer to
+      # "what is ui-monospace on macOS", which is the reason this matrix exists.
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: runtime-report-${{ matrix.os }}
+          path: playwright-report/
+          retention-days: 14

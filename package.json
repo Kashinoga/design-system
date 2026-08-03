@@ -22,7 +22,12 @@
     "src"
   ],
   "scripts": {
-    "dev": "npx --yes serve@14 .",
-    "test": "node --test"
+    "dev": "node tools/serve.js",
+    "test": "node --test",
+    "test:runtime": "playwright test",
+    "test:all": "npm test && npm run test:runtime"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
   }
 }
