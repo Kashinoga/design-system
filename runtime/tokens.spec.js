@@ -299,7 +299,7 @@ test("every length token lands on a whole pixel", async ({ page }) => {
   const LENGTHS = [
     "--text-xs", "--text-sm", "--text-base", "--text-lg", "--text-xl", "--text-2xl",
     "--measure", "--gutter", "--frame-max", "--sidenote-width", "--toc-width",
-    "--span-full", "--span-half", "--span-quarter", "--span-eighth", "--span-column", "--column-gap",
+    "--column", "--width-standard", "--width-reference", "--width-large", "--width-cap", "--column-gap",
     "--space", "--space-x2", "--space-x3", "--space-x4",
     "--gap-tight", "--gap-within", "--gap-between", "--gap-section",
     "--radius-sheet", "--radius-key", "--focus-ring-width", "--focus-ring-offset",
@@ -321,11 +321,10 @@ test("every length token lands on a whole pixel", async ({ page }) => {
   expect(fractional).toEqual([]);
 });
 
-test("every region is a clean halving of the frame", async ({ page }) => {
-  /* Halving is chosen over an N-column grid because it is the one division a
-     reader can verify by eye: two things are the same width, or one is visibly
-     twice the other. Nobody can see the difference between five twelfths and
-     four elevenths, so nobody can tell when it has gone wrong. */
+test("every tier is a whole number of one unchanging column", async ({ page }) => {
+  /* The metric-paper property: the unit survives the change of size. One column
+     is 80px at every tier, and the tier only changes how many there are, so
+     nothing is ever divided and nothing can come out fractional. */
   const px = await page.evaluate(() => {
     const probe = document.createElement("div");
     document.body.append(probe);
@@ -334,37 +333,36 @@ test("every region is a clean halving of the frame", async ({ page }) => {
       return parseFloat(getComputedStyle(probe).width);
     };
     const out = {
-      full: read("--span-full"),
-      column: read("--span-column"),
-      half: read("--span-half"),
-      quarter: read("--span-quarter"),
-      eighth: read("--span-eighth"),
+      column: read("--column"),
+      standard: read("--width-standard"),
+      reference: read("--width-reference"),
+      large: read("--width-large"),
+      cap: read("--width-cap"),
       measure: read("--measure"),
+      sidenote: read("--sidenote-width"),
+      toc: read("--toc-width"),
     };
     probe.remove();
     return out;
   });
 
-  expect(px.full).toBe(1200);
-  expect(px.half).toBe(px.full / 2);
-  expect(px.quarter).toBe(px.half / 2);
-  expect(px.eighth).toBe(px.quarter / 2);
+  expect(px.column).toBe(80);
+  expect(px.standard).toBe(px.column * 3);
+  expect(px.reference).toBe(px.column * 9);
+  expect(px.large).toBe(px.column * 15);
+  expect(px.cap).toBe(px.column * 27);
 
-  /* Halving and a 16-column grid are the same system: 1200 / 16 = 75 exactly,
-     so every halving lands on a column line and every span is a whole number of
-     columns. Carbon calls this "divide or multiply by two". */
-  expect(px.column).toBe(px.full / 16);
-  expect(px.eighth).toBe(px.column * 2);
+  /* Seven columns, because there is no half of fifteen. 15 = 4 + 7 + 4 puts the
+     text centred with a margin column each side. */
+  expect(px.measure).toBe(px.column * 7);
+  expect(px.sidenote).toBe(px.column * 4);
+  expect(px.toc).toBe(px.column * 4);
+  expect(px.measure + px.sidenote + px.toc).toBe(px.large);
 
-  /* Four levels stay whole. A fifth would be 75, and a sixth 37.5 — which is
-     where the halving stops being a pixel-perfect rule. */
   for (const [name, v] of Object.entries(px)) {
-    expect(Number.isInteger(v), `${name} = ${v}px`).toBe(true);
+    expect(Number.isInteger(v), ` = px`).toBe(true);
+    expect(v % px.column, ` is not a whole number of columns`).toBe(0);
   }
-
-  /* Prose takes half the frame, which leaves the other half for the apparatus a
-     research document needs rather than filling the width with text. */
-  expect(px.measure).toBe(px.half);
 });
 
 test("an item grid fills its region on whole columns", async ({ page }) => {

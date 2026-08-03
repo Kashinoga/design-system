@@ -60,6 +60,40 @@
   padding-inline: var(--gutter);
 }
 
+/* The three tiers. A FIXED grid: the column stays 80px and the tier changes how
+   many of them there are, so every width is whole at every size and a layout
+   scales by counting rather than by recomputing.
+
+   Media queries, not container queries, and the distinction is not pedantry:
+   this is the one measurement in the system that genuinely is about the
+   viewport. Everything inside the frame asks its container instead.
+
+   The breakpoints are the tier width plus its gutters — the point at which the
+   next tier actually fits, rather than a number chosen from a device table. */
+@media (min-width: 47.5rem) {
+  /* 760 = 720 + 2 x 20 */
+  .frame {
+    --frame-max: var(--width-reference);
+  }
+}
+
+@media (min-width: 77.5rem) {
+  /* 1240 = 1200 + 2 x 20 */
+  .frame {
+    --frame-max: var(--width-large);
+  }
+}
+
+@media (min-width: 137.5rem) {
+  /* 2200 = 2160 + 2 x 20. The hard ceiling: past this the page stops growing.
+     A reader at 2160 is already moving their head to follow a line rather than
+     their eyes, and a frame that keeps widening stops being readable long
+     before the monitor stops being wide. */
+  .frame {
+    --frame-max: var(--width-cap);
+  }
+}
+
 /* The layout layer contains no borders at all, and that is enforced by
    test/tokens.test.js rather than left to discipline. Arrangement is what
    creates grouping here; a rule in this layer would mean a spacing decision was
@@ -297,14 +331,14 @@ figure > * + figcaption {
   font-size: var(--text-sm);
 }
 
-/* 50rem, and the number is derived rather than chosen: the measure is 68ch —
-   about 34rem — plus a 12rem note plus the gap between them. Anything lower
-   puts the note in a margin that does not exist yet.
+/* 55rem = 880 = 11 columns, and the number is derived rather than chosen. The
+   contents rail takes 4 of the 15 columns, leaving the article 11. The text is
+   7 and the note is 4, and 7 + 4 = 11 exactly. Below that the note has no
+   margin to move into.
 
-   It was 58rem until the contents rail arrived and took 14rem off the article.
-   The two features compete for the same width, and the rail wins because a
-   reader needs to navigate before they need a margin note. */
-@container (min-inline-size: 56.25rem) {
+   15 = 4 + 7 + 4 is the whole layout in one line: a contents column, a text
+   column, a notes column, tiling the tier with nothing left over. */
+@container (min-inline-size: 55rem) {
   .document aside {
     float: inline-end;
     clear: inline-end;
