@@ -78,6 +78,19 @@ test("each grouping tier is at least twice the one below it", () => {
   }
 });
 
+test("the major prose gap is exactly twice the normal one", () => {
+  /* The doubled gap is the only signal that a new section starts. A value that
+     merely looks bigger makes the section break a matter of opinion, so this is
+     equality and not a ratio bound like the grouping tiers use. */
+  const rung = (name) => {
+    const m = tokens.match(new RegExp(`${name}:\\s*var\\(--space-(\\d+)\\)`));
+    assert.ok(m, `${name} must resolve to a named rung, not a literal`);
+    return Number(m[1]);
+  };
+
+  assert.equal(rung("--prose-gap-major"), rung("--prose-gap") * 2);
+});
+
 test("the layers that arrange things draw no lines", () => {
   /* Space does the delineating. A border in the layout layer means a spacing
      decision was skipped and papered over with ink. The two sanctioned

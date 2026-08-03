@@ -129,6 +129,41 @@ test("the grouping tiers stay twice-apart once the browser has resolved them", a
   }
 });
 
+test("a document keeps the beat: one unit everywhere, two before a new H1", async ({ page }) => {
+  /* The source test checks that the two tokens are 2:1. This builds the exact
+     document from the model and measures what a browser put on the screen,
+     which is the only place the :is() specificity trick can be proved to work —
+     get that wrong and an H1 after a heading silently takes the doubled gap. */
+  const gaps = await page.evaluate(() => {
+    const host = document.createElement("div");
+    host.className = "prose";
+    host.style.cssText = "position:absolute;visibility:hidden;inline-size:40rem";
+    host.innerHTML = `<h1>a</h1><p>b</p><p>c</p><h1>d</h1><h2>e</h2><p>f</p>`;
+    document.body.append(host);
+
+    const kids = [...host.children];
+    const out = kids.slice(1).map((el, i) => {
+      const above = kids[i].getBoundingClientRect();
+      return {
+        pair: `${kids[i].tagName} -> ${el.tagName}`,
+        gap: Math.round(el.getBoundingClientRect().top - above.bottom),
+      };
+    });
+
+    const unit = parseFloat(getComputedStyle(host).getPropertyValue("--prose-gap")) ;
+    host.remove();
+    return { out, unit };
+  });
+
+  /* The pattern straight from the model: H1>P, P>P, P>H1 (doubled), H1>H2
+     (a heading under a heading stays close), H2>P. */
+  const pattern = gaps.out.map((g) => g.gap);
+  const [one] = pattern;
+
+  expect(pattern, `measured ${JSON.stringify(gaps.out)}`).toEqual([one, one, one * 2, one, one]);
+  expect(one).toBeGreaterThan(0);
+});
+
 test("nothing in the system layers draws a line", async ({ page }) => {
   /* The source test greps for border declarations. This one asks the browser
      what actually got painted, which catches a line arriving from anywhere —

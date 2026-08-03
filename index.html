@@ -113,6 +113,32 @@
           </p>
           <div id="grouping" class="stack" style="--stack-gap: var(--gap-within)"></div>
 
+          <h4>Document rhythm</h4>
+          <p class="measure sub">
+            The prose axis. The grouping tiers rank parts of an interface; this sets the beat of a
+            document you read from top to bottom. Everything gets one unit. A new
+            <code>h1</code> gets two. A heading under a heading stays close, because the pair is one
+            title block. Put <code>.prose</code> on a container and its blocks space themselves.
+          </p>
+          <pre><code>H1
+[s]
+P
+[s]
+P
+[s]
+[s]      &lt;- a new section starts
+H1
+[s]
+H2       &lt;- one unit: a heading under a heading
+[s]
+P
+[s]</code></pre>
+          <p class="measure sub">
+            <code>--prose-gap-major</code> is <em>exactly</em> twice <code>--prose-gap</code>, not
+            approximately. The doubled gap is the only signal that a new section starts, so a value
+            that merely looks bigger would make the section break a matter of opinion.
+          </p>
+
           <h4>The scale</h4>
           <p class="measure sub">
             2px base, and the name is the pixel count — <code>--space-12</code> is 12px at a 16px

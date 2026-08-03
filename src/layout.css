@@ -55,6 +55,37 @@
   margin-block-start: var(--gap-section);
 }
 
+/* --- Prose: the document rhythm -----------------------------------------
+   The reading primitive. Put it on anything that holds a document and the
+   blocks inside it space themselves: one unit between everything, two units
+   before a new top level heading.
+
+   Use .prose for documents and .flow for lists of like things. .flow gives one
+   gap and knows nothing about what it separates; .prose knows that a heading
+   starts a section and that a heading under a heading does not.
+
+   The first child gets no space above it. `* + *` gives that for free, and it
+   is why this uses adjacent siblings instead of a gap: a flex gap would also
+   space the container's own edge, which the container's padding already owns. */
+.prose > * + * {
+  margin-block-start: var(--prose-gap);
+}
+
+.prose > * + h1 {
+  margin-block-start: var(--prose-gap-major);
+}
+
+/* A heading directly under another heading is one unit, not two. The pair is a
+   single title block, and doubling the gap would split it in half.
+
+   :is() rather than :where() on purpose. :where() has no specificity, so this
+   rule would lose to the `* + h1` rule above it and an H1 after a heading would
+   still take the doubled gap. :is() takes the specificity of its strongest
+   argument, so this wins. */
+.prose > :is(h1, h2, h3, h4, h5, h6) + :is(h1, h2, h3, h4, h5, h6) {
+  margin-block-start: var(--prose-gap);
+}
+
 /* --- Container query context --------------------------------------------
    Components ask their container how wide it is, not the viewport. A card in a
    narrow rail and the same card full-width are the same component. */

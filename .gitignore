@@ -1,7 +1,34 @@
+# Allowlist. Git ignores everything. Each rule below permits one thing.
+# A new file type does not enter the repository until somebody adds it here.
+*
+
+# Git must permit a directory before it can permit the files in it.
+!*/
+
+# Then remove the directories that must stay out.
 node_modules/
 test-results/
 playwright-report/
 blob-report/
-.DS_Store
-Thumbs.db
-*.log
+
+# Root files
+!/.gitignore
+!/README.md
+!/index.html
+!/styles.css
+!/docs.css
+!/docs.js
+!/package.json
+!/package-lock.json
+!/playwright.config.js
+
+# The system
+!/src/*.css
+
+# Tests and tools
+!/test/*.js
+!/runtime/*.js
+!/tools/*.js
+
+# Continuous integration
+!/.github/workflows/*.yml

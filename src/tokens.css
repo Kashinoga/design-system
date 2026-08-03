@@ -206,6 +206,37 @@
   --gap-between: var(--space-24); /* between groups — 3x within */
   --gap-section: var(--space-64); /* between sections — where a rule used to be */
 
+  /* --- Document rhythm ----------------------------------------------------
+     The prose axis. The grouping tiers above rank parts of an interface; these
+     two set the beat of a document you read from top to bottom.
+
+     The rule has one unit and one exception:
+
+         H1              a new top level heading
+         [s]
+         P               one unit after a heading
+         [s]
+         P               one unit between paragraphs
+         [s]
+         [s]             TWO units before the next top level heading
+         H1
+         [s]
+         H2              one unit — a heading under a heading stays close
+         [s]
+         P
+         [s]
+
+     Everything gets one unit. A new H1 gets two. That is the whole model, and
+     its simplicity is the point: a reader learns the beat in the first screen
+     and then reads the structure without looking at it.
+
+     --prose-gap-major is exactly twice --prose-gap, not approximately. The
+     doubled gap is the only signal that a new section starts, so a value that
+     merely looks bigger makes the section break a matter of opinion. The
+     equality is asserted. */
+  --prose-gap: var(--space-16); /* [s] */
+  --prose-gap-major: var(--space-32); /* [s][s] — exactly 2x */
+
   /* --- Semantic: layout -------------------------------------------------- */
   --gutter: var(--space-20); /* viewport edge to content */
   --frame-max: 72rem;
