@@ -49,15 +49,31 @@
   inherits: false;
 }
 
-/* --- Frame: the page gutter and the one max width -----------------------
-   --frame-max is the CONTENT width, so the gutter is added on top of it rather
-   than eaten out of it. That keeps the halving arithmetic starting from a clean
-   1200: change the gutter and every region keeps its size. */
+/* --- Frame: the one max width, and it is ABSOLUTE -----------------------
+   A tier width is a hard ceiling on the whole box. 1200 means 1200 of anything
+   — margins and padding included — not 1200 of content that then grows to 1240
+   once the gutter is added.
+
+   That creates an arithmetic problem worth stating, because it has no solution
+   by compromise: 1200 total with a 20px gutter leaves 1160 of content, and
+   1160 / 80 is 14.5 columns. A ceiling, a gutter and whole columns cannot all
+   be true at once.
+
+   The way out is the rule this system already uses one level down, where
+   regions tile and the gutter lives inside one as padding rather than between
+   two as a gap. Applied to the frame: there is no padding. The frame IS the
+   tier width, the columns tile it exactly, and the gutter appears only when the
+   viewport is narrower than the tier — which is the only time it is needed,
+   because above it the leftover viewport is already margin.
+
+       min(tier, 100% - 2 x gutter)
+
+   At 1400 that is min(1200, 1360) = 1200: fifteen whole columns, 100px of
+   leftover each side. At 1000 it is min(1200, 960) = 960: the gutter bites and
+   the frame is fluid. The ceiling is never exceeded by anything. */
 .frame {
-  inline-size: 100%;
-  max-inline-size: calc(var(--frame-max) + 2 * var(--gutter));
+  inline-size: min(var(--frame-max), 100% - 2 * var(--gutter));
   margin-inline: auto;
-  padding-inline: var(--gutter);
 }
 
 /* The three tiers. A FIXED grid: the column stays 80px and the tier changes how
@@ -69,7 +85,12 @@
    viewport. Everything inside the frame asks its container instead.
 
    The breakpoints are the tier width plus its gutters — the point at which the
-   next tier actually fits, rather than a number chosen from a device table. */
+   next tier actually fits, rather than a number chosen from a device table.
+
+   Between two breakpoints the frame is fluid, capped by the lower tier, so
+   there is leftover viewport either side. That is what a FIXED grid does: it
+   quantises. The alternative is fluid columns, which cannot be whole pixels at
+   an arbitrary width, and whole pixels is the constraint that was chosen. */
 @media (min-width: 47.5rem) {
   /* 760 = 720 + 2 x 20 */
   .frame {

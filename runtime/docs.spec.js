@@ -150,6 +150,47 @@ test("a section title is an h1, and only the banner takes the display size", asy
   }
 });
 
+test("a tier width is an absolute ceiling on the whole box", async ({ page }) => {
+  /* A ceiling that excludes its own margins and padding is not a ceiling. 1200
+     has to mean 1200 of everything, which is why the frame carries no padding
+     at all: the gutter appears only when the viewport is narrower than the tier
+     and the frame goes fluid. */
+  const TIERS = [
+    { viewport: 2560, ceiling: 2160 },
+    { viewport: 1440, ceiling: 1200 },
+    { viewport: 1000, ceiling: 720 },
+    { viewport: 600, ceiling: 240 },
+  ];
+
+  for (const { viewport, ceiling } of TIERS) {
+    await page.setViewportSize({ width: viewport, height: 900 });
+    await page.goto("/index.html");
+
+    const box = await page.evaluate(() => {
+      const el = document.querySelector("main.frame");
+      const cs = getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      return {
+        outer: Math.round(r.width),
+        padding: parseFloat(cs.paddingInlineStart) + parseFloat(cs.paddingInlineEnd),
+      };
+    });
+
+    expect(box.outer, `frame at a ${viewport}px viewport`).toBeLessThanOrEqual(ceiling);
+
+    /* No padding on the frame — a gutter inside the ceiling would eat the
+       columns and put 14.5 of them in a 15-column tier. */
+    expect(box.padding, "the frame must carry no padding").toBe(0);
+
+    /* And at the tier, the box is exactly the tier: a whole number of columns
+       with nothing shaved off. */
+    if (viewport >= ceiling + 40) {
+      expect(box.outer, `frame should fill its tier at ${viewport}px`).toBe(ceiling);
+      expect(box.outer % 80, "the frame must be a whole number of columns").toBe(0);
+    }
+  }
+});
+
 test("the page never scrolls sideways", async ({ page }) => {
   for (const width of [320, 480, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
