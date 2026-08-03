@@ -246,6 +246,13 @@ th {
   padding-block-end: var(--gap-between);
 }
 
+/* A caption names its figure. It takes the muted ink and the small size so it
+   reads as apparatus rather than as prose the reader must not skip. */
+figcaption {
+  font-size: var(--text-sm);
+  color: var(--sub);
+}
+
 /* --- Selection ------------------------------------------------------------ */
 
 ::selection {

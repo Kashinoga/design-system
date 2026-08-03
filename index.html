@@ -29,6 +29,7 @@
 
         <nav class="row docs-nav" aria-label="Sections">
           <a href="#foundations">Foundations</a>
+          <a href="#structure">Structure</a>
           <a href="#components">Components</a>
           <a href="#principles">Principles</a>
         </nav>
@@ -43,8 +44,8 @@
          region that actually scrolls and starts below the bar rather than
          running the full height of the window past chrome that never moves. -->
     <div class="docs-scroll">
-      <main id="main" class="frame">
-      <section class="section stack" style="--stack-gap: var(--space)">
+      <main id="main" class="frame stack" style="--stack-gap: var(--gap-section)">
+      <section class="stack" style="--stack-gap: var(--space)">
         <h1>Kashinoga Design System</h1>
         <p class="measure">
           Human interface guidelines for the web, and the CSS that implements them. One entry
@@ -58,7 +59,7 @@
       </section>
 
       <!-- ================================================================ -->
-      <section id="foundations" class="section stack" style="--stack-gap: var(--space-x2)">
+      <section id="foundations" class="stack" style="--stack-gap: var(--space-x2)">
         <h2>Foundations</h2>
 
         <div class="stack" style="--stack-gap: var(--gap-tight)">
@@ -170,7 +171,42 @@ P
       </section>
 
       <!-- ================================================================ -->
-      <section id="components" class="section stack">
+      <section id="structure" class="stack" style="--stack-gap: var(--space-x2)">
+        <h2>Structure</h2>
+        <p class="measure sub">
+          One class, on the article. Everything inside is plain semantic markup — an author writes
+          a document, not a set of class names, and the structure stays legible in the source with
+          no stylesheet to decode it.
+        </p>
+        <pre><code>&lt;article class="document"&gt;
+  &lt;header&gt;    the document banner — title, authors, abstract
+  &lt;section&gt;   a division of the document
+    &lt;p&gt; &lt;figure&gt;&lt;figcaption&gt; &lt;aside&gt;
+  &lt;footer&gt;    colophon, references, revision date
+&lt;/article&gt;</code></pre>
+        <p class="measure sub">
+          The article's own <code>&lt;header&gt;</code> <em>is</em> the banner; they are not two
+          elements. A banner outside the article is not part of the document — a reader who copies
+          the article loses the title, and a screen reader announcing the article starts at the
+          first paragraph.
+        </p>
+        <p class="measure sub">
+          <code>&lt;section&gt;</code> holds the paragraphs and figures. It cannot itself be a
+          paragraph: a <code>&lt;p&gt;</code> may not contain a <code>&lt;figure&gt;</code>, and the
+          parser does not complain — it closes the paragraph, lifts the figure out, and leaves a
+          stray empty <code>&lt;p&gt;</code> behind. Your CSS then styles a tree you did not write.
+        </p>
+        <p class="measure sub">
+          A note belongs beside the line that raises it. An <code>&lt;aside&gt;</code> is an
+          ordinary block in the flow until the container is wide enough to hold a margin column
+          without stealing from the measure. That is a container query, not a media query — a
+          document in a narrow pane on a wide screen has a narrow measure and wants the inline
+          form.
+        </p>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="components" class="stack">
         <h2>Components</h2>
         <p class="measure sub">
           Nothing here yet, deliberately. The <code>components</code> layer exists and its place in
@@ -181,7 +217,7 @@ P
       </section>
 
       <!-- ================================================================ -->
-      <section id="principles" class="section stack">
+      <section id="principles" class="stack">
         <h2>Principles</h2>
         <ol class="measure stack" style="--stack-gap: var(--space)">
           <li>

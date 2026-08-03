@@ -47,13 +47,11 @@
   gap: var(--grid-gap, var(--gap-between));
 }
 
-/* --- Section: a band of the page ----------------------------------------
-   Separated from its neighbours by --gap-section and nothing else. The rule
-   that used to sit here was drawing a boundary that 64px of air already states
-   — and states in every theme, at every contrast setting, and in print. */
-.section + .section {
-  margin-block-start: var(--gap-section);
-}
+/* No .section class. The word had two meanings — a band of a page, and a
+   division of a document — and one word with two meanings is the thing this
+   system is least able to afford. A band of a page is a .stack with a section
+   gap, which needs no name. A division of a document is a <section> inside
+   .document, which needs no class. */
 
 /* --- Prose: the document rhythm -----------------------------------------
    The reading primitive. Put it on anything that holds a document and the
@@ -67,11 +65,13 @@
    The first child gets no space above it. `* + *` gives that for free, and it
    is why this uses adjacent siblings instead of a gap: a flex gap would also
    space the container's own edge, which the container's padding already owns. */
-.prose > * + * {
+/* The rhythm is written once and worn by two things: .prose on any container,
+   and every part of a .document. A second copy would drift. */
+:is(.prose, .document > :is(header, section, footer)) > * + * {
   margin-block-start: var(--space);
 }
 
-.prose > * + h1 {
+:is(.prose, .document > :is(header, section, footer)) > * + h1 {
   margin-block-start: var(--space-x2);
 }
 
@@ -82,8 +82,79 @@
    rule would lose to the `* + h1` rule above it and an H1 after a heading would
    still take the doubled gap. :is() takes the specificity of its strongest
    argument, so this wins. */
-.prose > :is(h1, h2, h3, h4, h5, h6) + :is(h1, h2, h3, h4, h5, h6) {
+:is(.prose, .document > :is(header, section, footer))
+  > :is(h1, h2, h3, h4, h5, h6)
+  + :is(h1, h2, h3, h4, h5, h6) {
   margin-block-start: var(--space);
+}
+
+/* --- Document: the reading structure ------------------------------------
+   One class, on the article. Everything inside is plain semantic markup, which
+   is the point — an author writes a document, not a set of class names, and
+   the structure is legible in the source without a stylesheet to decode it.
+
+       <article class="document">
+         <header>    the document banner — title, authors, abstract
+         <section>   a division of the document
+           <p> <figure><figcaption> <aside>
+         <footer>    colophon, references, revision date
+
+   The article's own <header> IS the banner. They are not two elements. A
+   banner that sits outside the article is not part of the document: a reader
+   who copies the article loses the title, and a screen reader announcing the
+   article starts at the first paragraph.
+
+   Naming note: <section> here is a division of a document, and it replaces the
+   level that was drafted as "Paragraph". A <p> cannot contain a <figure> — the
+   parser closes the paragraph, moves the figure out, and leaves a stray empty
+   <p> behind, silently. So the level that holds paragraphs and figures can
+   never itself be a paragraph. */
+.document {
+  container-type: inline-size;
+  /* Contain the sidenote floats, so a note near the end of a section cannot
+     hang out of it and collide with the next one. */
+  display: flow-root;
+}
+
+.document > header {
+  margin-block-end: var(--gap-section);
+}
+
+.document > section + section,
+.document > footer {
+  margin-block-start: var(--gap-section);
+}
+
+/* A caption sits ON what it describes, so it takes the one gap below the
+   floor. It is not separated from its figure; it is part of it. */
+.document figure > * + figcaption,
+figure > * + figcaption {
+  margin-block-start: var(--gap-tight);
+}
+
+/* --- Sidenotes ----------------------------------------------------------
+   A note belongs beside the line that raises it. A footnote at the end of the
+   document makes the reader lose their place to read one sentence, and in a
+   viewer meant for research that happens on nearly every page.
+
+   Narrow first: the aside is an ordinary block in the flow, which is correct
+   and needs no query. The margin column only appears when the container is
+   wide enough to hold one without stealing from the measure — a container
+   query, not a media query, because a document in a narrow pane on a wide
+   screen has a narrow measure and wants the inline form. */
+.document aside {
+  color: var(--sub);
+  font-size: var(--text-sm);
+}
+
+@container (min-inline-size: 58rem) {
+  .document aside {
+    float: inline-end;
+    clear: inline-end;
+    inline-size: var(--sidenote-width);
+    margin-inline-end: calc(-1 * (var(--sidenote-width) + var(--space-x2)));
+    margin-block-start: 0;
+  }
 }
 
 /* --- Container query context --------------------------------------------

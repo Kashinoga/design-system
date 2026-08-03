@@ -272,6 +272,7 @@
   /* --- Semantic: layout -------------------------------------------------- */
   --gutter: var(--space-20); /* viewport edge to content */
   --frame-max: 72rem;
+  --sidenote-width: 12rem; /* the margin column, when the container can hold one */
 
   /* --- Radius ------------------------------------------------------------ */
   --radius-sheet: 2px;

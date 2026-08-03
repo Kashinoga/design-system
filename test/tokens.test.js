@@ -126,8 +126,13 @@ test("the document rhythm has no tokens of its own", () => {
      This asserts the collapse held rather than a second pair creeping back in. */
   const layout = src("layout.css");
 
-  assert.ok(/\.prose\s*>\s*\*\s*\+\s*\*/.test(layout), ".prose lost its base rule");
-  assert.match(layout, /\.prose\s*>\s*\*\s*\+\s*\*\s*\{\s*margin-block-start:\s*var\(--space\);/);
+  /* The rhythm is written once and worn by both .prose and .document, so the
+     base rule is a :is() list rather than a bare .prose selector. Match the
+     declaration it produces, not the exact shape of the selector — a test that
+     pins the selector text breaks on every refactor without catching anything. */
+  assert.ok(/\.prose[^{]*>\s*\*\s*\+\s*\*/.test(layout), ".prose lost its base rule");
+  assert.match(layout, /\.prose[^{]*>\s*\*\s*\+\s*\*\s*\{\s*margin-block-start:\s*var\(--space\);/);
+  assert.ok(/\.document\s*>\s*:is\(header, section, footer\)/.test(layout), ".document lost the rhythm");
   assert.equal(
     /--prose-gap/.test(tokens + layout),
     false,
