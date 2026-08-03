@@ -105,6 +105,27 @@
    The first child gets no space above it. `* + *` gives that for free, and it
    is why this uses adjacent siblings instead of a gap: a flex gap would also
    space the container's own edge, which the container's padding already owns. */
+/* No measure on the container. Text blocks cap themselves at --measure in
+   base.css, and anything that is not text — a swatch grid, a wide chart, a
+   table of results — runs the full width of the frame. Capping the container
+   instead would bind them together, and a five-column grid squeezed into a
+   reading measure is two columns and a lot of scrolling.
+
+   The reason that is safe now: --measure moved from 68ch to 36rem. `ch` is the
+   advance of "0" in the ELEMENT's own font, so a per-element measure used to
+   give a different width to every font on the page — 586.5px of prose against
+   538.4px of code, a 48px ragged edge nobody chose. In rem it is 576px for all
+   of them, so every text block shares one edge without the container having to
+   force it. */
+
+/* The document title. The one heading that names the whole thing takes the
+   display size — every other h1 is a section title and sits on the ladder in
+   base.css. A page with five section titles at 2.2rem is a page of banners. */
+:is(header.prose, .document > article > header) h1 {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-normal);
+}
+
 /* The rhythm is written once and worn by two things: .prose on any container,
    and every part of a .document. A second copy would drift. */
 :is(.prose, .document > article > :is(header, section, footer)) > * + * {

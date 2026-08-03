@@ -182,7 +182,7 @@
     /* 11ch, not 9ch: "--space-12" is ten characters and was wrapping. ch is the
        width of "0", and this face's hyphen is wider, so the column needs slack
        over the raw character count. */
-    inline-size: 11ch;
+    inline-size: 7rem;
     white-space: nowrap;
   }
 

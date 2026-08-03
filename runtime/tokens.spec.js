@@ -290,6 +290,71 @@ test("a container's spacing knob does not leak into the containers inside it", a
   expect(measured.tuned).toBe("4px");
 });
 
+test("every length token lands on a whole pixel", async ({ page }) => {
+  /* A fractional value is not a rounding detail. The browser rounds it per
+     line and per box, so the same token pays half a pixel in one place and
+     nothing in another, and a rhythm built on top of it drifts with no rule to
+     point at. The type scale used to be 12.8 / 14.4 / 16 / 16.8 / 21.6 / 35.2 —
+     one of six was whole. */
+  const LENGTHS = [
+    "--text-xs", "--text-sm", "--text-base", "--text-lg", "--text-xl", "--text-2xl",
+    "--measure", "--gutter", "--frame-max", "--sidenote-width", "--toc-width",
+    "--space", "--space-x2", "--space-x3", "--space-x4",
+    "--gap-tight", "--gap-within", "--gap-between", "--gap-section",
+    "--radius-sheet", "--radius-key", "--focus-ring-width", "--focus-ring-offset",
+  ];
+
+  const fractional = await page.evaluate((names) => {
+    const probe = document.createElement("div");
+    document.body.append(probe);
+    const bad = [];
+    for (const n of names) {
+      probe.style.width = `var(${n})`;
+      const px = parseFloat(getComputedStyle(probe).width);
+      if (!Number.isInteger(px)) bad.push(`${n} = ${px}px`);
+    }
+    probe.remove();
+    return bad;
+  }, LENGTHS);
+
+  expect(fractional).toEqual([]);
+});
+
+test("every line box in the type scale is a whole number of pixels", async ({ page }) => {
+  /* Two ratios cover the system: 1.5 for body, 1.25 for headings. That only
+     works because the heading sizes are multiples of 4 — the ratio and the
+     scale were chosen together, and changing either alone reintroduces
+     fractions. */
+  const boxes = await page.evaluate(() => {
+    const probe = document.createElement("span");
+    probe.textContent = "x";
+    document.body.append(probe);
+    const out = [];
+    for (const [size, leading] of [
+      ["--text-xs", "--leading-body"], ["--text-sm", "--leading-body"],
+      ["--text-base", "--leading-body"], ["--text-base", "--leading-tight"],
+      ["--text-lg", "--leading-tight"], ["--text-xl", "--leading-tight"],
+      ["--text-2xl", "--leading-tight"],
+    ]) {
+      probe.style.fontSize = `var(${size})`;
+      probe.style.lineHeight = `var(${leading})`;
+      const cs = getComputedStyle(probe);
+      out.push({
+        pair: `${size} x ${leading}`,
+        size: parseFloat(cs.fontSize),
+        pitch: parseFloat(cs.lineHeight),
+      });
+    }
+    probe.remove();
+    return out;
+  });
+
+  for (const b of boxes) {
+    expect(Number.isInteger(b.size), `${b.pair}: size ${b.size}px`).toBe(true);
+    expect(Number.isInteger(b.pitch), `${b.pair}: line pitch ${b.pitch}px`).toBe(true);
+  }
+});
+
 test("nothing in the system layers draws a line", async ({ page }) => {
   /* The source test greps for border declarations. This one asks the browser
      what actually got painted, which catches a line arriving from anywhere —

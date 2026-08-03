@@ -45,7 +45,7 @@
          running the full height of the window past chrome that never moves. -->
     <div class="docs-scroll">
       <main id="main" class="frame stack" style="--stack-gap: var(--gap-section)">
-      <section class="prose">
+      <header class="prose">
         <h1>Kashinoga Design System</h1>
         <p class="measure">
           Human interface guidelines for the web, and the CSS that implements them. One entry
@@ -56,13 +56,13 @@
           <strong>Status:</strong> scaffold. The foundations below are neutral placeholders with
           the final structure in place. Nothing has been migrated from Pixelite yet.
         </p>
-      </section>
+      </header>
 
       <!-- ================================================================ -->
       <section id="foundations" class="prose">
-        <h2>Foundations</h2>
+        <h1>Foundations</h1>
 
-          <h3>Colour</h3>
+          <h2>Colour</h2>
           <p class="measure sub">
             One accent plus three answering inks. The accent means <em>you are here</em> — a state,
             never an outcome. The three answers are named as stones, and that constraint is what
@@ -71,7 +71,7 @@
           </p>
           <div id="swatches" class="grid" style="--grid-min: 11rem"></div>
 
-          <h3>Type</h3>
+          <h2>Type</h2>
           <p class="measure sub">
             Four faces, four jobs, no overlap. A reader should be able to tell what kind of thing
             they are looking at before reading it. Every stack defaults to a face the platform
@@ -81,7 +81,7 @@
           </p>
           <dl id="faces" class="docs-defs"></dl>
 
-          <h3>Space</h3>
+          <h2>Space</h2>
           <p class="measure sub">
             Space is the primary means of expression here. Grouping, delineation and separation —
             the work a border would normally do — are done with space, and a border is what you
@@ -101,7 +101,7 @@
             instead. There is no border anywhere on this page.
           </p>
 
-          <h4>[s], the floor</h4>
+          <h3>[s], the floor</h3>
           <p class="measure sub">
             At least one <code>[s]</code> sits between any two elements. Nothing that separates two
             things may go below it. It is a floor and not a default because the failure is
@@ -117,7 +117,7 @@
             separation — a label and its field are one control, not two elements.
           </p>
 
-          <h4>Grouping</h4>
+          <h3>Grouping</h3>
           <p class="measure sub">
             A rung is a size; these are relationships, and they are what actually replaces the
             border. Proximity only groups if the gaps are clearly unequal — two groups 10px apart
@@ -126,7 +126,7 @@
           </p>
           <div id="grouping" class="stack" style="--stack-gap: var(--gap-within)"></div>
 
-          <h4>Document rhythm</h4>
+          <h3>Document rhythm</h3>
           <p class="measure sub">
             The prose axis. The grouping tiers rank parts of an interface; this sets the beat of a
             document you read from top to bottom. Everything gets one unit. A new
@@ -154,7 +154,7 @@ P
             opinion.
           </p>
 
-          <h4>The scale</h4>
+          <h3>The scale</h3>
           <p class="measure sub">
             2px base, and the name is the pixel count — <code>--space-12</code> is 12px at a 16px
             root. A rung whose name lies is worse than no name, so the identity is asserted in
@@ -166,7 +166,7 @@ P
 
       <!-- ================================================================ -->
       <section id="structure" class="prose">
-        <h2>Structure</h2>
+        <h1>Structure</h1>
         <p class="measure sub">
           One class, on the article. Everything inside is plain semantic markup — an author writes
           a document, not a set of class names, and the structure stays legible in the source with
@@ -201,7 +201,7 @@ P
 
       <!-- ================================================================ -->
       <section id="components" class="prose">
-        <h2>Components</h2>
+        <h1>Components</h1>
         <p class="measure sub">
           Nothing here yet, deliberately. The <code>components</code> layer exists and its place in
           the cascade is settled, so the first component can land without reordering anything.
@@ -212,7 +212,7 @@ P
 
       <!-- ================================================================ -->
       <section id="principles" class="prose">
-        <h2>Principles</h2>
+        <h1>Principles</h1>
         <ol class="measure stack" style="--stack-gap: var(--space)">
           <li>
             <strong>Say only what cannot be guessed.</strong> The audience is technical. Do not

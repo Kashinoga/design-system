@@ -103,21 +103,43 @@
 
   /* Type is not spacing. em units, measured heights and line pitch
      (font-size x line-height) are all exempt from the 4px scale below. */
-  --text-xs: 0.8rem;
-  --text-sm: 0.9rem;
-  --text-base: 1rem;
-  --text-lg: 1.05rem;
-  --text-xl: 1.35rem;
-  --text-2xl: 2.2rem;
+  /* Every size lands on a whole pixel at a 16px root, and so does every line
+     box it can appear in. A fractional size is not a rounding detail: the
+     browser rounds it per line, so the same value pays 0.5px in one place and
+     nothing in another, and a rhythm built on top of it drifts by a pixel with
+     no rule to point at.
 
-  --leading-tight: 1.2;
-  --leading-body: 1.55;
+     The old scale was 12.8 / 14.4 / 16 / 16.8 / 21.6 / 35.2. Only one of six
+     was whole.
+
+     Heading sizes are all multiples of 4, which is what lets --leading-tight
+     stay a single ratio: 1.25 x 16, 20, 24 and 36 gives 20, 25, 30 and 45.
+     --leading-body is 1.5, which is whole for 12, 14 and 16 alike. Two ratios
+     cover the whole system, and neither has to be special-cased per level. */
+  --text-xs: 0.75rem; /* 12 */
+  --text-sm: 0.875rem; /* 14 */
+  --text-base: 1rem; /* 16 */
+  --text-lg: 1.25rem; /* 20 */
+  --text-xl: 1.5rem; /* 24 */
+  --text-2xl: 2.25rem; /* 36 */
+
+  --leading-tight: 1.25; /* headings: 20, 25, 30, 45 */
+  --leading-body: 1.5; /* body: 18, 21, 24 */
 
   --weight-normal: 400;
   --weight-strong: 600;
 
-  /* The one width prose is allowed to be. */
-  --measure: 68ch;
+  /* The one width prose is allowed to be — in rem, not ch, and the change is
+     deliberate. 68ch computed to 586.5px: a measure that cannot land on a whole
+     pixel is a ragged right edge on every block that shares it.
+
+     Losing the character count costs less than it looks. ch is the advance of
+     "0" in the ELEMENT's own font, so 68ch was never 68 characters of anything
+     — it was 68 zeroes of whichever face the platform supplied, which differs
+     between Segoe UI, SF Pro and whatever Linux resolves to. It was a nominal
+     count, not a real one. 36rem is 576px everywhere, and about 66 characters
+     of Segoe UI, which is inside the readable band. */
+  --measure: 36rem; /* 576 */
 
   /* === SPACE ==============================================================
      Space is the primary means of expression in this system. Grouping,
@@ -271,7 +293,7 @@
 
   /* --- Semantic: layout -------------------------------------------------- */
   --gutter: var(--space-20); /* viewport edge to content */
-  --frame-max: 72rem;
+  --frame-max: 75rem; /* 1200 */
   --sidenote-width: 12rem; /* the margin column, when the article can hold one */
   --toc-width: 14rem; /* the contents rail, when the page can hold one */
 

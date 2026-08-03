@@ -96,7 +96,7 @@ for (const [token, meaning] of TIERS) {
   const row = document.createElement("div");
   row.className = "docs-rung";
   row.innerHTML = `
-    <span class="docs-rung__name" style="inline-size: 14ch">${token}</span>
+    <span class="docs-rung__name" style="inline-size: 9rem">${token}</span>
     <span class="docs-rung__bar" style="inline-size: var(${token})"></span>
     <span class="docs-rung__px">${px}px — ${meaning}</span>
   `;

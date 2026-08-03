@@ -86,6 +86,70 @@ test("the docs read their values from the live stylesheet, not a copy", async ({
   expect(drift).toEqual([]);
 });
 
+test("text blocks share one edge, and non-text may run wider", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/index.html");
+
+  /* `ch` is the advance of "0" in the ELEMENT's own font, so a measure in ch
+     gave a different width to every font on the page — 586.5px of prose against
+     538.4px of code, a 48px ragged edge nobody chose. In rem every text block
+     gets the same number without the container having to force it. */
+  const box = (sel) =>
+    page.evaluate((s) => {
+      const r = document.querySelector(s).getBoundingClientRect();
+      return { left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width) };
+    }, sel);
+
+  const prose = await box("#foundations > p");
+  const code = await box("#foundations pre");
+  const defs = await box("#faces");
+  const grid = await box("#swatches");
+
+  for (const [name, b] of [["code", code], ["defs", defs]]) {
+    expect(b.left, `${name} left edge`).toBe(prose.left);
+    expect(b.right, `${name} right edge`).toBe(prose.right);
+  }
+
+  /* A five-column swatch grid squeezed into a reading measure is two columns
+     and a lot of scrolling, so anything that is not text runs the full frame. */
+  expect(grid.left).toBe(prose.left);
+  expect(grid.width).toBeGreaterThan(prose.width);
+});
+
+test("a section title is an h1, and only the banner takes the display size", async ({ page }) => {
+  await page.goto("/index.html");
+
+  const type = await page.evaluate(() => {
+    const px = (el) => parseFloat(getComputedStyle(el).fontSize);
+    return {
+      banner: px(document.querySelector("header.prose h1")),
+      section: px(document.querySelector("#foundations > h1")),
+      sub: px(document.querySelector("#foundations h2")),
+      h1Count: document.querySelectorAll("main h1").length,
+      /* Levels must not skip. Nothing infers depth from nesting — the HTML
+         outline algorithm was never implemented and has been removed — so a
+         jump from h1 to h3 is a real hole in the document, not a style choice. */
+      levels: [...document.querySelectorAll("main :is(h1,h2,h3,h4,h5,h6)")].map((h) =>
+        Number(h.tagName[1]),
+      ),
+    };
+  });
+
+  /* Separate sections are siblings, so they take h1 too. */
+  expect(type.h1Count).toBeGreaterThan(1);
+
+  /* The ladder has to carry the hierarchy on its own. */
+  expect(type.banner).toBeGreaterThan(type.section);
+  expect(type.section).toBeGreaterThan(type.sub);
+
+  for (let i = 1; i < type.levels.length; i++) {
+    expect(
+      type.levels[i] - type.levels[i - 1],
+      `heading level jumped from h${type.levels[i - 1]} to h${type.levels[i]}`,
+    ).toBeLessThanOrEqual(1);
+  }
+});
+
 test("the page never scrolls sideways", async ({ page }) => {
   for (const width of [320, 480, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
