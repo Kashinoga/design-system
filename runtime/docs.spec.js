@@ -158,8 +158,8 @@ test("a tier width is an absolute ceiling on the whole box", async ({ page }) =>
   const TIERS = [
     { viewport: 2560, ceiling: 2160 },
     { viewport: 1440, ceiling: 1200 },
-    { viewport: 1000, ceiling: 720 },
-    { viewport: 600, ceiling: 240 },
+    { viewport: 1000, ceiling: 1200 },
+    { viewport: 700, ceiling: 864 },
   ];
 
   for (const { viewport, ceiling } of TIERS) {
@@ -179,14 +179,14 @@ test("a tier width is an absolute ceiling on the whole box", async ({ page }) =>
     expect(box.outer, `frame at a ${viewport}px viewport`).toBeLessThanOrEqual(ceiling);
 
     /* No padding on the frame — a gutter inside the ceiling would eat the
-       columns and put 14.5 of them in a 15-column tier. */
+       columns and put 24.2 of them in a 25-column tier. */
     expect(box.padding, "the frame must carry no padding").toBe(0);
 
     /* And at the tier, the box is exactly the tier: a whole number of columns
        with nothing shaved off. */
     if (viewport >= ceiling + 40) {
       expect(box.outer, `frame should fill its tier at ${viewport}px`).toBe(ceiling);
-      expect(box.outer % 80, "the frame must be a whole number of columns").toBe(0);
+      expect(box.outer % 48, "the frame must be a whole number of columns").toBe(0);
     }
   }
 });

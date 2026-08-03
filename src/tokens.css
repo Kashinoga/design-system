@@ -129,65 +129,76 @@
   --weight-normal: 400;
   --weight-strong: 600;
 
-  /* --- The column, and the three tiers ------------------------------------
-     One column, 80px, everywhere. The tier changes how MANY you get, never how
-     wide one is. That is the metric-paper property: the unit survives the
+  /* === THE GRID, DERIVED FROM THE BOTTOM UP ================================
+     Built upward from the smallest fixed thing, so the page widths are results
+     rather than choices. Each step constrains the next.
+
+     1. THE ATOM — 2px. The granularity of any value in the system.
+
+     2. THE RHYTHM UNIT — [s], 16px. The minimum space between two elements.
+
+     3. THE COLUMN — 48px = 3[s]. This is the real bottom, and the thing that
+        fixes it is the touch target: the narrowest column still has to hold
+        something a finger can hit. 48 is the smallest multiple of [s] that
+        clears the 48px minimum target size. 2[s] is 32 and too small; 4[s] is
+        64 and wider than anything demands.
+
+     4. THE MEASURE — 11 columns = 528px, about 61 characters. Readable prose is
+        45 to 75 characters, and whole columns of 48 give 50, 56, 61, 67 and 73
+        inside that band. Eleven is taken from those five because it is ODD, and
+        an odd measure is what lets the reading layout have a true centre.
+
+     5. THE READING LAYOUT — contents, text, notes:
+
+            7  +  11  +  7  =  25 columns  =  1200
+
+        The large-format width is DERIVED here. It was not chosen and then
+        divided down; it is what a centred 11-column measure with one apparatus
+        column on each side adds up to.
+
+     6. THE TIERS — each one adds a region, not a device:
+
+            Standard   11 columns   528   the measure alone
+            Reference  18 columns   864   + one apparatus column
+            Large      25 columns  1200   + the second, centred
+            Cap        45 columns  2160   the ceiling
+
+     THE CAP IS THE ONE JUDGEMENT, and it is worth saying plainly that nothing
+     below derives it. Every other number here is forced by the step under it.
+     This one is a decision — that a page should stop growing before a reader
+     moves their head rather than their eyes. 2160 is 45 whole columns, so the
+     decision costs the grid nothing.
+
+     The unit still never changes. A tier says how many columns there are, never
+     how wide one is, which is the metric-paper property: the unit survives the
      change of size, so a layout scales by counting rather than by recomputing.
-     Carbon says the same thing as "fixed grids use multiplication".
+     Carbon states it as "fixed grids use multiplication". */
+  --column: 3rem; /* 48 = 3[s], one touch target */
 
-         Standard    3 columns    240   blogs, articles
-         Reference   9 columns    720   small dashboards
-         Large      15 columns  1200   large-format reference
-         Cap        27 columns  2160   the hard ceiling
+  --tier-standard: 11;
+  --tier-reference: 18;
+  --tier-large: 25;
+  --tier-cap: 45;
 
-     Every tier is whole at every column, because nothing is ever divided —
-     15 x 80 = 1200 and 27 x 80 = 2160, both exact.
+  --width-standard: 33rem; /* 528  = 11 columns */
+  --width-reference: 54rem; /* 864  = 18 */
+  --width-large: 75rem; /* 1200 = 25 */
+  --width-cap: 135rem; /* 2160 = 45 */
 
-     The cap is where the page stops growing. Past 2160 a reader is moving their
-     head to follow a line, not their eyes, and a measure that keeps widening
-     stops being readable long before the monitor stops being wide. Three, nine
-     and twenty-seven are the powers of three; fifteen sits between the last two
-     as the named large-format tier because a reference document wants the extra
-     margin columns before it wants another five of them.
+  /* 16 = one [s]. An item grid inside a region keeps whole columns because 48
+     and 16 share a factor: four items in 1200 come out 288 each, three come out
+     389 and change, so the count that divides cleanly is the count to use. A gap
+     is part of the arithmetic, not a decoration applied afterwards. */
+  --column-gap: var(--space); /* 16 */
 
-     WHAT THIS COSTS, because it replaces the halving rule and the trade is
-     real: 15, 9 and 3 are odd, so there is no exact half of a tier. 7.5 columns
-     does not exist.
+  /* Eleven columns — see step 4 of the derivation above. 528px, about 61
+     characters, and odd so the reading layout can centre.
 
-     WHAT IT BUYS: every tier divides into thirds — 15 = 3x5, 9 = 3x3, 3 = 3x1 —
-     and an odd count has a true centre, so a region can sit centred with equal
-     margins either side. 15 = 4 + 7 + 4 is a centred text column with a margin
-     column each side, which is exactly the shape a reference document wants and
-     is not expressible on an even grid. */
-  --column: 5rem; /* 80 */
-
-  --tier-standard: 3;
-  --tier-reference: 9;
-  --tier-large: 15;
-  --tier-cap: 27;
-
-  --width-standard: 15rem; /* 240  = 3 columns */
-  --width-reference: 45rem; /* 720  = 9 */
-  --width-large: 75rem; /* 1200 = 15 */
-  --width-cap: 135rem; /* 2160 = 27 */
-
-  /* 20, so an item grid still lands on whole columns inside a region: at 1200
-     five columns come out 224 each and four come out 285. A gap is part of the
-     arithmetic, not a decoration applied afterwards. */
-  --column-gap: var(--space-20); /* 20 */
-
-  /* The one width prose is allowed to be: seven columns.
-
-     Seven, not half, because there is no half of fifteen. 7 x 80 = 560px, about
-     65 characters of Segoe UI — nearer the ideal measure than the 70 that half
-     of 1200 gave. It also leaves 8 columns, and 15 = 4 + 7 + 4 sets the text
-     centred with a margin column each side.
-
-     It was 68ch before that, which computed to 586.5px — and ch is the advance
-     of "0" in the ELEMENT's own font, so it was never 68 characters of
-     anything. It was 68 zeroes of whichever face the platform supplied, which
-     is why prose measured 586.5px against code at 538.4px on the same page. */
-  --measure: 35rem; /* 560 = 7 columns */
+     It was 68ch once, which computed to 586.5px — and ch is the advance of "0"
+     in the ELEMENT own font, so it was never 68 characters of anything. It was
+     68 zeroes of whichever face the platform supplied, which is why prose
+     measured 586.5px against code at 538.4px on the same page. */
+  --measure: 33rem; /* 528 = 11 columns */
 
   /* === SPACE ==============================================================
      Space is the primary means of expression in this system. Grouping,
@@ -346,11 +357,11 @@
   --frame-max: var(--width-standard);
   --gutter: var(--space-20); /* viewport edge to content */
 
-  /* Four columns each. 15 = 4 + 7 + 4 puts the text centred with a margin
-     column on each side, which is the shape an odd grid makes possible and an
-     even one does not. */
-  --sidenote-width: 20rem; /* 320 = 4 columns */
-  --toc-width: 20rem; /* 320 = 4 columns */
+  /* Seven columns each. 25 = 7 + 11 + 7 puts the text centred with one
+     apparatus column on each side, which is the shape an odd total makes
+     possible and an even one does not. */
+  --sidenote-width: 21rem; /* 336 = 7 columns */
+  --toc-width: 21rem; /* 336 = 7 columns */
 
   /* --- Radius ------------------------------------------------------------ */
   --radius-sheet: 2px;
