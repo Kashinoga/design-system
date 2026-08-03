@@ -177,6 +177,20 @@ pre code {
    silently drops every other feature its ancestor asked for. Declaring both —
    as this rule did — means the high-level property is doing the work and the
    low-level one is a loaded gun pointed at whatever gets nested inside. */
+/* No slashed-zero here, and the reason is worth keeping. An OpenType feature is
+   not a CSS capability — it is a question asked of whatever font the platform
+   handed you, and the answer when the font has no such glyph is silence. There
+   is no synthesis and no error; the declaration simply does nothing.
+   Rendered and compared on Windows: every mono face (ui-monospace, Consolas,
+   Cascadia Mono, Cascadia Code) already draws a slashed zero by DEFAULT and is
+   unmoved by the property, while no proportional UI face (Segoe UI, Segoe UI
+   Variable Text) has the glyph at all and is equally unmoved. Inert in both
+   directions, for opposite reasons.
+   A rule that silently does nothing is worse than no rule: it reads as a
+   guarantee the system cannot keep, and it will be believed. When the shape of
+   a numeral genuinely matters, the answer is to name a face and ship it — which
+   is precisely why Pixelite reserves a bitmap face for numerals rather than
+   asking the platform nicely. */
 .numeral {
   font-family: var(--font-numeral);
   font-variant-numeric: tabular-nums;
