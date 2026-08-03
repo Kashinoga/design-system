@@ -30,6 +30,10 @@
   .docs-scroll {
     flex: 1 1 auto;
     overflow-y: auto;
+    /* Reserve the scrollbar even when there is nothing to scroll, so the
+       region's width does not change as content grows and the bar above it
+       does not have to be re-measured. */
+    scrollbar-gutter: stable;
     /* Don't hand a scroll gesture that runs out of room here up to the window,
        which has nowhere to go and would only rubber-band. */
     overscroll-behavior: contain;
@@ -63,6 +67,18 @@
     flex: none;
     background-color: color-mix(in srgb, var(--ink) 6%, var(--surface));
     padding-block: var(--space-12);
+
+    /* The bar sits OUTSIDE the scroll region, so its frame centres in the full
+       width while main's frame centres in the width MINUS the scrollbar. The
+       two are then offset by half a scrollbar — about 7px — and the wordmark
+       misses the title below it on both edges.
+
+       Reserving the same width here makes the bar's content box identical to
+       the scroll region's client box, so the two centred frames coincide on the
+       left AND the right. --scrollbar-width is measured in docs.js, because CSS
+       cannot ask how wide a scrollbar is; the 0px fallback is correct for the
+       overlay scrollbars on macOS and iOS, where there is nothing to reserve. */
+    padding-inline-end: var(--scrollbar-width, 0px);
   }
 
   .docs-bar .frame {

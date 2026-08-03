@@ -179,6 +179,51 @@
   gap: var(--grid-gap, var(--column-gap));
 }
 
+/* --- Columns: prose subsections flowing into rows -----------------------
+   The same idea as an item grid, applied to prose. A section's subsections are
+   independent blocks, so on a wide page they should sit beside each other
+   instead of each taking a full row and leaving two thirds of the tier empty.
+
+   The track is a FIXED measure, not a 1fr share. That distinction is the whole
+   rule: 1fr would stretch each column to half the tier — 710px at the ceiling —
+   and prose past its measure is the one thing the measure exists to prevent. A
+   fixed track means two columns of 528 with the remainder left as margin, which
+   is the correct trade. Space is cheaper than an unreadable line.
+
+   auto-fill rather than auto-fit, so the column structure does not collapse
+   when a row has one item in it and the last block on a page stays the width of
+   every other block.
+
+   A subsection that carries something wider than prose — a swatch grid, a wide
+   table — takes .span-all and gets the row to itself. */
+/* The gutter between two text columns is THREE grid columns, and that number is
+   forced rather than picked:
+
+       11  +  3  +  11  =  25 columns  =  1200
+
+   Two measures with a three-column gutter is exactly the reading layout. The
+   two-column form of a section fills the derived width and nothing has to be
+   nudged to make it line up.
+
+   It is also the right gutter typographically. Two text columns need a wide
+   channel between them or the eye jumps the gap mid-line and reads across; 144
+   is comfortably past that. The row gap is a section gap, because vertically
+   these are still separate subsections. */
+.columns {
+  display: grid;
+  /* min(measure, 100%) and not the bare measure. A fixed 528px track is wider
+     than a phone, and a grid track wider than its container does not wrap — it
+     overflows, and the whole page scrolls sideways. Caught at 320px, where it
+     hung 228px off the edge. */
+  grid-template-columns: repeat(auto-fill, min(var(--measure), 100%));
+  gap: var(--gap-section) calc(3 * var(--column));
+  align-items: start;
+}
+
+.columns > .span-all {
+  grid-column: 1 / -1;
+}
+
 /* No .section class. The word had two meanings — a band of a page, and a
    division of a document — and one word with two meanings is the thing this
    system is least able to afford. A band of a page is a .stack with a section

@@ -100,19 +100,21 @@ test("text blocks share one edge, and non-text may run wider", async ({ page }) 
       return { left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width) };
     }, sel);
 
-  const prose = await box("#foundations > p");
-  const code = await box("#foundations pre");
+  /* Compare blocks INSIDE one subsection. Since subsections flow into columns,
+     two blocks in different columns are meant to have different edges — the
+     claim is about a block and its neighbours, not about the whole page. */
+  const prose = await box("#faces ~ p, #foundations .prose:has(#faces) p");
   const defs = await box("#faces");
+
+  expect(defs.left, "a definition list must share its paragraph's edge").toBe(prose.left);
+  expect(defs.right, "a definition list must share its paragraph's edge").toBe(prose.right);
+
+  /* And a block that carries something wider than prose spans the row instead,
+     so a five-column swatch grid is not squeezed into a reading measure. */
+  const swatchProse = await box("#foundations .prose:has(#swatches) p");
   const grid = await box("#swatches");
 
-  for (const [name, b] of [["code", code], ["defs", defs]]) {
-    expect(b.left, `${name} left edge`).toBe(prose.left);
-    expect(b.right, `${name} right edge`).toBe(prose.right);
-  }
-
-  /* A five-column swatch grid squeezed into a reading measure is two columns
-     and a lot of scrolling, so anything that is not text runs the full frame. */
-  expect(grid.left).toBe(prose.left);
+  expect(grid.left).toBe(swatchProse.left);
   expect(grid.width).toBeGreaterThan(prose.width);
 });
 
@@ -148,6 +150,90 @@ test("a section title is an h1, and only the banner takes the display size", asy
       `heading level jumped from h${type.levels[i - 1]} to h${type.levels[i]}`,
     ).toBeLessThanOrEqual(1);
   }
+});
+
+test("prose subsections share a row, at the measure, on the grid", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.goto("/index.html");
+
+  const cols = await page.evaluate(() => {
+    const grid = document.querySelector("#foundations .columns");
+    const cs = getComputedStyle(grid);
+    const tracks = cs.gridTemplateColumns.split(" ").map(parseFloat);
+
+    /* Group the children by their top edge to recover the rows. */
+    const rows = new Map();
+    for (const el of grid.children) {
+      const r = el.getBoundingClientRect();
+      const key = Math.round(r.top);
+      rows.set(key, [...(rows.get(key) ?? []), Math.round(r.width)]);
+    }
+
+    const probe = document.createElement("div");
+    document.body.append(probe);
+    probe.style.width = "var(--measure)";
+    const measure = parseFloat(getComputedStyle(probe).width);
+    probe.style.width = "var(--column)";
+    const column = parseFloat(getComputedStyle(probe).width);
+    probe.remove();
+
+    return { tracks, gap: parseFloat(cs.columnGap), rows: [...rows.values()], measure, column };
+  });
+
+  /* A FIXED track, not a 1fr share. 1fr would stretch each column to half the
+     tier and put prose past its measure, which is the one thing the measure
+     exists to prevent. */
+  expect(cols.tracks.length).toBeGreaterThan(1);
+  for (const t of cols.tracks) {
+    expect(t, "a prose track must be exactly one measure").toBe(cols.measure);
+  }
+
+  /* The gutter is three grid columns, so two measures plus it is 25 columns —
+     the reading layout exactly. */
+  expect(cols.gap).toBe(cols.column * 3);
+  expect(cols.measure * 2 + cols.gap).toBe(cols.column * 25);
+
+  /* At least one row genuinely carries two subsections, or the whole feature
+     is inert and this test is watching nothing. */
+  expect(cols.rows.some((r) => r.length > 1), "no row shares two subsections").toBe(true);
+
+  /* Every block is either one measure or a full span; nothing in between. */
+  const full = cols.measure * 2 + cols.gap;
+  for (const row of cols.rows) {
+    for (const w of row) {
+      expect([cols.measure, full], `a block ${w}px wide is neither a measure nor a full span`).toContain(w);
+    }
+  }
+});
+
+test("the superbar and the content share both edges", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 700 });
+  await page.goto("/index.html");
+  await page.waitForLoadState("networkidle");
+
+  /* The bar sits outside the scroll region, so nothing aligns them by itself:
+     the region loses a scrollbar's width and the bar does not, leaving the two
+     centred frames offset by half a scrollbar. A short viewport is used on
+     purpose, so the region definitely scrolls and the gutter is real. */
+  const edges = await page.evaluate(() => {
+    const box = (sel) => {
+      const r = document.querySelector(sel).getBoundingClientRect();
+      return { left: Math.round(r.left), right: Math.round(r.right) };
+    };
+    return {
+      bar: box(".docs-bar .frame"),
+      content: box("main.frame"),
+      reserved: getComputedStyle(document.documentElement).getPropertyValue("--scrollbar-width"),
+    };
+  });
+
+  expect(edges.bar.left, "left edges must agree").toBe(edges.content.left);
+  expect(edges.bar.right, "right edges must agree").toBe(edges.content.right);
+
+  /* And the measurement actually ran — a missing value would leave the fallback
+     of 0px, which happens to be correct on overlay-scrollbar platforms and
+     would hide a broken measurement everywhere else. */
+  expect(edges.reserved, "docs.js must publish a scrollbar width").not.toBe("");
 });
 
 test("a tier width is an absolute ceiling on the whole box", async ({ page }) => {

@@ -169,6 +169,25 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
 
 setScheme("auto");
 
+/* --- Keep the bar and the content on the same edges -----------------------
+   The bar is outside the scroll region, so nothing makes their widths agree by
+   itself: the region loses a scrollbar's width and the bar does not. Measure it
+   and hand it to CSS, which has no way to ask.
+
+   offsetWidth minus clientWidth is the reserved gutter. It is 0 on platforms
+   with overlay scrollbars, which is the right answer there — there is nothing
+   to reserve. */
+const scrollRegion = document.querySelector(".docs-scroll");
+
+function measureScrollbar() {
+  if (!scrollRegion) return;
+  const width = scrollRegion.offsetWidth - scrollRegion.clientWidth;
+  root.style.setProperty("--scrollbar-width", `${width}px`);
+}
+
+measureScrollbar();
+addEventListener("resize", measureScrollbar);
+
 /* Read the values once more after load. styles.css pulls its six layers in with
    @import, and an imported sheet can still be in flight when a deferred module
    runs — so the first read can land before the system has been applied and
