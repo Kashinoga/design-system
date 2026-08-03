@@ -110,6 +110,27 @@ p {
   text-wrap: pretty;
 }
 
+/* Trim the half-leading off every block that takes part in the rhythm, not
+   headings alone.
+
+   A line box is taller than its letters, and the leading is split above and
+   below. At line-height 1.55 that is ~4.4px of dead space at each edge, so a
+   16px gap renders as a ~25px one. Every spacing value in this system was then
+   understating itself by more than half a rung, and the [s] floor — the rule
+   the whole model rests on — did not mean what it said.
+
+   Headings were trimmed first, on the argument that prose gaps are read as
+   texture rather than measured. That argument was wrong: the first person to
+   measure a list found the gap too large, and it was too large by exactly the
+   leading. A number that has to be read with a mental correction is not a
+   number.
+
+   The property trims the first line's top and the last line's bottom, so a
+   multi-line block keeps its internal line spacing untouched. */
+:where(p, li, dd, dt, blockquote, figcaption) {
+  text-box: trim-both cap alphabetic;
+}
+
 :where(p, ul, ol, dl, blockquote, pre, table, figure) {
   max-inline-size: var(--measure);
 }

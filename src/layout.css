@@ -9,6 +9,46 @@
  * transposes with writing-mode instead of needing a mirrored stylesheet.
  */
 
+/* --- The knobs must not inherit ------------------------------------------
+   These are per-instance controls, not tokens. --stack-gap tunes THE container
+   it is set on, and nothing inside it.
+
+   Custom properties inherit by default, and that broke every nested container
+   silently. Setting --stack-gap on a page-level .stack meant every .stack
+   inside it adopted the same gap, because the value was inherited rather than
+   absent — and `var(--stack-gap, var(--gap-within))` only reaches its fallback
+   when the property is UNSET, not when an ancestor set it. Sections meant to be
+   one unit apart were rendering a whole section gap apart, with nothing in the
+   markup to explain why.
+
+   syntax "*" with no initial-value leaves the initial value guaranteed-invalid,
+   which is what makes the var() fallback fire again on any element that has not
+   set the knob itself. */
+@property --stack-gap {
+  syntax: "*";
+  inherits: false;
+}
+
+@property --row-gap {
+  syntax: "*";
+  inherits: false;
+}
+
+@property --row-align {
+  syntax: "*";
+  inherits: false;
+}
+
+@property --grid-gap {
+  syntax: "*";
+  inherits: false;
+}
+
+@property --grid-min {
+  syntax: "*";
+  inherits: false;
+}
+
 /* --- Frame: the page gutter and the one max width ----------------------- */
 .frame {
   inline-size: 100%;
@@ -67,22 +107,45 @@
    space the container's own edge, which the container's padding already owns. */
 /* The rhythm is written once and worn by two things: .prose on any container,
    and every part of a .document. A second copy would drift. */
-:is(.prose, .document > :is(header, section, footer)) > * + * {
+:is(.prose, .document > article > :is(header, section, footer)) > * + * {
   margin-block-start: var(--space);
 }
 
-:is(.prose, .document > :is(header, section, footer)) > * + h1 {
+/* Any heading that follows content starts something new, so it stacks a second
+   unit — not h1 alone.
+
+   The drafted model showed the doubled gap on h1 only, but it had no case of a
+   heading after a paragraph. On the page it reads wrong at every level: a
+   subheading one unit below the paragraph above it and one unit above the
+   paragraph below it floats between them, and a reader cannot tell which side
+   it belongs to. A heading belongs to what FOLLOWS it, and the only way to say
+   so with space is to put more above than below. */
+:is(.prose, .document > article > :is(header, section, footer))
+  > *
+  + :is(h1, h2, h3, h4, h5, h6) {
   margin-block-start: var(--space-x2);
 }
 
-/* A heading directly under another heading is one unit, not two. The pair is a
-   single title block, and doubling the gap would split it in half.
+/* There is deliberately NO rule tightening the gap below a heading. One went in
+   and came straight back out, and the reason is worth keeping: it looked
+   necessary only because the leading had not been trimmed yet. A heading with
+   ~9px of dead space under it needed a 4px margin to look right, so the margin
+   was compensating for a measurement error. Once base.css trimmed the leading
+   off every block in the rhythm, 4px read as cramped and one unit read as
+   correct — which is what the drafted model said in the first place.
+
+   The asymmetry that matters is still there, and it comes entirely from the
+   doubled gap ABOVE a heading. One unit below, two units above: the heading is
+   closer to what it names than to what it follows.
+
+   A heading directly under another heading is one unit. The pair is a single
+   title block.
 
    :is() rather than :where() on purpose. :where() has no specificity, so this
-   rule would lose to the `* + h1` rule above it and an H1 after a heading would
-   still take the doubled gap. :is() takes the specificity of its strongest
-   argument, so this wins. */
-:is(.prose, .document > :is(header, section, footer))
+   rule would lose to the two above and a heading after a heading would take the
+   wrong gap. :is() takes the specificity of its strongest argument, so this
+   wins. */
+:is(.prose, .document > article > :is(header, section, footer))
   > :is(h1, h2, h3, h4, h5, h6)
   + :is(h1, h2, h3, h4, h5, h6) {
   margin-block-start: var(--space);
@@ -108,21 +171,73 @@
    level that was drafted as "Paragraph". A <p> cannot contain a <figure> — the
    parser closes the paragraph, moves the figure out, and leaves a stray empty
    <p> behind, silently. So the level that holds paragraphs and figures can
-   never itself be a paragraph. */
+   never itself be a paragraph.
+
+   There is no hero element. A site banner and a document banner are the same
+   job done twice, and <header> as a child of <body> becomes the `banner`
+   landmark — two of them leaves a reader navigating by landmark unable to tell
+   which is the site header. The superbar is the one banner; the article's
+   header is the document's own.
+
+   "Running head" and "folio" belong to print. A scrolling document has one
+   page, so there is no head to repeat and no number to print. On screen the
+   superbar does that job, because it stays while the text moves. */
+/* .document is the WRAPPER, not the article. It holds the table of contents
+   and the article side by side. The article is the text; the document is the
+   text plus the apparatus for finding your way around it. */
 .document {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap-section);
+}
+
+/* The container is on the ARTICLE, not on the wrapper. A sidenote cares how
+   wide the text column is, and the wrapper is wider than the text by the width
+   of the rail — query the wrapper and the note moves into the margin at a point
+   where the text has not actually got any wider. */
+.document > article {
   container-type: inline-size;
+  min-inline-size: 0;
   /* Contain the sidenote floats, so a note near the end of a section cannot
      hang out of it and collide with the next one. */
   display: flow-root;
 }
 
-.document > header {
+.document > article > header {
   margin-block-end: var(--gap-section);
 }
 
-.document > section + section,
-.document > footer {
+.document > article > section + section,
+.document > article > footer {
   margin-block-start: var(--gap-section);
+}
+
+/* --- The table of contents ----------------------------------------------
+   Narrow first, and the narrow form is a plain block above the article. That
+   is the correct reading order: a reader who cannot see the rail still meets
+   the contents before the text.
+
+   Wide enough, it becomes a rail beside the article and sticks, because a
+   contents list that scrolls away has stopped being a contents list.
+
+   This query resolves against the nearest ANCESTOR container, so .document
+   must sit inside one — the .container utility does it. With no container
+   ancestor the query never matches and the stacked form stays, which is a
+   degraded layout rather than a broken one. */
+@container (min-inline-size: 68rem) {
+  .document {
+    grid-template-columns: var(--toc-width) minmax(0, 1fr);
+    column-gap: var(--space-x4);
+    align-items: start;
+  }
+
+  .document > nav {
+    position: sticky;
+    inset-block-start: var(--space);
+    max-block-size: calc(100svb - var(--space-x2));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }
 
 /* A caption sits ON what it describes, so it takes the one gap below the
@@ -147,7 +262,14 @@ figure > * + figcaption {
   font-size: var(--text-sm);
 }
 
-@container (min-inline-size: 58rem) {
+/* 50rem, and the number is derived rather than chosen: the measure is 68ch —
+   about 34rem — plus a 12rem note plus the gap between them. Anything lower
+   puts the note in a margin that does not exist yet.
+
+   It was 58rem until the contents rail arrived and took 14rem off the article.
+   The two features compete for the same width, and the rail wins because a
+   reader needs to navigate before they need a margin note. */
+@container (min-inline-size: 50rem) {
   .document aside {
     float: inline-end;
     clear: inline-end;

@@ -10,33 +10,41 @@ import { test, expect } from "@playwright/test";
  */
 
 const DOC = `
-  <article class="document">
-    <header>
-      <h1>Title</h1>
-      <p>Authors</p>
-      <p>Abstract</p>
-    </header>
-    <section>
-      <h2>First division</h2>
-      <p>One</p>
-      <p>Two</p>
-      <figure><img alt="" width="10" height="10"><figcaption>Caption</figcaption></figure>
-      <aside>A note.</aside>
-    </section>
-    <section>
-      <h2>Second division</h2>
-      <p>Three</p>
-    </section>
-    <footer><p>Colophon</p></footer>
-  </article>
+  <div class="document">
+    <nav aria-label="Contents"><ol><li><a href="#d1">First division</a></li></ol></nav>
+    <article>
+      <header>
+        <h1>Title</h1>
+        <p>Authors</p>
+        <p>Abstract</p>
+      </header>
+      <section id="d1">
+        <h2>First division</h2>
+        <p>One</p>
+        <p>Two</p>
+        <figure><img alt="" width="10" height="10"><figcaption>Caption</figcaption></figure>
+        <aside>A note.</aside>
+      </section>
+      <section>
+        <h2>Second division</h2>
+        <p>Three</p>
+      </section>
+      <footer><p>Colophon</p></footer>
+    </article>
+  </div>
 `;
 
+/* The probe host carries .container because the contents rail is enabled by a
+   query against the nearest ANCESTOR container. Without one the query never
+   matches and the stacked form stays — degraded, not broken — which is exactly
+   what the narrow case below asserts. */
 async function mount(page, width = 900) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto("/index.html");
   return page.evaluate((html) => {
     const host = document.createElement("div");
     host.id = "doc-probe";
+    host.className = "container";
     host.innerHTML = html;
     document.querySelector("main").append(host);
   }, DOC);
@@ -46,7 +54,7 @@ test("the authored tree survives the parser", async ({ page }) => {
   await mount(page);
 
   const shape = await page.evaluate(() => {
-    const art = document.querySelector("#doc-probe .document");
+    const art = document.querySelector("#doc-probe .document > article");
     return {
       children: [...art.children].map((c) => c.tagName),
       figureInsideParagraph: !!art.querySelector("p figure"),
@@ -71,7 +79,7 @@ test("the banner is the article's own header, not a sibling of it", async ({ pag
   await mount(page);
 
   const banner = await page.evaluate(() => {
-    const art = document.querySelector("#doc-probe .document");
+    const art = document.querySelector("#doc-probe .document > article");
     const header = art.querySelector(":scope > header");
     return {
       insideArticle: art.contains(header),
@@ -94,7 +102,7 @@ test("divisions are separated by a section gap, and prose keeps the beat", async
   await mount(page);
 
   const m = await page.evaluate(() => {
-    const art = document.querySelector("#doc-probe .document");
+    const art = document.querySelector("#doc-probe .document > article");
     const gap = (a, b) => Math.round(b.getBoundingClientRect().top - a.getBoundingClientRect().bottom);
     const [s1, s2] = art.querySelectorAll(":scope > section");
     const header = art.querySelector(":scope > header");
@@ -154,6 +162,68 @@ test("a caption sits ON its figure, below the floor on purpose", async ({ page }
      not two elements here — there is one figure. */
   expect(m.gap).toBe(m.tight);
   expect(m.gap).toBeLessThan(m.unit);
+});
+
+test("there is no second banner landmark", async ({ page }) => {
+  await mount(page);
+
+  /* <header> as a child of <body> is the `banner` landmark. A site hero AND a
+     superbar would give the page two, and a reader navigating by landmark
+     could not tell which is the site header. So the hero is not a separate
+     element — it is the article's own header, and an <article><header> is a
+     plain header with no landmark role at all. */
+  const landmarks = await page.evaluate(() => ({
+    bodyLevelHeaders: [...document.body.children].filter((el) => el.tagName === "HEADER").length,
+    articleHeaderIsScoped: !!document.querySelector("#doc-probe article > header"),
+    heroElements: document.querySelectorAll(".hero, #hero").length,
+  }));
+
+  expect(landmarks.bodyLevelHeaders).toBe(1);
+  expect(landmarks.articleHeaderIsScoped).toBe(true);
+  expect(landmarks.heroElements).toBe(0);
+});
+
+test("the contents list stacks when narrow and rails when wide", async ({ page }) => {
+  const read = () =>
+    page.evaluate(() => {
+      const nav = document.querySelector("#doc-probe .document > nav");
+      const art = document.querySelector("#doc-probe .document > article");
+      const n = nav.getBoundingClientRect();
+      const a = art.getBoundingClientRect();
+      return {
+        position: getComputedStyle(nav).position,
+        /* Stacked: the contents sit entirely above the article. Railed: they
+           sit beside it, so their vertical ranges overlap. */
+        above: Math.round(n.bottom) <= Math.round(a.top),
+        beside: Math.round(n.right) <= Math.round(a.left) && n.top < a.bottom,
+      };
+    });
+
+  await mount(page, 600);
+  const narrow = await read();
+
+  await mount(page, 1400);
+  const wide = await read();
+
+  expect(narrow.above, "narrow must put the contents above the article").toBe(true);
+  expect(narrow.position).toBe("static");
+
+  expect(wide.beside, "wide must put the contents beside the article").toBe(true);
+  expect(wide.position, "a contents list that scrolls away is not a contents list").toBe("sticky");
+});
+
+test("the contents come before the text in reading order, at every width", async ({ page }) => {
+  /* The rail is a grid placement, not a reorder. A reader on a screen reader or
+     with CSS off must still meet the contents first — which is why the narrow
+     form is the authored order and the rail only moves it visually. */
+  for (const width of [600, 1400]) {
+    await mount(page, width);
+    const order = await page.evaluate(() => {
+      const doc = document.querySelector("#doc-probe .document");
+      return [...doc.children].map((c) => c.tagName);
+    });
+    expect(order, `DOM order at ${width}px`).toEqual(["NAV", "ARTICLE"]);
+  }
 });
 
 test("a sidenote is inline when narrow and in the margin when wide", async ({ page }) => {

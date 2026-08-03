@@ -168,3 +168,10 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
 });
 
 setScheme("auto");
+
+/* Read the values once more after load. styles.css pulls its six layers in with
+   @import, and an imported sheet can still be in flight when a deferred module
+   runs — so the first read can land before the system has been applied and
+   print the unstyled value. Harmless when the styles were already there, and
+   the difference between a correct table and a quietly wrong one when not. */
+addEventListener("load", paintResolvedValues);

@@ -132,7 +132,24 @@ test("the document rhythm has no tokens of its own", () => {
      pins the selector text breaks on every refactor without catching anything. */
   assert.ok(/\.prose[^{]*>\s*\*\s*\+\s*\*/.test(layout), ".prose lost its base rule");
   assert.match(layout, /\.prose[^{]*>\s*\*\s*\+\s*\*\s*\{\s*margin-block-start:\s*var\(--space\);/);
-  assert.ok(/\.document\s*>\s*:is\(header, section, footer\)/.test(layout), ".document lost the rhythm");
+  assert.ok(
+    /\.document\s*>\s*article\s*>\s*:is\(header, section, footer\)/.test(layout),
+    ".document lost the rhythm",
+  );
+
+  /* Every per-instance knob must be registered as non-inheriting. An inheriting
+     knob reaches every container inside the one that set it, and the var()
+     fallback stops firing — which renders as a gap several times too large with
+     nothing in the markup to explain it. */
+  const utilities = src("utilities.css");
+  for (const knob of ["--stack-gap", "--row-gap", "--row-align", "--grid-gap", "--grid-min"]) {
+    assert.match(
+      layout,
+      new RegExp(`@property ${knob} \\{\\s*syntax: "\\*";\\s*inherits: false;`),
+      `${knob} must be registered with inherits: false`,
+    );
+  }
+  assert.match(utilities, /@property --flow-space \{\s*syntax: "\*";\s*inherits: false;/);
   assert.equal(
     /--prose-gap/.test(tokens + layout),
     false,

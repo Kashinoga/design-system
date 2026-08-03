@@ -15,6 +15,12 @@
   white-space: nowrap;
 }
 
+/* Per-instance, so it must not inherit — see the note in layout.css. */
+@property --flow-space {
+  syntax: "*";
+  inherits: false;
+}
+
 .flow > * + * {
   margin-block-start: var(--flow-space, var(--space));
 }

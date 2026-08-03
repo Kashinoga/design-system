@@ -272,7 +272,8 @@
   /* --- Semantic: layout -------------------------------------------------- */
   --gutter: var(--space-20); /* viewport edge to content */
   --frame-max: 72rem;
-  --sidenote-width: 12rem; /* the margin column, when the container can hold one */
+  --sidenote-width: 12rem; /* the margin column, when the article can hold one */
+  --toc-width: 14rem; /* the contents rail, when the page can hold one */
 
   /* --- Radius ------------------------------------------------------------ */
   --radius-sheet: 2px;

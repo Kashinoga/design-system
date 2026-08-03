@@ -173,29 +173,121 @@ test("a document keeps the beat: one unit everywhere, two before a new H1", asyn
     const host = document.createElement("div");
     host.className = "prose";
     host.style.cssText = "position:absolute;visibility:hidden;inline-size:40rem";
-    host.innerHTML = `<h1>a</h1><p>b</p><p>c</p><h1>d</h1><h2>e</h2><p>f</p>`;
+    host.innerHTML =
+      `<h1>a</h1><p>b</p><p>c</p><h1>d</h1><h2>e</h2><p>f</p><h2>g</h2><p>h</p>`;
     document.body.append(host);
 
     const kids = [...host.children];
     const out = kids.slice(1).map((el, i) => {
       const above = kids[i].getBoundingClientRect();
       return {
-        pair: `${kids[i].tagName} -> ${el.tagName}`,
+        pair: `${kids[i].tagName}->${el.tagName}`,
         gap: Math.round(el.getBoundingClientRect().top - above.bottom),
       };
     });
 
+    const probe = document.createElement("div");
+    document.body.append(probe);
+    const read = (t) => {
+      probe.style.width = `var(${t})`;
+      return parseFloat(getComputedStyle(probe).width);
+    };
+    const units = { unit: read("--space"), double: read("--space-x2"), tight: read("--gap-tight") };
+    probe.remove();
+
     host.remove();
-    return { out };
+    return { out, units };
   });
 
-  /* The pattern straight from the model: H1>P, P>P, P>H1 (doubled), H1>H2
-     (a heading under a heading stays close), H2>P. */
-  const pattern = gaps.out.map((g) => g.gap);
-  const [one] = pattern;
+  /* Heading spacing is asymmetric, and that is the whole point: MORE above a
+     heading than below it. Equal space on both sides leaves the heading
+     floating between two blocks with no way to tell which one it names. */
+  const { unit, double, tight } = gaps.units;
 
-  expect(pattern, `measured ${JSON.stringify(gaps.out)}`).toEqual([one, one, one * 2, one, one]);
-  expect(one).toBeGreaterThan(0);
+  /* An ordered list, not a map — H2->P occurs twice and a map would collapse
+     the two into one, quietly halving what this test checks. */
+  expect(gaps.out).toEqual([
+    { pair: "H1->P", gap: unit }, //    one unit below a heading
+    { pair: "P->P", gap: unit }, //     the floor, between two ordinary blocks
+    { pair: "P->H1", gap: double }, //  two units above — a heading starts something new
+    { pair: "H1->H2", gap: unit }, //   a heading under a heading is one title block
+    { pair: "H2->P", gap: unit },
+    { pair: "P->H2", gap: double }, //  every level, not h1 alone
+    { pair: "H2->P", gap: unit },
+  ]);
+
+  /* The asymmetry, asserted as a relationship so a future retune of the tokens
+     cannot quietly flatten it. A heading must sit closer to what it names than
+     to what it follows, or a reader cannot tell which side it belongs to. */
+  expect(double).toBeGreaterThan(unit);
+  expect(tight).toBeLessThan(unit);
+});
+
+test("the leading is trimmed off every block in the rhythm", async ({ page }) => {
+  /* A line box is taller than its letters, so an untrimmed 16px gap renders as
+     about 25px. Every spacing value would then understate itself by more than
+     half a rung, and the [s] floor would not mean what it says. Caught by
+     measuring a list that looked too loose and was already exactly one unit. */
+  const trimmed = await page.evaluate(() => {
+    const out = {};
+    for (const sel of ["main p", "#principles li", "h2"]) {
+      const el = document.querySelector(sel);
+      /* getPropertyValue, not the camelCase accessor. Gecko has not shipped the
+         property, so `.textBoxTrim` is undefined rather than "none" — and an
+         undefined compared against a list of allowed strings fails in a way
+         that looks like a styling bug instead of a missing feature. */
+      out[sel] = el ? getComputedStyle(el).getPropertyValue("text-box-trim") : "missing";
+    }
+    return out;
+  });
+
+  for (const [sel, value] of Object.entries(trimmed)) {
+    /* Gecko keeps the leading, which is the same accepted cross-browser
+       difference the heading trim already carries. "" is Gecko not knowing the
+       property at all. */
+    expect(["trim-both", "none", ""], `${sel} reported "${value}"`).toContain(value);
+  }
+});
+
+test("a container's spacing knob does not leak into the containers inside it", async ({ page }) => {
+  /* Custom properties inherit. A knob set on an outer container reached every
+     container inside it, and `var(--stack-gap, <default>)` never fell back,
+     because the property was inherited rather than unset. The visible result
+     was a section gap where one unit was intended, with nothing in the markup
+     to explain it. Registered with inherits:false, which this proves. */
+  const measured = await page.evaluate(() => {
+    const outer = document.createElement("div");
+    outer.className = "stack";
+    outer.style.setProperty("--stack-gap", "64px");
+    outer.innerHTML = `
+      <div class="stack" id="inner"><i>a</i><i>b</i></div>
+      <div class="stack" id="tuned" style="--stack-gap: 4px"><i>a</i><i>b</i></div>`;
+    document.body.append(outer);
+
+    const probe = document.createElement("div");
+    document.body.append(probe);
+    probe.style.width = "var(--gap-within)";
+    const within = parseFloat(getComputedStyle(probe).width);
+    probe.remove();
+
+    const out = {
+      outer: getComputedStyle(outer).rowGap,
+      inner: getComputedStyle(outer.querySelector("#inner")).rowGap,
+      tuned: getComputedStyle(outer.querySelector("#tuned")).rowGap,
+      within,
+    };
+    outer.remove();
+    return out;
+  });
+
+  /* The container that set the knob keeps it. */
+  expect(measured.outer).toBe("64px");
+
+  /* The one inside falls back to the default, not to its ancestor's value. */
+  expect(measured.inner).toBe(`${measured.within}px`);
+
+  /* And an inner container can still tune itself. */
+  expect(measured.tuned).toBe("4px");
 });
 
 test("nothing in the system layers draws a line", async ({ page }) => {

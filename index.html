@@ -45,7 +45,7 @@
          running the full height of the window past chrome that never moves. -->
     <div class="docs-scroll">
       <main id="main" class="frame stack" style="--stack-gap: var(--gap-section)">
-      <section class="stack" style="--stack-gap: var(--space)">
+      <section class="prose">
         <h1>Kashinoga Design System</h1>
         <p class="measure">
           Human interface guidelines for the web, and the CSS that implements them. One entry
@@ -59,10 +59,9 @@
       </section>
 
       <!-- ================================================================ -->
-      <section id="foundations" class="stack" style="--stack-gap: var(--space-x2)">
+      <section id="foundations" class="prose">
         <h2>Foundations</h2>
 
-        <div class="stack" style="--stack-gap: var(--gap-tight)">
           <h3>Colour</h3>
           <p class="measure sub">
             One accent plus three answering inks. The accent means <em>you are here</em> — a state,
@@ -71,9 +70,7 @@
             stylesheet, so this table cannot drift from the source.
           </p>
           <div id="swatches" class="grid" style="--grid-min: 11rem"></div>
-        </div>
 
-        <div class="stack" style="--stack-gap: var(--gap-tight)">
           <h3>Type</h3>
           <p class="measure sub">
             Four faces, four jobs, no overlap. A reader should be able to tell what kind of thing
@@ -83,9 +80,7 @@
             separate tokens so one can move without the other.
           </p>
           <dl id="faces" class="docs-defs"></dl>
-        </div>
 
-        <div class="stack" style="--stack-gap: var(--gap-tight)">
           <h3>Space</h3>
           <p class="measure sub">
             Space is the primary means of expression here. Grouping, delineation and separation —
@@ -144,10 +139,10 @@ P
 [s]
 P
 [s]
-[s]      &lt;- a new section starts
-H1
+[s]      &lt;- two units: a heading after content starts something new
+H2
 [s]
-H2       &lt;- one unit: a heading under a heading
+H3       &lt;- one unit: a heading under a heading is one title block
 [s]
 P
 [s]</code></pre>
@@ -167,11 +162,10 @@ P
             difference is decisive at 8px and invisible at 64px; they may never narrow.
           </p>
           <div id="scale" class="stack" style="--stack-gap: var(--gap-within)"></div>
-        </div>
       </section>
 
       <!-- ================================================================ -->
-      <section id="structure" class="stack" style="--stack-gap: var(--space-x2)">
+      <section id="structure" class="prose">
         <h2>Structure</h2>
         <p class="measure sub">
           One class, on the article. Everything inside is plain semantic markup — an author writes
@@ -206,7 +200,7 @@ P
       </section>
 
       <!-- ================================================================ -->
-      <section id="components" class="stack">
+      <section id="components" class="prose">
         <h2>Components</h2>
         <p class="measure sub">
           Nothing here yet, deliberately. The <code>components</code> layer exists and its place in
@@ -217,7 +211,7 @@ P
       </section>
 
       <!-- ================================================================ -->
-      <section id="principles" class="stack">
+      <section id="principles" class="prose">
         <h2>Principles</h2>
         <ol class="measure stack" style="--stack-gap: var(--space)">
           <li>
