@@ -17,12 +17,19 @@
   padding-inline: var(--gutter);
 }
 
+/* The layout layer contains no borders at all, and that is enforced by
+   test/tokens.test.js rather than left to discipline. Arrangement is what
+   creates grouping here; a rule in this layer would mean a spacing decision was
+   skipped and papered over. */
+
 /* --- Stack: vertical rhythm, one gap, no margins on children -------------
-   Override per instance with --stack-gap. */
+   Defaults to --gap-within, because a stack is by definition one group.
+   Override per instance with --stack-gap, preferring a grouping token over a
+   raw rung so the relationship stays legible. */
 .stack {
   display: flex;
   flex-direction: column;
-  gap: var(--stack-gap, var(--space-16));
+  gap: var(--stack-gap, var(--gap-within));
 }
 
 /* --- Row: horizontal, wraps by default ---------------------------------- */
@@ -30,24 +37,22 @@
   display: flex;
   flex-wrap: wrap;
   align-items: var(--row-align, center);
-  gap: var(--row-gap, var(--space-8));
+  gap: var(--row-gap, var(--gap-within));
 }
 
 /* --- Grid: as many columns as fit at the given minimum ------------------- */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min, 16rem), 100%), 1fr));
-  gap: var(--grid-gap, var(--space-16));
+  gap: var(--grid-gap, var(--gap-between));
 }
 
-/* --- Section: a band of the page ---------------------------------------- */
-.section {
-  padding-block: var(--space-40);
-  border-block-start: 1px solid var(--hairline);
-}
-
-.section:first-of-type {
-  border-block-start: 0;
+/* --- Section: a band of the page ----------------------------------------
+   Separated from its neighbours by --gap-section and nothing else. The rule
+   that used to sit here was drawing a boundary that 64px of air already states
+   — and states in every theme, at every contrast setting, and in print. */
+.section + .section {
+  margin-block-start: var(--gap-section);
 }
 
 /* --- Container query context --------------------------------------------

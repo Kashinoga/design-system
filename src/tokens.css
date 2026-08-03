@@ -56,6 +56,13 @@
   --sub: color-mix(in srgb, var(--ink) 40%, transparent);
   --page: light-dark(var(--grey-050), var(--grey-900));
   --surface: light-dark(var(--grey-000), var(--grey-800));
+  /* The last step of the escalation, not the first. Space groups; colour
+     separates what space cannot reach; this is only for the case where the
+     boundary IS the content — a white swatch on a white sheet has nothing to
+     show but its own edge, and no fill can supply one because the fill is the
+     subject. Reaching for it to solve a grouping problem means a spacing
+     decision was skipped; reaching for it to make something look pressable
+     means a colour decision was skipped. See the SPACE section below. */
   --hairline: light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.26));
 
   /* --- Semantic: inks ---------------------------------------------------- */
@@ -112,28 +119,92 @@
   /* The one width prose is allowed to be. */
   --measure: 68ch;
 
-  /* --- Space: a 4px scale where the name IS the pixel count ---------------
-     --space-12 is 12px at a 16px root. A rung whose name lies is worse than no
-     name, so this identity is asserted in test/tokens.test.js. The base is
-     0.25rem, not 0.2rem: on a 0.2 scale only every fifth step is a whole pixel.
-     16 is the dominant gap — when collapsing near-identical values, collapse
-     toward it. */
+  /* === SPACE ==============================================================
+     Space is the primary means of expression in this system. Grouping,
+     delineation, separation, hierarchy — the work a border would normally do —
+     is done with space, and a border is what you reach for only when space
+     cannot reach.
+
+     Why: a border draws a line where a boundary is *inferred*. Two things
+     twelve pixels apart and two things forty-eight pixels apart already say
+     "same group" and "different group" without drawing anything, and they keep
+     saying it at any size, in any colour scheme, on any background, in high
+     contrast mode, and in print. A rule says it once, in one colour, and then
+     has to be maintained in every theme it survives into. Space costs nothing
+     to theme because it has no colour.
+
+     --- The escalation ---
+     Three steps, in order. Take the first one that works and stop.
+
+       1. SPACE. Distance groups, separates and ranks. The default answer, and
+          the answer for nearly everything.
+
+       2. COLOUR. When distance cannot carry it — because the boundary moves, or
+          because the thing needs to look like it does something. A control is
+          the clearest case: no gap makes a word look pressable, but a fill
+          does. Sticky chrome is the other: its distance to the content it must
+          be told apart from changes on every scroll tick, so there is no gap to
+          set, but an opaque fill of its own separates it at any scroll offset.
+
+       3. BORDER. Only when the boundary IS the content — a white swatch on a
+          white sheet has nothing to show but its own edge, and no fill can
+          supply one, because the fill is the subject. This is the whole of what
+          --hairline is for.
+
+     The order matters more than the list. Reaching for a line to solve a
+     grouping problem is the failure this foundation exists to prevent, and
+     reaching for a line to solve an affordance problem is the same mistake one
+     step later.
+
+     --- The scale ---
+     2px base, and the name IS the pixel count: --space-12 is 12px at a 16px
+     root. A rung whose name lies is worse than no name, so the identity is
+     machine-asserted in test/tokens.test.js rather than trusted.
+
+     2px, not 4px, because space is now carrying the whole load. Once a border
+     is not available to mark a boundary, the DIFFERENCE between two gaps is the
+     only signal left, and at the tight end a 4px scale cannot draw a difference
+     small enough to read as "these belong together" rather than "these are
+     adjacent". 2px also stays whole at every step; 0.125rem is exact.
+
+     Strides widen as the scale climbs — 2s, then 4s, then 8s, then 16s — because
+     spacing is read proportionally. A 2px difference is decisive at 8px and
+     invisible at 64px. A scale with a uniform stride is either too coarse to
+     group tightly or too fine to separate boldly; this one is neither. The
+     strides must never NARROW: a ladder whose steps shrink as it rises reads as
+     a mistake, and that is asserted too. */
+  --space-2: 0.125rem;
   --space-4: 0.25rem;
+  --space-6: 0.375rem;
   --space-8: 0.5rem;
+  --space-10: 0.625rem;
   --space-12: 0.75rem;
+  --space-14: 0.875rem;
   --space-16: 1rem;
   --space-20: 1.25rem;
   --space-24: 1.5rem;
   --space-28: 1.75rem;
   --space-32: 2rem;
-  --space-36: 2.25rem;
   --space-40: 2.5rem;
-  --space-44: 2.75rem;
+  --space-48: 3rem;
+  --space-56: 3.5rem;
+  --space-64: 4rem;
+  --space-80: 5rem;
 
-  /* The one rung with a meaning rather than a size: a thing sitting ON what it
-     introduces — a heading and its list, a label and its control. Anything
-     wanting air between two SEPARATE things wants a larger rung by name. */
-  --stack-tight: var(--space-4);
+  /* --- Grouping: the tier that makes space work as a substitute for lines ---
+     A rung is a size. These are RELATIONSHIPS, and they are what actually
+     replaces the border. Reach for these first; drop to a raw rung only when
+     expressing something that is not a grouping.
+
+     Grouping by proximity only reads if the gaps are clearly unequal. Two
+     groups separated by 10px with 8px inside them are not two groups — they are
+     one group with a wobble. The ratio is the whole mechanism, so it is
+     asserted: each tier must be at least twice the one below it. That single
+     rule is what stops the scale drifting back into needing lines. */
+  --gap-tight: var(--space-4); /* a thing sitting ON what it introduces */
+  --gap-within: var(--space-8); /* between items of one group */
+  --gap-between: var(--space-24); /* between groups — 3x within */
+  --gap-section: var(--space-64); /* between sections — where a rule used to be */
 
   /* --- Semantic: layout -------------------------------------------------- */
   --gutter: var(--space-20); /* viewport edge to content */

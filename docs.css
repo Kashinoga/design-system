@@ -11,12 +11,57 @@
  */
 
 @layer docs {
+  /* --- App shell: the scrollbar belongs to what actually scrolls ----------
+     The window itself does not scroll. The bar is a fixed-height row and the
+     region below it is the scroll container, so the scrollbar spans only the
+     area that can actually move — it starts under the bar instead of running
+     the full height of the window past chrome that never goes anywhere.
+
+     A second thing falls out of this for free: content can no longer pass
+     underneath the bar, because it is clipped at the region's top edge. The
+     boundary between chrome and content stops being a moving one. */
+  body {
+    block-size: 100svb;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .docs-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    /* Don't hand a scroll gesture that runs out of room here up to the window,
+       which has nowhere to go and would only rubber-band. */
+    overscroll-behavior: contain;
+    /* Anchor links land inside this container now, and the bar is outside it,
+       so a heading lands at the top of the region with nothing covering it —
+       no offset hack required. */
+    scroll-padding-block-start: var(--gap-within);
+  }
+
+  main {
+    padding-block: var(--gap-section);
+  }
+
+  footer {
+    padding-block-end: var(--gap-section);
+  }
+
+  /* STEP 2, COLOUR — but note the reason changed when the shell went in. It is
+     no longer "the boundary moves": the scroll region is clipped below the bar,
+     so nothing passes under it and the boundary is now perfectly static. What
+     the fill still does is say the bar is a DIFFERENT KIND OF THING from the
+     content — chrome, not page — and that is an identity distinction, which
+     space cannot make at any distance.
+
+     The mix is toward --ink rather than a fixed grey, which keeps the two
+     schemes in step BY EFFECT rather than by matching numbers: on light stock
+     --ink is black and the bar darkens away from the page; on dark stock --ink
+     is near-white and it lightens away. One percentage, both directions
+     correct. A literal grey would have to be two values and would drift. */
   .docs-bar {
-    position: sticky;
-    inset-block-start: 0;
-    z-index: 10;
-    background-color: var(--surface);
-    border-block-end: 1px solid var(--hairline);
+    flex: none;
+    background-color: color-mix(in srgb, var(--ink) 6%, var(--surface));
     padding-block: var(--space-12);
   }
 
@@ -47,32 +92,46 @@
 
   /* A plain key. Stands in until the real control lands in the components
      layer — at which point this rule is deleted, not extended. */
+  /* STEP 2, COLOUR. No gap makes a word look pressable — this is the clearest
+     case where space runs out and colour takes over. A fill plus padding reads
+     as a key; the outline it used to have was saying the same thing a third
+     time. Stands in until the real plastic key lands in the components layer. */
   .docs-key {
-    background-color: var(--surface);
+    background-color: color-mix(in srgb, var(--ink) 8%, var(--surface));
     color: var(--ink);
-    border: 1px solid var(--hairline);
+    border: 0;
     border-radius: var(--radius-key);
-    padding: var(--space-4) var(--space-12);
+    padding: var(--space-6) var(--space-14);
     font-size: var(--text-sm);
     cursor: pointer;
     transition: background-color var(--duration-fast) var(--ease-out);
   }
 
   .docs-key:hover {
-    background-color: color-mix(in srgb, var(--ink) 6%, var(--surface));
+    background-color: color-mix(in srgb, var(--ink) 16%, var(--surface));
   }
 
   /* --- Foundation displays ------------------------------------------------ */
 
+  /* STEP 2, COLOUR — and the fix was to change the GROUND, not the chip.
+     A white chip on a white sheet does need an edge, which is why this looked
+     like the one honest border on the page. But that framing had the problem
+     backwards: the chip is invisible because of what is behind it, so the thing
+     to change is what is behind it. Tinting the card the chip sits on makes
+     --surface and --page read as the pale colours they are, with no line
+     anywhere — and it groups each chip with its own label as a bonus, which the
+     border never did. There is now no border in the entire page. */
   .docs-swatch {
     display: flex;
     flex-direction: column;
-    gap: var(--stack-tight);
+    gap: var(--gap-tight);
+    padding: var(--space-8);
+    background-color: color-mix(in srgb, var(--ink) 7%, var(--surface));
+    border-radius: var(--radius-sheet);
   }
 
   .docs-swatch__chip {
     block-size: var(--space-40);
-    border: 1px solid var(--hairline);
     border-radius: var(--radius-sheet);
   }
 

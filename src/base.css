@@ -114,10 +114,21 @@ p {
   max-inline-size: var(--measure);
 }
 
+/* Underlined, always, and deliberately old-school. This system is for reading
+   technical documents, and a reader scanning a page for citations should not
+   have to hover to find out where they are — an underline is the only link
+   affordance that survives being skimmed, printed, or read by someone who
+   cannot distinguish the accent from the ink.
+
+   skip-ink keeps descenders legible, so the classic underline costs nothing in
+   readability that it used to cost in 1994. from-font takes the thickness and
+   position the typeface itself specifies rather than a guess. */
 a {
   color: var(--accent);
-  text-underline-offset: 0.16em;
+  text-decoration-line: underline;
   text-decoration-thickness: from-font;
+  text-decoration-skip-ink: auto;
+  text-underline-offset: 0.16em;
 }
 
 strong,
@@ -130,16 +141,23 @@ small {
   color: var(--sub);
 }
 
+/* Indented, not ruled. The inset alone says "this is set apart" — that is what
+   an indent has always meant in print, long before anyone could draw a line
+   cheaply. The old left rule said the same thing a second time, in a colour
+   that then had to be maintained in every scheme. */
 blockquote {
   font-family: var(--font-display);
-  border-inline-start: 1px solid var(--hairline);
-  padding-inline-start: var(--space-16);
+  padding-inline-start: var(--space-24);
 }
 
+/* A thematic break is a break. Drawing a line through it states in ink what the
+   gap already states in space, and the gap states it in every theme, at every
+   contrast setting, and in print. The element stays — it is the semantics that
+   matter, and a screen reader announces it either way. */
 hr {
   border: 0;
-  border-block-start: 1px solid var(--hairline);
-  margin-block: var(--space-32);
+  block-size: 0;
+  margin-block: var(--gap-section);
 }
 
 /* --- Source text ----------------------------------------------------------
@@ -152,11 +170,14 @@ hr {
   font-size: 0.9em;
 }
 
+/* The surface change and the padding together make the block. A border round it
+   was a third statement of a boundary already made twice — and the padding is
+   the one doing the real work, because it is what stops the code touching the
+   edge and reading as page text. */
 pre {
   overflow-x: auto;
   padding: var(--space-16);
   background-color: var(--surface);
-  border: 1px solid var(--hairline);
   border-radius: var(--radius-sheet);
 }
 
@@ -203,9 +224,26 @@ th {
   font-weight: var(--weight-strong);
 }
 
+/* Rows are separated by air, not by rules — and the header is separated from
+   the body by more air than the rows are from each other. That difference is
+   the whole grouping mechanism: unequal gaps say "these rows are one thing, and
+   that row is not" without a single line being drawn.
+
+   The known limit: on a table wide enough that the eye loses its row between
+   the first column and the last, proximity stops being enough and the boundary
+   becomes a tracking problem rather than a grouping one. That is a component
+   decision — zebra banding or rules — not a reason to rule every table. */
 :where(th, td) {
-  padding: var(--space-8) var(--space-12);
-  border-block-end: 1px solid var(--hairline);
+  padding-block: var(--gap-within);
+  padding-inline: var(--space-16);
+}
+
+:where(th, td):first-child {
+  padding-inline-start: 0;
+}
+
+:where(thead th) {
+  padding-block-end: var(--gap-between);
 }
 
 /* --- Selection ------------------------------------------------------------ */

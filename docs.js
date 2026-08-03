@@ -73,7 +73,35 @@ for (const [token, job] of FACES) {
 
 /* --- Space ---------------------------------------------------------------- */
 
-const RUNGS = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44];
+const RUNGS = [2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48, 56, 64, 80];
+
+/* --- Grouping tiers ------------------------------------------------------- */
+
+const TIERS = [
+  ["--gap-tight", "a thing sitting ON what it introduces"],
+  ["--gap-within", "between items of one group"],
+  ["--gap-between", "between groups"],
+  ["--gap-section", "between sections — where a rule used to be"],
+];
+
+const grouping = document.querySelector("#grouping");
+
+for (const [token, meaning] of TIERS) {
+  const probe = document.createElement("div");
+  probe.style.width = `var(${token})`;
+  document.body.append(probe);
+  const px = parseFloat(getComputedStyle(probe).width);
+  probe.remove();
+
+  const row = document.createElement("div");
+  row.className = "docs-rung";
+  row.innerHTML = `
+    <span class="docs-rung__name" style="inline-size: 14ch">${token}</span>
+    <span class="docs-rung__bar" style="inline-size: var(${token})"></span>
+    <span class="docs-rung__px">${px}px — ${meaning}</span>
+  `;
+  grouping.append(row);
+}
 
 const scale = document.querySelector("#scale");
 const rootFontSize = parseFloat(getComputedStyle(root).fontSize);

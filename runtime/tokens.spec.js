@@ -16,14 +16,17 @@ const SEMANTIC = [
   "--font-body", "--font-display", "--font-mono", "--font-numeral",
   "--text-xs", "--text-sm", "--text-base", "--text-lg", "--text-xl", "--text-2xl",
   "--leading-tight", "--leading-body", "--weight-normal", "--weight-strong",
-  "--measure", "--stack-tight", "--gutter", "--frame-max",
+  "--measure", "--gutter", "--frame-max",
+  "--gap-tight", "--gap-within", "--gap-between", "--gap-section",
   "--radius-sheet", "--radius-key",
   "--focus-ring-width", "--focus-ring-offset", "--focus-ring-color",
   "--duration-fast", "--duration-base", "--ease-out", "--ease-spring",
   "--shadow-sheet",
 ];
 
-const RUNGS = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44];
+const RUNGS = [2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48, 56, 64, 80];
+
+const TIERS = ["--gap-tight", "--gap-within", "--gap-between", "--gap-section"];
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/index.html");
@@ -102,6 +105,48 @@ for (const width of [320, 480, 768, 900, 1024, 1280, 1440]) {
     }
   });
 }
+
+test("the grouping tiers stay twice-apart once the browser has resolved them", async ({ page }) => {
+  /* The source test checks the alias chain in the file. This checks the pixels
+     a browser actually computed — the ratio is the entire mechanism by which
+     space replaces a border, so it is worth asserting on both sides. */
+  const px = await page.evaluate((tiers) => {
+    const probe = document.createElement("div");
+    document.body.append(probe);
+    const out = tiers.map((t) => {
+      probe.style.width = `var(${t})`;
+      return { tier: t, value: parseFloat(getComputedStyle(probe).width) };
+    });
+    probe.remove();
+    return out;
+  }, TIERS);
+
+  for (let i = 1; i < px.length; i++) {
+    expect(
+      px[i].value,
+      `${px[i].tier} must be at least twice ${px[i - 1].tier}`,
+    ).toBeGreaterThanOrEqual(px[i - 1].value * 2);
+  }
+});
+
+test("nothing in the system layers draws a line", async ({ page }) => {
+  /* The source test greps for border declarations. This one asks the browser
+     what actually got painted, which catches a line arriving from anywhere —
+     a shorthand, a UA default the reset failed to clear, an inherited edge. */
+  const lined = await page.evaluate(() => {
+    const SIDES = ["Top", "Right", "Bottom", "Left"];
+    /* No allowlist. The last border on the page — around the colour swatches —
+       went when the card behind them was tinted instead. Nothing is exempt. */
+    return [...document.querySelectorAll("main *, footer *")]
+      .filter((el) => {
+        const cs = getComputedStyle(el);
+        return SIDES.some((s) => parseFloat(cs[`border${s}Width`]) > 0);
+      })
+      .map((el) => `${el.tagName.toLowerCase()}${el.className ? "." + el.className : ""}`);
+  });
+
+  expect([...new Set(lined)]).toEqual([]);
+});
 
 test("light-dark() actually switches, in both directions", async ({ page }) => {
   const read = () =>

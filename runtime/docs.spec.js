@@ -91,10 +91,20 @@ test("the page never scrolls sideways", async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/index.html");
 
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-    );
-    expect(overflow, `horizontal overflow at ${width}px`).toBeLessThanOrEqual(0);
+    /* Measure the SCROLL REGION, not the document. Since the shell went in the
+       document has overflow:hidden and cannot report sideways scroll at all —
+       checking it would be a guard that can no longer fail, which looks exactly
+       like a guard that passes. */
+    const overflow = await page.evaluate(() => {
+      const region = document.querySelector(".docs-scroll");
+      return {
+        region: region.scrollWidth - region.clientWidth,
+        doc: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+
+    expect(overflow.region, `horizontal overflow in the scroll region at ${width}px`).toBeLessThanOrEqual(0);
+    expect(overflow.doc, `horizontal overflow on the document at ${width}px`).toBeLessThanOrEqual(0);
   }
 });
 

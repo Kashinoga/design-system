@@ -2,6 +2,18 @@
 
 Human interface guidelines for the web, and the CSS that implements them.
 
+## The premise
+
+**A technical document viewer you would actually want to do research in.** Classic, old-school link
+underlines and the reading conventions that came with them, given a modern technical flare that is
+genuinely nice to look at. Data that is pleasant to read and a surface that is fun to work in.
+
+That premise decides arguments. A link is underlined because that is what a link has looked like
+since the web had links, and a reader scanning for citations should not have to hover to find them.
+Density is a feature, not a compromise — someone doing research wants more on screen, not a landing
+page. And the system pays for its restraint elsewhere: no borders, no chrome for its own sake, so
+the attention it does spend lands on the content.
+
 **Status: scaffold.** The structure is final; the values are neutral placeholders. Nothing has
 been migrated from [Pixelite](../_ARCHIVE/pixelite-design-system.md) yet.
 

@@ -39,7 +39,11 @@
       </div>
     </header>
 
-    <main id="main" class="frame">
+    <!-- The bar sits OUTSIDE this element, so the scrollbar belongs to the
+         region that actually scrolls and starts below the bar rather than
+         running the full height of the window past chrome that never moves. -->
+    <div class="docs-scroll">
+      <main id="main" class="frame">
       <section class="section stack" style="--stack-gap: var(--space-16)">
         <h1>Kashinoga Design System</h1>
         <p class="measure">
@@ -57,7 +61,7 @@
       <section id="foundations" class="section stack" style="--stack-gap: var(--space-32)">
         <h2>Foundations</h2>
 
-        <div class="stack" style="--stack-gap: var(--stack-tight)">
+        <div class="stack" style="--stack-gap: var(--gap-tight)">
           <h3>Colour</h3>
           <p class="measure sub">
             One accent plus three answering inks. The accent means <em>you are here</em> — a state,
@@ -68,7 +72,7 @@
           <div id="swatches" class="grid" style="--grid-min: 11rem"></div>
         </div>
 
-        <div class="stack" style="--stack-gap: var(--stack-tight)">
+        <div class="stack" style="--stack-gap: var(--gap-tight)">
           <h3>Type</h3>
           <p class="measure sub">
             Four faces, four jobs, no overlap. A reader should be able to tell what kind of thing
@@ -80,12 +84,41 @@
           <dl id="faces" class="docs-defs"></dl>
         </div>
 
-        <div class="stack" style="--stack-gap: var(--stack-tight)">
+        <div class="stack" style="--stack-gap: var(--gap-tight)">
           <h3>Space</h3>
           <p class="measure sub">
-            A 4px scale where the name is the pixel count — <code>--space-12</code> is 12px at a
-            16px root. A rung whose name lies is worse than no name, so the identity is asserted in
-            <code>test/tokens.test.js</code>.
+            Space is the primary means of expression here. Grouping, delineation and separation —
+            the work a border would normally do — are done with space, and a border is what you
+            reach for only when space cannot reach. A rule says a boundary once, in one colour,
+            and then has to be maintained in every theme it survives into; a gap says it in every
+            theme, at every contrast setting, and in print, for free.
+          </p>
+          <p class="measure sub">
+            Three steps, in order — take the first that works and stop.
+            <strong>Space</strong> groups, separates and ranks; it is the answer for nearly
+            everything. <strong>Colour</strong> takes over when distance cannot carry it: no gap
+            makes a word look pressable, and sticky chrome has no fixed distance to the content it
+            must be told apart from, but a fill of its own separates it at any scroll offset.
+            <strong>A border</strong> only when the boundary <em>is</em> the content — the swatches
+            above are white on a white sheet and have nothing to show but their own edge, which no
+            fill can supply because the fill is the subject. That is the one border on this page.
+          </p>
+
+          <h4>Grouping</h4>
+          <p class="measure sub">
+            A rung is a size; these are relationships, and they are what actually replaces the
+            border. Proximity only groups if the gaps are clearly unequal — two groups 10px apart
+            with 8px inside them are not two groups, they are one group with a wobble. So each
+            tier must be at least twice the one below it, and that ratio is asserted.
+          </p>
+          <div id="grouping" class="stack" style="--stack-gap: var(--gap-within)"></div>
+
+          <h4>The scale</h4>
+          <p class="measure sub">
+            2px base, and the name is the pixel count — <code>--space-12</code> is 12px at a 16px
+            root. A rung whose name lies is worse than no name, so the identity is asserted in
+            <code>test/tokens.test.js</code>. Strides widen as the scale climbs, because a 2px
+            difference is decisive at 8px and invisible at 64px; they may never narrow.
           </p>
           <div id="scale" class="stack" style="--stack-gap: var(--space-4)"></div>
         </div>
@@ -132,12 +165,13 @@
       </section>
     </main>
 
-    <footer class="frame section">
-      <p class="sub">
-        Kashinoga Design System · scaffold ·
-        <span class="numeral">0.0.1</span>
-      </p>
-    </footer>
+      <footer class="frame">
+        <p class="sub">
+          Kashinoga Design System · scaffold ·
+          <span class="numeral">0.0.1</span>
+        </p>
+      </footer>
+    </div>
 
     <script type="module" src="docs.js"></script>
   </body>
