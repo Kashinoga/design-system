@@ -299,6 +299,7 @@ test("every length token lands on a whole pixel", async ({ page }) => {
   const LENGTHS = [
     "--text-xs", "--text-sm", "--text-base", "--text-lg", "--text-xl", "--text-2xl",
     "--measure", "--gutter", "--frame-max", "--sidenote-width", "--toc-width",
+    "--span-full", "--span-half", "--span-quarter", "--span-eighth", "--span-column", "--column-gap",
     "--space", "--space-x2", "--space-x3", "--space-x4",
     "--gap-tight", "--gap-within", "--gap-between", "--gap-section",
     "--radius-sheet", "--radius-key", "--focus-ring-width", "--focus-ring-offset",
@@ -318,6 +319,84 @@ test("every length token lands on a whole pixel", async ({ page }) => {
   }, LENGTHS);
 
   expect(fractional).toEqual([]);
+});
+
+test("every region is a clean halving of the frame", async ({ page }) => {
+  /* Halving is chosen over an N-column grid because it is the one division a
+     reader can verify by eye: two things are the same width, or one is visibly
+     twice the other. Nobody can see the difference between five twelfths and
+     four elevenths, so nobody can tell when it has gone wrong. */
+  const px = await page.evaluate(() => {
+    const probe = document.createElement("div");
+    document.body.append(probe);
+    const read = (t) => {
+      probe.style.width = `var(${t})`;
+      return parseFloat(getComputedStyle(probe).width);
+    };
+    const out = {
+      full: read("--span-full"),
+      column: read("--span-column"),
+      half: read("--span-half"),
+      quarter: read("--span-quarter"),
+      eighth: read("--span-eighth"),
+      measure: read("--measure"),
+    };
+    probe.remove();
+    return out;
+  });
+
+  expect(px.full).toBe(1200);
+  expect(px.half).toBe(px.full / 2);
+  expect(px.quarter).toBe(px.half / 2);
+  expect(px.eighth).toBe(px.quarter / 2);
+
+  /* Halving and a 16-column grid are the same system: 1200 / 16 = 75 exactly,
+     so every halving lands on a column line and every span is a whole number of
+     columns. Carbon calls this "divide or multiply by two". */
+  expect(px.column).toBe(px.full / 16);
+  expect(px.eighth).toBe(px.column * 2);
+
+  /* Four levels stay whole. A fifth would be 75, and a sixth 37.5 — which is
+     where the halving stops being a pixel-perfect rule. */
+  for (const [name, v] of Object.entries(px)) {
+    expect(Number.isInteger(v), `${name} = ${v}px`).toBe(true);
+  }
+
+  /* Prose takes half the frame, which leaves the other half for the apparatus a
+     research document needs rather than filling the width with text. */
+  expect(px.measure).toBe(px.half);
+});
+
+test("an item grid fills its region on whole columns", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/index.html");
+
+  /* The swatch grid is NOT a region division — it is a flow of items filling
+     one region, and the column count falls out of the width. Five is an
+     outcome, not a choice, so nothing may depend on it being five. What DOES
+     have to hold is that the columns land on whole pixels: the gap is part of
+     that arithmetic, not a decoration applied afterwards. */
+  const grid = await page.evaluate(() => {
+    const el = document.querySelector("#swatches");
+    const cs = getComputedStyle(el);
+    const tracks = cs.gridTemplateColumns.split(" ").map(parseFloat);
+    return {
+      count: tracks.length,
+      tracks,
+      gap: parseFloat(cs.columnGap),
+      width: Math.round(el.getBoundingClientRect().width),
+    };
+  });
+
+  expect(grid.count).toBeGreaterThan(1);
+  for (const t of grid.tracks) {
+    expect(Number.isInteger(t), `column track ${t}px`).toBe(true);
+  }
+
+  /* The tracks and gaps must add up to the region exactly — a remainder is a
+     column that does not fit and a right edge that does not line up. */
+  const total = grid.tracks.reduce((a, b) => a + b, 0) + grid.gap * (grid.count - 1);
+  expect(Math.round(total)).toBe(grid.width);
 });
 
 test("every line box in the type scale is a whole number of pixels", async ({ page }) => {

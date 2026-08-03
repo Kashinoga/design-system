@@ -129,17 +129,68 @@
   --weight-normal: 400;
   --weight-strong: 600;
 
-  /* The one width prose is allowed to be — in rem, not ch, and the change is
-     deliberate. 68ch computed to 586.5px: a measure that cannot land on a whole
-     pixel is a ragged right edge on every block that shares it.
+  /* === REGIONS: halve, and halve again ====================================
+     The content width is 1200 and every region is a power-of-two division of
+     it. Nothing else. A block occupies a half, a quarter or an eighth — never
+     "about 60%".
 
-     Losing the character count costs less than it looks. ch is the advance of
-     "0" in the ELEMENT's own font, so 68ch was never 68 characters of anything
-     — it was 68 zeroes of whichever face the platform supplied, which differs
-     between Segoe UI, SF Pro and whatever Linux resolves to. It was a nominal
-     count, not a real one. 36rem is 576px everywhere, and about 66 characters
-     of Segoe UI, which is inside the readable band. */
-  --measure: 36rem; /* 576 */
+         full     1200   16 columns
+         half      600    8
+         quarter   300    4
+         eighth    150    2
+         (column)   75    1
+
+     Halving and a 16-column grid are the SAME SYSTEM, which is worth stating
+     because they look like alternatives. 1200 / 16 = 75px exactly, so every
+     halving lands on a column line and every column span is a halving. This is
+     Carbon's 2x Grid: "divide or multiply by two" — a fluid grid divides the
+     container, a fixed grid multiplies the unit. The relation to metric paper
+     is the same one: A5 is half of A4 and the proportion survives the cut, so
+     one rule serves every size instead of a table of them.
+
+     Halving is chosen over 12 columns because it is the one division a reader
+     can verify by eye. Two things are the same width, or one is visibly twice
+     the other; nobody can see the difference between five twelfths and four
+     elevenths, so nobody can tell when it has gone wrong. It also stays whole
+     for four levels, which twelfths do not.
+
+     WHERE THE SWATCH GRID FITS, because this is the question that always comes
+     up: it does not. It is not a region division at all, and treating it as one
+     is the mistake.
+
+     A REGION is a place, fixed by the halving rule. An ITEM GRID is a flow that
+     fills one region — as many things as fit at a minimum size, and the count
+     falls out of the width. The swatches span the FULL region and land on five
+     columns at 1200px; at 900 they are four and at 600 they are three. Five was
+     never chosen. Nothing downstream may depend on it being five, which is
+     exactly why it does not need to divide by two.
+
+     The two systems never have to agree because they answer different
+     questions. "Where does this block go" is halving. "How many of these fit"
+     is the item grid. */
+  --span-full: 75rem; /* 1200 — 16 columns */
+  --span-half: 37.5rem; /* 600 — 8 */
+  --span-quarter: 18.75rem; /* 300 — 4 */
+  --span-eighth: 9.375rem; /* 150 — 2 */
+  --span-column: 4.6875rem; /* 75 — 1, the smallest whole division */
+
+  /* 20, so an item grid still lands on whole columns inside a region: at 1200
+     five columns come out 224 each and four come out 285. A gap is part of the
+     arithmetic, not a decoration applied afterwards. */
+  --column-gap: var(--space-20); /* 20 */
+
+  /* The one width prose is allowed to be: half the frame.
+
+     It was 68ch, which computed to 586.5px — and ch is the advance of "0" in
+     the ELEMENT's own font, so it was never 68 characters of anything. It was
+     68 zeroes of whichever face the platform supplied, which is why prose
+     measured 586.5px against code at 538.4px on the same page.
+
+     600px is about 70 characters of Segoe UI, which is squarely in the readable
+     band, and it leaves the other half of the frame for the apparatus a
+     research document needs — sidenotes, a contents rail, a wide figure. A
+     measure that fills the frame has nowhere to put any of it. */
+  --measure: var(--span-half); /* 600 */
 
   /* === SPACE ==============================================================
      Space is the primary means of expression in this system. Grouping,
@@ -292,10 +343,18 @@
      already the vocabulary. */
 
   /* --- Semantic: layout -------------------------------------------------- */
+  /* --frame-max is the CONTENT width, not the border-box width. The gutter is
+     added to it in layout.css, so the halving arithmetic starts from a clean
+     1200 rather than from 1200 minus whatever the gutter happened to be. Change
+     the gutter and every region keeps its size. */
+  --frame-max: var(--span-full); /* 1200 of content */
   --gutter: var(--space-20); /* viewport edge to content */
-  --frame-max: 75rem; /* 1200 */
-  --sidenote-width: 12rem; /* the margin column, when the article can hold one */
-  --toc-width: 14rem; /* the contents rail, when the page can hold one */
+
+  /* A quarter each, so the margin apparatus lands on a region boundary rather
+     than sitting at some width of its own. Half for the text, a quarter for the
+     notes, a quarter spare. */
+  --sidenote-width: var(--span-quarter); /* 300 */
+  --toc-width: var(--span-quarter); /* 300 */
 
   /* --- Radius ------------------------------------------------------------ */
   --radius-sheet: 2px;

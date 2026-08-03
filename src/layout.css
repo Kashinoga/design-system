@@ -49,10 +49,13 @@
   inherits: false;
 }
 
-/* --- Frame: the page gutter and the one max width ----------------------- */
+/* --- Frame: the page gutter and the one max width -----------------------
+   --frame-max is the CONTENT width, so the gutter is added on top of it rather
+   than eaten out of it. That keeps the halving arithmetic starting from a clean
+   1200: change the gutter and every region keeps its size. */
 .frame {
   inline-size: 100%;
-  max-inline-size: var(--frame-max);
+  max-inline-size: calc(var(--frame-max) + 2 * var(--gutter));
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
@@ -84,7 +87,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min, 16rem), 100%), 1fr));
-  gap: var(--grid-gap, var(--gap-between));
+  gap: var(--grid-gap, var(--column-gap));
 }
 
 /* No .section class. The word had two meanings — a band of a page, and a
@@ -105,18 +108,17 @@
    The first child gets no space above it. `* + *` gives that for free, and it
    is why this uses adjacent siblings instead of a gap: a flex gap would also
    space the container's own edge, which the container's padding already owns. */
-/* No measure on the container. Text blocks cap themselves at --measure in
-   base.css, and anything that is not text — a swatch grid, a wide chart, a
-   table of results — runs the full width of the frame. Capping the container
-   instead would bind them together, and a five-column grid squeezed into a
-   reading measure is two columns and a lot of scrolling.
+/* No measure on the container. Text blocks cap themselves at --measure — half
+   the frame — and anything that is not text takes the region it needs. Capping
+   the container would bind them all to the narrowest one, and an item grid
+   squeezed into a reading measure is two columns and a lot of scrolling.
 
-   The reason that is safe now: --measure moved from 68ch to 36rem. `ch` is the
+   Safe because --measure is now a span in rem rather than 68ch. `ch` is the
    advance of "0" in the ELEMENT's own font, so a per-element measure used to
    give a different width to every font on the page — 586.5px of prose against
-   538.4px of code, a 48px ragged edge nobody chose. In rem it is 576px for all
-   of them, so every text block shares one edge without the container having to
-   force it. */
+   538.4px of code, a 48px ragged edge nobody chose. A span is the same number
+   for all of them, so every text block shares one edge without the container
+   having to force it. */
 
 /* The document title. The one heading that names the whole thing takes the
    display size — every other h1 is a section title and sits on the ladder in
@@ -245,11 +247,23 @@
    must sit inside one — the .container utility does it. With no container
    ancestor the query never matches and the stacked form stays, which is a
    degraded layout rather than a broken one. */
-@container (min-inline-size: 68rem) {
+/* Regions TILE. The gap lives inside a region as padding, never between them as
+   a grid gap — that is what lets the halving arithmetic close.
+
+   A quarter for the contents, a half for the text and a quarter for the notes
+   is exactly 1200. Add a 32px gap between each and it is 1264, so the layout
+   that the region sizes describe cannot be built. Taking the gap out of the
+   region instead keeps every edge on a division and costs the region its gap's
+   worth of content width, which is the honest trade. */
+@container (min-inline-size: 56.25rem) {
   .document {
     grid-template-columns: var(--toc-width) minmax(0, 1fr);
-    column-gap: var(--space-x4);
+    column-gap: 0;
     align-items: start;
+  }
+
+  .document > nav {
+    padding-inline-end: var(--column-gap);
   }
 
   .document > nav {
@@ -290,12 +304,16 @@ figure > * + figcaption {
    It was 58rem until the contents rail arrived and took 14rem off the article.
    The two features compete for the same width, and the rail wins because a
    reader needs to navigate before they need a margin note. */
-@container (min-inline-size: 50rem) {
+@container (min-inline-size: 56.25rem) {
   .document aside {
     float: inline-end;
     clear: inline-end;
+    /* The note occupies a whole quarter and takes its gutter out of that
+       quarter as padding, exactly as the contents rail does. Regions tile; the
+       gap lives inside one. */
     inline-size: var(--sidenote-width);
-    margin-inline-end: calc(-1 * (var(--sidenote-width) + var(--space-x2)));
+    padding-inline-start: var(--column-gap);
+    margin-inline-end: calc(-1 * var(--sidenote-width));
     margin-block-start: 0;
   }
 }
