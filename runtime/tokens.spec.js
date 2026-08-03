@@ -192,7 +192,7 @@ test("a document keeps the beat: one unit everywhere, two before a new H1", asyn
       probe.style.width = `var(${t})`;
       return parseFloat(getComputedStyle(probe).width);
     };
-    const units = { unit: read("--space"), double: read("--space-x2"), tight: read("--gap-tight") };
+    const units = { unit: read("--space"), double: read("--space-x2"), quad: read("--space-x4") };
     probe.remove();
 
     host.remove();
@@ -202,25 +202,25 @@ test("a document keeps the beat: one unit everywhere, two before a new H1", asyn
   /* Heading spacing is asymmetric, and that is the whole point: MORE above a
      heading than below it. Equal space on both sides leaves the heading
      floating between two blocks with no way to tell which one it names. */
-  const { unit, double, tight } = gaps.units;
+  const { unit, double, quad } = gaps.units;
 
   /* An ordered list, not a map — H2->P occurs twice and a map would collapse
      the two into one, quietly halving what this test checks. */
   expect(gaps.out).toEqual([
-    { pair: "H1->P", gap: unit }, //    one unit below a heading
-    { pair: "P->P", gap: unit }, //     the floor, between two ordinary blocks
-    { pair: "P->H1", gap: double }, //  two units above — a heading starts something new
+    { pair: "H1->P", gap: unit }, //    a heading sits ON what it introduces
+    { pair: "P->P", gap: double }, //   two units between blocks
+    { pair: "P->H1", gap: quad }, //    four units above — a heading starts something new
     { pair: "H1->H2", gap: unit }, //   a heading under a heading is one title block
     { pair: "H2->P", gap: unit },
-    { pair: "P->H2", gap: double }, //  every level, not h1 alone
+    { pair: "P->H2", gap: quad }, //    every level, not h1 alone
     { pair: "H2->P", gap: unit },
   ]);
 
-  /* The asymmetry, asserted as a relationship so a future retune of the tokens
-     cannot quietly flatten it. A heading must sit closer to what it names than
-     to what it follows, or a reader cannot tell which side it belongs to. */
-  expect(double).toBeGreaterThan(unit);
-  expect(tight).toBeLessThan(unit);
+  /* The ladder doubles at each step — 16 / 32 / 64 — and the asymmetry is
+     asserted as a relationship so a future retune cannot quietly flatten it.
+     A heading must sit closer to what it names than to what it follows. */
+  expect(double).toBe(unit * 2);
+  expect(quad).toBe(unit * 4);
 });
 
 test("the leading is trimmed off every block in the rhythm", async ({ page }) => {
@@ -394,12 +394,14 @@ test("an item grid fills its region on whole columns", async ({ page }) => {
      least a fifth of the width, so auto-fit cannot place a sixth. */
   expect(grid.count).toBeLessThanOrEqual(5);
 
-  /* Whole tracks at the tier the grid is designed for. No gap makes EVERY
-     count whole — 1fr distribution cannot promise that — so 20 is chosen to
-     divide the capped count of five: 224 at 1200, 416 at 2160. */
-  for (const t of grid.tracks) {
-    expect(Number.isInteger(t), `column track ${t}px at a 1440 viewport`).toBe(true);
-  }
+  /* Whole TRACKS are not assertable and this test no longer claims them. The
+     region an item grid lives in is a leftover — the frame minus two rails —
+     and an arbitrary width divided by an arbitrary count is fractional far more
+     often than not: 816 across three tracks with a 20px gap is 258.67.
+
+     That is 1fr distribution, not a token drifting. Every token IS whole, and
+     the test above asserts it. What can be promised here is the invariant
+     below, which holds at every width and every count. */
 
   /* This one must hold at every width and every count: tracks plus gaps sum to
      the container exactly. A remainder is a right edge that does not line up. */

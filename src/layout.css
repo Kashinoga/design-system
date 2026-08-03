@@ -215,7 +215,15 @@
      than a phone, and a grid track wider than its container does not wrap — it
      overflows, and the whole page scrolls sideways. Caught at 320px, where it
      hung 228px off the edge. */
-  grid-template-columns: repeat(auto-fill, min(var(--measure), 100%));
+  /* minmax, so a lone track FILLS its region rather than sitting at a measure
+     with slack beside it. Prose still stops at the measure — base.css caps every
+     text block — so the track being wider costs the reading width nothing, and
+     a swatch grid or a wide table gets the whole region instead of being
+     squeezed into a reading column.
+
+     Fixed tracks were tried first and are wrong for exactly that reason: with
+     one track the swatch grid came out 528 wide inside a 900 region. */
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--measure), 100%), 1fr));
   gap: var(--gap-section) calc(3 * var(--column));
   align-items: start;
 }
@@ -264,7 +272,30 @@
 
 /* The rhythm is written once and worn by two things: .prose on any container,
    and every part of a .document. A second copy would drift. */
+/* Two units between blocks, not one.
+
+   One was the drafted model and it was right until the leading came off. A
+   16px gap plus ~8px of half-leading reads as 24; trimmed, the same 16 reads as
+   16, and two paragraphs at 16 apart run together. The number did not change
+   its meaning — the rendering finally matched it, and the honest value turned
+   out to be twice what the untrimmed page needed.
+
+   The ladder is 16 / 32 / 64, doubling at each step:
+
+       heading -> its content     1 unit    16
+       block   -> block           2 units   32
+       content -> a new heading   4 units   64
+
+   The asymmetry still comes from above the heading, and it is now unmissable:
+   a heading sits four times closer to what it names than to what it follows. */
 :is(.prose, .document > article > :is(header, section, footer)) > * + * {
+  margin-block-start: var(--space-x2);
+}
+
+/* A heading sits ON what it introduces — the one gap that stays a single unit.
+   Equal specificity to the heading rule below, so source order decides; this
+   comes first and the heading-pair rule overrides it. */
+:is(.prose, .document > article > :is(header, section, footer)) > :is(h1, h2, h3, h4, h5, h6) + * {
   margin-block-start: var(--space);
 }
 
@@ -280,7 +311,7 @@
 :is(.prose, .document > article > :is(header, section, footer))
   > *
   + :is(h1, h2, h3, h4, h5, h6) {
-  margin-block-start: var(--space-x2);
+  margin-block-start: var(--space-x4);
 }
 
 /* There is deliberately NO rule tightening the gap below a heading. One went in
@@ -389,7 +420,7 @@
    that the region sizes describe cannot be built. Taking the gap out of the
    region instead keeps every edge on a division and costs the region its gap's
    worth of content width, which is the honest trade. */
-@container (min-inline-size: 75rem) {
+@container (min-inline-size: 54rem) {
   .document {
     grid-template-columns: var(--toc-width) minmax(0, 1fr);
     column-gap: 0;

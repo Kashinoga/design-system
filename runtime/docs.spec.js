@@ -156,8 +156,23 @@ test("prose subsections share a row, at the measure, on the grid", async ({ page
   await page.setViewportSize({ width: 1600, height: 900 });
   await page.goto("/index.html");
 
+  /* Measured in a container wide enough to hold two measures, NOT in the docs
+     page's own content column. With both rails present that column is five
+     eighths of the frame — 900px at the ceiling — and two measures plus their
+     three-column gutter need 1200. The primitive is what is under test here;
+     whether this particular page is wide enough to show two columns is a
+     separate question, and the answer today is no. */
   const cols = await page.evaluate(() => {
-    const grid = document.querySelector("#foundations .columns");
+    /* A fresh element rather than a clone of the page's own grid. Cloning drags
+       along whatever the page happens to be doing to that node, and the point
+       here is the primitive: give .columns a container wide enough for two
+       measures and check what it does. */
+    const host = document.createElement("div");
+    host.className = "columns";
+    host.style.cssText = "position:absolute;visibility:hidden;inline-size:1200px";
+    host.innerHTML = "<div class='prose'><h2>a</h2><p>a</p></div>".repeat(4);
+    document.body.append(host);
+    const grid = host;
     const cs = getComputedStyle(grid);
     const tracks = cs.gridTemplateColumns.split(" ").map(parseFloat);
 
@@ -177,7 +192,15 @@ test("prose subsections share a row, at the measure, on the grid", async ({ page
     const column = parseFloat(getComputedStyle(probe).width);
     probe.remove();
 
-    return { tracks, gap: parseFloat(cs.columnGap), rows: [...rows.values()], measure, column };
+    /* Read the gap BEFORE detaching. getComputedStyle returns a LIVE object, so
+       reading cs.columnGap in the return statement — after host.remove() —
+       resolved it against a detached element and produced NaN. The tracks read
+       fine only because they were pulled out while the node was still in the
+       document. */
+    const gap = parseFloat(cs.columnGap);
+
+    host.remove();
+    return { tracks, gap, rows: [...rows.values()], measure, column };
   });
 
   /* A FIXED track, not a 1fr share. 1fr would stretch each column to half the
@@ -222,7 +245,7 @@ test("the superbar and the content share both edges", async ({ page }) => {
     };
     return {
       bar: box(".docs-bar .frame"),
-      content: box("main.frame"),
+      content: box(".docs-shell"),
       reserved: getComputedStyle(document.documentElement).getPropertyValue("--scrollbar-width"),
     };
   });
@@ -253,7 +276,7 @@ test("a tier width is an absolute ceiling on the whole box", async ({ page }) =>
     await page.goto("/index.html");
 
     const box = await page.evaluate(() => {
-      const el = document.querySelector("main.frame");
+      const el = document.querySelector(".docs-shell");
       const cs = getComputedStyle(el);
       const r = el.getBoundingClientRect();
       return {

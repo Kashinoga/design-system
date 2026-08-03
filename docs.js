@@ -169,6 +169,45 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
 
 setScheme("auto");
 
+/* --- The local rail: a contents list built from the document --------------
+   Read out of the headings rather than written by hand. A hand-written contents
+   list is a second copy of the document, and a value copied is a value that
+   will drift — the entry outlives the section it points at and nobody notices,
+   because a stale link still looks like a link.
+
+   Ids are generated where a heading has none, so an author does not have to
+   remember to add one for the rail to work. */
+const toc = document.querySelector("#docs-toc");
+
+function slug(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+if (toc) {
+  const headings = [...document.querySelectorAll("main :is(h1, h2, h3)")];
+
+  for (const h of headings) {
+    if (!h.id) h.id = slug(h.textContent) || `s-${headings.indexOf(h)}`;
+
+    const li = document.createElement("li");
+    li.dataset.depth = h.tagName[1];
+
+    const a = document.createElement("a");
+    a.href = `#${h.id}`;
+    a.textContent = h.textContent;
+    /* A section title is an h1 and so is the banner; the rail leans on weight
+       rather than size, because the rail is small everywhere. */
+    if (h.tagName === "H1") a.style.fontWeight = "var(--weight-strong)";
+
+    li.append(a);
+    toc.append(li);
+  }
+}
+
 /* --- Keep the bar and the content on the same edges -----------------------
    The bar is outside the scroll region, so nothing makes their widths agree by
    itself: the region loses a scrollbar's width and the bar does not. Measure it

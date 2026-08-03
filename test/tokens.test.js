@@ -15,6 +15,9 @@ const src = (name) =>
 
 const tokens = src("tokens.css");
 
+/* Not part of the system, but the balance guard covers it — see the note there. */
+const docs = readFileSync(fileURLToPath(new URL("../docs.css", import.meta.url)), "utf8");
+
 test("every --space-N rung equals N pixels at a 16px root", () => {
   const rungs = [...tokens.matchAll(/--space-(\d+):\s*([\d.]+)rem;/g)];
 
@@ -131,7 +134,7 @@ test("the document rhythm has no tokens of its own", () => {
      declaration it produces, not the exact shape of the selector — a test that
      pins the selector text breaks on every refactor without catching anything. */
   assert.ok(/\.prose[^{]*>\s*\*\s*\+\s*\*/.test(layout), ".prose lost its base rule");
-  assert.match(layout, /\.prose[^{]*>\s*\*\s*\+\s*\*\s*\{\s*margin-block-start:\s*var\(--space\);/);
+  assert.match(layout, /\.prose[^{]*>\s*\*\s*\+\s*\*\s*\{\s*margin-block-start:\s*var\(--space-x2\);/);
   assert.ok(
     /\.document\s*>\s*article\s*>\s*:is\(header, section, footer\)/.test(layout),
     ".document lost the rhythm",
@@ -189,10 +192,14 @@ test("comment markers are balanced in every stylesheet", () => {
   // one whole declaration. Nothing looks broken: the rest of the file still
   // applies and the token just quietly resolves to nothing. Caught once the hard
   // way, when --font-body went missing and every paragraph fell back to Times.
+  /* docs.css is in this list even though it is not part of the system, and the
+     reason is that leaving it out cost a real bug: a stray marker there ate a
+     media query and the rails stacked instead of railing. The guard is about
+     the failure mode, not about which directory a file lives in. */
   const FILES = ["reset.css", "tokens.css", "base.css", "layout.css", "components.css", "utilities.css"];
+  const ALL = [...FILES.map((n) => [n, src(n)]), ["docs.css", docs]];
 
-  for (const name of FILES) {
-    const text = src(name);
+  for (const [name, text] of ALL) {
     let depth = 0;
 
     for (let i = 0; i < text.length - 1; i++) {

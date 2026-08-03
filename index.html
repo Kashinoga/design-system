@@ -27,12 +27,9 @@
         <span class="docs-wordmark">Kashinoga</span>
         <span class="sub">Design System</span>
 
-        <nav class="row docs-nav" aria-label="Sections">
-          <a href="#foundations">Foundations</a>
-          <a href="#structure">Structure</a>
-          <a href="#components">Components</a>
-          <a href="#principles">Principles</a>
-        </nav>
+        <!-- The section links moved to the global nav on the left. A superbar
+             that also carries navigation is doing two jobs, and the left rail
+             is where the grid already reserved room for one of them. -->
 
         <button type="button" id="scheme-toggle" class="docs-key" aria-pressed="false">
           <span id="scheme-label">Auto</span>
@@ -44,7 +41,21 @@
          region that actually scrolls and starts below the bar rather than
          running the full height of the window past chrome that never moves. -->
     <div class="docs-scroll">
-      <main id="main" class="frame stack" style="--stack-gap: var(--gap-section)">
+      <div class="frame docs-shell">
+        <!-- GLOBAL: the same on every page. Sticky, so it is reachable from
+             anywhere in a long document without scrolling back. -->
+        <nav class="docs-rail docs-global" aria-label="Sections">
+          <p class="docs-rail__title">Sections</p>
+          <ul role="list">
+            <li><a href="#foundations">Foundations</a></li>
+            <li><a href="#structure">Structure</a></li>
+            <li><a href="#components">Components</a></li>
+            <li><a href="#principles">Principles</a></li>
+          </ul>
+        </nav>
+
+        <div class="docs-column">
+      <main id="main" class="stack" style="--stack-gap: var(--gap-section)">
       <header class="prose">
         <h1>Kashinoga Design System</h1>
         <p class="measure">
@@ -105,7 +116,7 @@
           </p>
         </div>
         <div class="prose">
-          <h3>[s], the floor</h3>
+          <h3>The Quantum</h3>
           <p class="measure sub">
             At least one <code>[s]</code> sits between any two elements. Nothing that separates two
             things may go below it. It is a floor and not a default because the failure is
@@ -249,12 +260,22 @@ P
       </section>
     </main>
 
-      <footer class="frame">
-        <p class="sub">
-          Kashinoga Design System · scaffold ·
-          <span class="numeral">0.0.1</span>
-        </p>
-      </footer>
+          <footer>
+            <p class="sub">
+              Kashinoga Design System · scaffold ·
+              <span class="numeral">0.0.1</span>
+            </p>
+          </footer>
+        </div>
+
+        <!-- LOCAL: this page only. Built from the headings by docs.js, because
+             a contents list written by hand is a second copy of the document
+             and will fall out of step with it. -->
+        <nav class="docs-rail docs-local" aria-label="On this page">
+          <p class="docs-rail__title">On this page</p>
+          <ul id="docs-toc" role="list"></ul>
+        </nav>
+      </div>
     </div>
 
     <script type="module" src="docs.js"></script>

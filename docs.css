@@ -43,8 +43,111 @@
     scroll-padding-block-start: var(--gap-within);
   }
 
+  /* --- The shell: global rail, text, local rail --------------------------
+   The layout the grid derivation already produced, now with something in it:
+
+       7  +  11  +  7  =  25 columns  =  1200
+       global   text   local
+
+   Narrow first. Below the width where all three fit, the rails are not shown
+   at all — a rail squeezed to four columns is unreadable, and stacking them
+   above the text puts two lists between the reader and the first paragraph.
+   The superbar keeps the page usable without them.
+
+   The breakpoint is where the frame actually reaches 25 columns, not a device
+   size: 1240 is 1200 plus its two gutters. Below it the frame is capped at the
+   18-column tier, which cannot hold two rails and a measure. */
+  .docs-shell {
+    --docs-rail: calc(4 * var(--column)); /* 192 */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Four columns each side. 4 + 22 + 4 = 30 columns = 1440, all whole.
+
+     It started as 1fr 5fr 1fr, which is the right PROPORTION but the wrong
+     mechanism: sevenths of 1440 are 205.71, so the content region came out
+     fractional and every track of every grid inside it inherited the fraction.
+     A ratio that has to divide the frame cannot also land on the grid unless
+     the frame happens to be divisible, and 1440 is not divisible by seven.
+
+     Fixed rails of four columns give 1 : 5.5 : 1, which is within a rounding of
+     the ratio asked for and lands exactly on column lines. The proportion was
+     the goal; the arithmetic decides how to reach it.
+
+     Four rather than seven because at seven the rail sat 336 from the text and
+     read as belonging to the window rather than to the document. A nav you have
+     to track across empty space to reach reads as belonging to the window; 192
+     is close enough to feel attached. */
+  @media (min-width: 77.5rem) {
+    .docs-shell {
+      grid-template-columns: var(--docs-rail) minmax(0, 1fr) var(--docs-rail);
+      align-items: start;
+    }
+  }
+
+  /* Sticky, and always present. In a long document the whole point of a rail is
+     that it does not go away — a contents list you have to scroll back to find
+     is a contents list you stop using.
+
+     Its own scroll, capped to the viewport, because a page with forty headings
+     would otherwise produce a rail taller than the screen whose bottom half is
+     unreachable. overscroll-behavior stops a gesture that runs out of rail from
+     grabbing the document behind it. */
+  .docs-rail {
+    position: sticky;
+    inset-block-start: 0;
+    max-block-size: 100svb;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-block: var(--space-x2);
+    font-size: var(--text-sm);
+  }
+
+  .docs-rail ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-within);
+  }
+
+  .docs-rail__title {
+    color: var(--sub);
+    font-size: var(--text-xs);
+    margin-block-end: var(--space);
+  }
+
+  .docs-rail a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .docs-rail a:hover {
+    text-decoration: underline;
+  }
+
+  /* One unit of indent, not one grid column. A column is 48 and pushed the
+     nested entries most of the way across a 192 rail, which reads as a second
+     list rather than as children of the line above. The rail is chrome and its
+     hierarchy only has to be legible, not measured. */
+  .docs-rail [data-depth="3"] {
+    padding-inline-start: var(--space);
+  }
+
+  /* The rails take their gutter from inside their own region, as every region
+     in this system does — never as a gap between two of them. */
+  .docs-global {
+    padding-inline-end: var(--column-gap);
+  }
+
+  .docs-local {
+    padding-inline-start: var(--column-gap);
+  }
+
   main {
-    padding-block: var(--gap-section);
+    /* Two units, not a section gap. 64 above the title left a band of empty
+       page across the full width before anything began — the rails start at the
+       same line, so the emptiness reads as a mistake rather than as air. */
+    padding-block: var(--space-x2);
   }
 
   footer {
@@ -92,6 +195,13 @@
     font-weight: var(--weight-strong);
   }
 
+  /* The controls sit at the far end. The section links used to push them there
+     with an auto margin of their own; they have moved to the rail, so the push
+     has to come from the control itself now. */
+  .docs-bar .docs-key {
+    margin-inline-start: auto;
+  }
+
   .docs-nav {
     margin-inline-start: auto;
     gap: var(--space);
@@ -112,8 +222,14 @@
      case where space runs out and colour takes over. A fill plus padding reads
      as a key; the outline it used to have was saying the same thing a third
      time. Stands in until the real plastic key lands in the components layer. */
+  /* The fill has to be measured against what it SITS ON, not against the page.
+     This was 8% ink on --surface, which is the right amount of contrast against
+     a white sheet — but the bar is itself 6%, so the key was two points away
+     from its own background and read as a faint rectangle rather than a
+     control. Against the bar it needs the same step the page version had. */
   .docs-key {
-    background-color: color-mix(in srgb, var(--ink) 8%, var(--surface));
+    --docs-key-fill: color-mix(in srgb, var(--ink) 8%, var(--surface));
+    background-color: var(--docs-key-fill);
     color: var(--ink);
     border: 0;
     border-radius: var(--radius-key);
@@ -123,8 +239,16 @@
     transition: background-color var(--duration-fast) var(--ease-out);
   }
 
+  .docs-bar .docs-key {
+    --docs-key-fill: color-mix(in srgb, var(--ink) 20%, var(--surface));
+  }
+
   .docs-key:hover {
-    background-color: color-mix(in srgb, var(--ink) 16%, var(--surface));
+    --docs-key-fill: color-mix(in srgb, var(--ink) 16%, var(--surface));
+  }
+
+  .docs-bar .docs-key:hover {
+    --docs-key-fill: color-mix(in srgb, var(--ink) 32%, var(--surface));
   }
 
   /* --- Foundation displays ------------------------------------------------ */

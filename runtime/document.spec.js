@@ -38,16 +38,21 @@ const DOC = `
    query against the nearest ANCESTOR container. Without one the query never
    matches and the stacked form stays — degraded, not broken — which is exactly
    what the narrow case below asserts. */
-async function mount(page, width = 900) {
+async function mount(page, width = 900, host = 900) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto("/index.html");
-  return page.evaluate((html) => {
-    const host = document.createElement("div");
-    host.id = "doc-probe";
-    host.className = "container";
-    host.innerHTML = html;
-    document.querySelector("main").append(host);
-  }, DOC);
+  return page.evaluate(([html, hostWidth]) => {
+    const el = document.createElement("div");
+    el.id = "doc-probe";
+    el.className = "container";
+    /* An EXPLICIT width, and mounted on the BODY rather than inside the page.
+       The probe used to inherit whatever the docs page gave it, so adding rails
+       to that page silently narrowed the thing under test and three primitive
+       tests failed for a reason that had nothing to do with the primitive. */
+    el.style.cssText = `position:absolute;inset-block-start:0;inline-size:${hostWidth}px`;
+    el.innerHTML = html;
+    document.body.append(el);
+  }, [DOC, host]);
 }
 
 test("the authored tree survives the parser", async ({ page }) => {
@@ -127,7 +132,7 @@ test("divisions are separated by a section gap, and prose keeps the beat", async
     };
   });
 
-  expect(m.paragraphToParagraph).toBe(m.unit);
+  expect(m.paragraphToParagraph).toBe(m.unit * 2);
   expect(m.sectionToSection).toBe(m.section);
   expect(m.headerToSection).toBe(m.section);
 });
@@ -199,10 +204,10 @@ test("the contents list stacks when narrow and rails when wide", async ({ page }
       };
     });
 
-  await mount(page, 600);
+  await mount(page, 600, 600);
   const narrow = await read();
 
-  await mount(page, 1400);
+  await mount(page, 1600, 1400);
   const wide = await read();
 
   expect(narrow.above, "narrow must put the contents above the article").toBe(true);
@@ -217,7 +222,7 @@ test("the contents come before the text in reading order, at every width", async
      with CSS off must still meet the contents first — which is why the narrow
      form is the authored order and the rail only moves it visually. */
   for (const width of [600, 1400]) {
-    await mount(page, width);
+    await mount(page, width, width);
     const order = await page.evaluate(() => {
       const doc = document.querySelector("#doc-probe .document");
       return [...doc.children].map((c) => c.tagName);
@@ -240,10 +245,10 @@ test("a sidenote is inline when narrow and in the margin when wide", async ({ pa
       };
     });
 
-  await mount(page, 480);
+  await mount(page, 480, 480);
   const narrow = await read();
 
-  await mount(page, 1400);
+  await mount(page, 1600, 1400);
   const wide = await read();
 
   expect(narrow.float, "a narrow container must keep the note in the flow").toBe("none");
