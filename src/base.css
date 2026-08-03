@@ -6,16 +6,41 @@
  * making the ordinary work.
  */
 
-body {
-  background-color: var(--page);
+/* Type goes on :root, not on body. The root-relative font units — rch, rex,
+   rcap, ric, rlh — measure against the ROOT element's font, so setting the
+   family one level down leaves them resolving against the browser default.
+   Measured before this moved: the root font was "Times New Roman" while every
+   visible character on the page was Segoe UI. Nothing looked wrong, and every
+   root-relative unit was silently wrong. */
+:root {
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: var(--leading-body);
   font-weight: var(--weight-normal);
+
   /* No -webkit-font-smoothing override. Forcing `antialiased` thins text away
      from how the platform renders every other app on the screen, which is the
      opposite of a native feel. The OS already knows how to draw its own face. */
+
+  /* Never fake a weight or a slant. If a face has no bold, synthesis smears the
+     glyphs sideways and the result is a weight that exists in no font file —
+     which then differs per platform. Refusing it turns a missing weight into a
+     visible flat rendering during development instead of a plausible-looking
+     lie in production. Safe here because every platform UI face ships real
+     weights and a real italic; revisit if a named face without them is adopted. */
+  font-synthesis: none;
+
+  /* Insurance for the fallback arms of the stacks. from-font takes the aspect
+     ratio of the FIRST available font and holds every substitute to it, so a
+     fallback keeps the x-height of the face it stands in for rather than
+     jumping a size. A no-op whenever the first font resolves, which on a system
+     stack is nearly always — it costs nothing and covers the case that isn't. */
+  font-size-adjust: from-font;
+}
+
+body {
+  background-color: var(--page);
 }
 
 /* --- Headings -------------------------------------------------------------
@@ -27,6 +52,29 @@ body {
   font-family: var(--font-display);
   line-height: var(--leading-tight);
   text-wrap: balance;
+
+  /* Trim the half-leading. A line box is taller than its letters: the leading
+     is split evenly above and below, so a heading ships invisible padding that
+     belongs to no spacing rung. Measured on this page's h1 — 42.23px box around
+     24.64px of actual letterform, i.e. 17.6px of dead space, ~8.8px at each
+     edge. That is more than two rungs of the scale, sitting inside a system
+     whose whole claim is that the name of a rung is its pixel count.
+
+     Trimming makes --space-16 between a heading and its content measure 16px
+     optically, not 16px plus whatever the face's metrics happened to add. This
+     is the single highest-leverage modern text property for a design system,
+     because it is what lets a spacing scale mean what it says.
+
+     Headings only for now. The property trims the first line's top and the last
+     line's bottom, so it is equally correct on prose — but prose gaps are read
+     as texture rather than measured, and widening the blast radius before the
+     first component lands buys risk for no benefit.
+
+     Firefox has not shipped it, and gets the old half-leading. That is a real
+     cross-browser difference in vertical rhythm, accepted deliberately: the
+     alternative is hand-tuned negative margins per heading level, which drift
+     the moment a face changes. */
+  text-box: trim-both cap alphabetic;
 }
 
 h1 {
@@ -123,10 +171,15 @@ pre code {
    character, never a margin. A gap is not a space: it looks identical and
    produces "0001min" in the accessibility tree and on copy-paste. */
 
+/* font-variant-numeric only, never font-feature-settings. The two do the same
+   job at different altitudes, and the low-level one is all-or-nothing: it does
+   not inherit feature-by-feature, so any descendant setting a single feature
+   silently drops every other feature its ancestor asked for. Declaring both —
+   as this rule did — means the high-level property is doing the work and the
+   low-level one is a loaded gun pointed at whatever gets nested inside. */
 .numeral {
   font-family: var(--font-numeral);
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
 }
 
 /* --- Tables --------------------------------------------------------------- */

@@ -81,6 +81,21 @@ arguably the more correct one. A named face, when one is wanted, replaces the *h
 is never the fallback, so a font that fails to load degrades to the platform face rather than to
 whatever the browser picks last.
 
+**Half-leading is trimmed off headings.** A line box is taller than its letters — the leading is
+split above and below, so a heading ships invisible padding belonging to no rung. Measured on the
+docs h1: a 42.23px box around 24.64px of letterform, 17.6px of dead space. `text-box: trim-both cap
+alphabetic` removes it, which is what lets `--space-16` between a heading and its content *measure*
+16px. Firefox hasn't shipped it and keeps the old leading; that difference is accepted deliberately,
+because the alternative is per-level negative margins that drift the moment a face changes.
+
+**No synthesised weights or slants** (`font-synthesis: none`). A faked bold is a weight that exists
+in no font file and differs per platform. Refusing it turns a missing weight into something visible
+during development rather than a plausible lie in production.
+
+**`font-variant-*`, never `font-feature-settings`.** Same job, different altitude — but the
+low-level property is all-or-nothing and doesn't inherit feature-by-feature, so a descendant setting
+one feature silently drops every other feature its ancestor asked for.
+
 **Logical properties throughout.** `block`/`inline`, not `top`/`left`, so a layout transposes with
 writing-mode instead of needing a mirrored stylesheet.
 
