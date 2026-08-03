@@ -1,0 +1,36 @@
+/*
+ * utilities — single-purpose overrides, last layer, always win
+ * ---------------------------------------------------------------------------
+ * Kept short on purpose. A utility is an escape hatch for a one-off; a utility
+ * used in twenty places was a missing component. Because this layer sits last,
+ * none of these needs !important to beat a component.
+ */
+
+.visually-hidden:not(:focus):not(:active) {
+  clip-path: inset(50%);
+  block-size: 1px;
+  inline-size: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+}
+
+.flow > * + * {
+  margin-block-start: var(--flow-space, var(--space-16));
+}
+
+.measure {
+  max-inline-size: var(--measure);
+}
+
+.full-bleed {
+  max-inline-size: none;
+}
+
+.sub {
+  color: var(--sub);
+}
+
+.center {
+  margin-inline: auto;
+}

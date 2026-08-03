@@ -1,0 +1,46 @@
+/*
+ * components — the named parts
+ * ---------------------------------------------------------------------------
+ * DELIBERATELY EMPTY. Nothing has been migrated from Pixelite yet; this file
+ * exists so the layer has a home and the cascade order is settled before the
+ * first component lands.
+ *
+ * Conventions for anything added here
+ * -----------------------------------
+ * 1. Read SEMANTIC tokens only. A component that reads --grey-100 instead of
+ *    --surface cannot be themed, only rewritten.
+ *
+ * 2. No outer margin, ever. A component owns its inside. Its parent owns the
+ *    space around it — that is what .stack and .grid are for.
+ *
+ * 3. Expose the knobs as custom properties on the block, so a caller can retune
+ *    one instance without a modifier class or a specificity fight:
+ *
+ *      .thing { --thing-pad: var(--space-16); padding: var(--thing-pad); }
+ *      .rail .thing { --thing-pad: var(--space-8); }
+ *
+ * 4. Variants are data attributes, not extra classes: [data-tone="ruby"],
+ *    [data-size="sm"]. They read as state in the markup and in devtools, and
+ *    they cannot silently coexist the way two conflicting classes can.
+ *
+ * 5. State comes from the platform where the platform has it — :hover,
+ *    :disabled, [aria-expanded], [aria-current], :has(). A class mirroring a
+ *    state the DOM already knows will fall out of sync.
+ *
+ * 6. A control that cannot act is absent, not disabled. Greying out asks the
+ *    reader to work out why; removing states it.
+ *
+ * Template
+ * --------
+ * .block {
+ *   --block-pad: var(--space-16);
+ *
+ *   background-color: var(--surface);
+ *   border: 1px solid var(--hairline);
+ *   border-radius: var(--radius-sheet);
+ *   padding: var(--block-pad);
+ * }
+ *
+ * .block__element { ... }
+ * .block[data-tone="ruby"] { ... }
+ */

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en" data-scheme="auto">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kashinoga Design System</title>
+    <meta
+      name="description"
+      content="The Kashinoga Design System — foundations, components and the reasoning behind them."
+    />
+    <meta name="color-scheme" content="light dark" />
+
+    <!-- The system itself. One file, six layers. -->
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Styling for this documentation page only. Never ships with the system. -->
+    <link rel="stylesheet" href="docs.css" />
+  </head>
+
+  <body>
+    <a class="visually-hidden" href="#main">Skip to content</a>
+
+    <header class="docs-bar">
+      <div class="frame row">
+        <!-- Written in its own case in the markup, not uppercased in CSS, so it
+             can be selected, searched and spoken as the name. -->
+        <span class="docs-wordmark">Kashinoga</span>
+        <span class="sub">Design System</span>
+
+        <nav class="row docs-nav" aria-label="Sections">
+          <a href="#foundations">Foundations</a>
+          <a href="#components">Components</a>
+          <a href="#principles">Principles</a>
+        </nav>
+
+        <button type="button" id="scheme-toggle" class="docs-key" aria-pressed="false">
+          <span id="scheme-label">Auto</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="main" class="frame">
+      <section class="section stack" style="--stack-gap: var(--space-16)">
+        <h1>Kashinoga Design System</h1>
+        <p class="measure">
+          Human interface guidelines for the web, and the CSS that implements them. One entry
+          point, <code>styles.css</code>, in six cascade layers: reset, tokens, base, layout,
+          components, utilities.
+        </p>
+        <p class="measure sub">
+          <strong>Status:</strong> scaffold. The foundations below are neutral placeholders with
+          the final structure in place. Nothing has been migrated from Pixelite yet.
+        </p>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="foundations" class="section stack" style="--stack-gap: var(--space-32)">
+        <h2>Foundations</h2>
+
+        <div class="stack" style="--stack-gap: var(--stack-tight)">
+          <h3>Colour</h3>
+          <p class="measure sub">
+            One accent plus three answering inks. The accent means <em>you are here</em> — a state,
+            never an outcome. The three answers are named as stones, and that constraint is what
+            stops the palette growing a fifth ambiguous shade. Every swatch is read live from the
+            stylesheet, so this table cannot drift from the source.
+          </p>
+          <div id="swatches" class="grid" style="--grid-min: 11rem"></div>
+        </div>
+
+        <div class="stack" style="--stack-gap: var(--stack-tight)">
+          <h3>Type</h3>
+          <p class="measure sub">
+            Four faces, four jobs, no overlap. A reader should be able to tell what kind of thing
+            they are looking at before reading it.
+          </p>
+          <dl id="faces" class="docs-defs"></dl>
+        </div>
+
+        <div class="stack" style="--stack-gap: var(--stack-tight)">
+          <h3>Space</h3>
+          <p class="measure sub">
+            A 4px scale where the name is the pixel count — <code>--space-12</code> is 12px at a
+            16px root. A rung whose name lies is worse than no name, so the identity is asserted in
+            <code>test/tokens.test.js</code>.
+          </p>
+          <div id="scale" class="stack" style="--stack-gap: var(--space-4)"></div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="components" class="section stack">
+        <h2>Components</h2>
+        <p class="measure sub">
+          Nothing here yet, deliberately. The <code>components</code> layer exists and its place in
+          the cascade is settled, so the first component can land without reordering anything.
+          Conventions for what goes in it are documented at the top of
+          <code>src/components.css</code>.
+        </p>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="principles" class="section stack">
+        <h2>Principles</h2>
+        <ol class="measure stack" style="--stack-gap: var(--space-12)">
+          <li>
+            <strong>Say only what cannot be guessed.</strong> The audience is technical. Do not
+            caption standard affordances; do document what the platform will not allow.
+          </li>
+          <li>
+            <strong>A control that cannot act is absent, not disabled.</strong> Greying out asks
+            the reader to work out why; removing states it.
+          </li>
+          <li>
+            <strong>A value copied is a value that will drift.</strong> Publish it as a custom
+            property and read it.
+          </li>
+          <li>
+            <strong>A gap is not a space.</strong> Spacing a unit or a legend with
+            <code>margin</code> or <code>gap</code> produces text that reads as one word to a
+            screen reader and on copy-paste. Use real characters.
+          </li>
+          <li>
+            <strong>Movement is a feature; a printed manual does not bounce.</strong> Under
+            reduced-motion, keep the state change and drop the sweep — somebody who asked for less
+            movement did not ask for less information.
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <footer class="frame section">
+      <p class="sub">
+        Kashinoga Design System · scaffold ·
+        <span class="numeral">0.0.1</span>
+      </p>
+    </footer>
+
+    <script type="module" src="docs.js"></script>
+  </body>
+</html>

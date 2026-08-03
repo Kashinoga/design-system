@@ -1,0 +1,21 @@
+/*
+ * Kashinoga Design System
+ * ---------------------------------------------------------------------------
+ * Single entry point. Import this one file and you have the whole system.
+ *
+ *     <link rel="stylesheet" href="styles.css">
+ *
+ * The cascade layers are declared here, in order, BEFORE anything is imported.
+ * That means the order below — not source order, not specificity — decides who
+ * wins. A utility always beats a component; a component always beats base type;
+ * the reset can never beat anything. Adding a file later cannot reorder this.
+ */
+
+@layer reset, tokens, base, layout, components, utilities;
+
+@import url("src/reset.css") layer(reset);
+@import url("src/tokens.css") layer(tokens);
+@import url("src/base.css") layer(base);
+@import url("src/layout.css") layer(layout);
+@import url("src/components.css") layer(components);
+@import url("src/utilities.css") layer(utilities);

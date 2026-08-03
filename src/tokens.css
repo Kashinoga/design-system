@@ -1,0 +1,143 @@
+/*
+ * tokens — every value the system is allowed to use
+ * ---------------------------------------------------------------------------
+ * Nothing downstream may write a literal. If a rule needs a number, that number
+ * is named here first. A value copied is a value that will drift.
+ *
+ * SCAFFOLD NOTE
+ * The *structure* below is final; the *values* are neutral placeholders. The
+ * Pixelite palette, faces and materials have not been migrated yet — see
+ * _ARCHIVE/pixelite-design-system.md. Anything marked (placeholder) is expected
+ * to be replaced wholesale, not edited in place.
+ *
+ * Two tiers, and the distinction is load-bearing:
+ *   PRIMITIVE  a raw value with no opinion   --grey-100, --space-16
+ *   SEMANTIC   a job, resolved to a primitive --surface, --gutter
+ * Components read SEMANTIC tokens only. That is what makes a theme a swap of
+ * one block rather than a search-and-replace across the whole system.
+ */
+
+:root {
+  /* --- Colour scheme ------------------------------------------------------
+     Declared once, here. Every colour below uses light-dark(), so the two
+     schemes are written on the same line and can never fall out of step.
+     A single percentage cannot tune both schemes — a mix toward the ink moves
+     in opposite directions on light and dark stock. Keep the arms in step by
+     effect, never by matching the numbers. */
+  color-scheme: light dark;
+
+  /* --- Primitive: neutrals (placeholder) --------------------------------- */
+  --grey-000: #ffffff;
+  --grey-050: #fbfbfb;
+  --grey-100: #f2f2f2;
+  --grey-800: #1a1a1c;
+  --grey-900: #0e0e10;
+  --grey-950: #000000;
+
+  /* --- Primitive: hues (placeholder) -------------------------------------
+     One accent plus three answering inks. The accent means "you are here" —
+     a state. It is never an outcome. The three answers are named as stones so
+     the palette cannot quietly grow a fifth ambiguous shade. */
+  --accent-light: #103dff;
+  --accent-dark: #607ffd;
+  --emerald-light: #00734a; /* it landed */
+  --emerald-dark: #3fca92;
+  --ruby-light: #b3261e; /* it did not land */
+  --ruby-dark: #ff8a80;
+  --topaz-light: #8a5a00; /* still happening */
+  --topaz-dark: #ffc95c;
+
+  /* --- Semantic: ground -------------------------------------------------- */
+  --ink: light-dark(var(--grey-950), var(--grey-100));
+  --sub: color-mix(in srgb, var(--ink) 40%, transparent);
+  --page: light-dark(var(--grey-050), var(--grey-900));
+  --surface: light-dark(var(--grey-000), var(--grey-800));
+  --hairline: light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.26));
+
+  /* --- Semantic: inks ---------------------------------------------------- */
+  --accent: light-dark(var(--accent-light), var(--accent-dark));
+  --emerald: light-dark(var(--emerald-light), var(--emerald-dark));
+  --ruby: light-dark(var(--ruby-light), var(--ruby-dark));
+  --topaz: light-dark(var(--topaz-light), var(--topaz-dark));
+
+  /* --- Type: four faces, four jobs (placeholder stacks) -------------------
+     The face names the job. A reader should be able to tell what kind of thing
+     they are looking at before reading it. No face may take a second job. */
+  --font-body: system-ui, sans-serif; /* all chrome, and body prose */
+  --font-mono: ui-monospace, monospace; /* source text only — never "technical" */
+  --font-display: georgia, serif; /* every heading level, H1–H6, and blockquote */
+  --font-numeral: var(--font-mono); /* numerals only — figures, counters, versions */
+
+  /* Type is not spacing. em units, measured heights and line pitch
+     (font-size x line-height) are all exempt from the 4px scale below. */
+  --text-xs: 0.8rem;
+  --text-sm: 0.9rem;
+  --text-base: 1rem;
+  --text-lg: 1.05rem;
+  --text-xl: 1.35rem;
+  --text-2xl: 2.2rem;
+
+  --leading-tight: 1.2;
+  --leading-body: 1.55;
+
+  --weight-normal: 400;
+  --weight-strong: 600;
+
+  /* The one width prose is allowed to be. */
+  --measure: 68ch;
+
+  /* --- Space: a 4px scale where the name IS the pixel count ---------------
+     --space-12 is 12px at a 16px root. A rung whose name lies is worse than no
+     name, so this identity is asserted in test/tokens.test.js. The base is
+     0.25rem, not 0.2rem: on a 0.2 scale only every fifth step is a whole pixel.
+     16 is the dominant gap — when collapsing near-identical values, collapse
+     toward it. */
+  --space-4: 0.25rem;
+  --space-8: 0.5rem;
+  --space-12: 0.75rem;
+  --space-16: 1rem;
+  --space-20: 1.25rem;
+  --space-24: 1.5rem;
+  --space-28: 1.75rem;
+  --space-32: 2rem;
+  --space-36: 2.25rem;
+  --space-40: 2.5rem;
+  --space-44: 2.75rem;
+
+  /* The one rung with a meaning rather than a size: a thing sitting ON what it
+     introduces — a heading and its list, a label and its control. Anything
+     wanting air between two SEPARATE things wants a larger rung by name. */
+  --stack-tight: var(--space-4);
+
+  /* --- Semantic: layout -------------------------------------------------- */
+  --gutter: var(--space-20); /* viewport edge to content */
+  --frame-max: 72rem;
+
+  /* --- Radius ------------------------------------------------------------ */
+  --radius-sheet: 2px;
+  --radius-key: 4px;
+
+  /* --- Focus ------------------------------------------------------------- */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--accent);
+
+  /* --- Motion ------------------------------------------------------------ */
+  --duration-fast: 0.15s;
+  --duration-base: 0.24s;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  /* --- Elevation (placeholder — Pixelite's paper/plastic recipes land here) */
+  --shadow-sheet: 0 1px 4px 1px rgb(0 0 0 / 0.05);
+}
+
+/* Opting a subtree out of the system scheme. Set on <html> by the docs toggle;
+   also usable to force one scheme for an embed or a print sheet. */
+:root[data-scheme="light"] {
+  color-scheme: light;
+}
+
+:root[data-scheme="dark"] {
+  color-scheme: dark;
+}

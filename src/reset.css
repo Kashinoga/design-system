@@ -1,0 +1,87 @@
+/*
+ * reset — undo browser defaults that fight the system
+ * ---------------------------------------------------------------------------
+ * Deliberately small. A reset that sets opinions is not a reset; opinions go in
+ * base.css where they can be read as decisions rather than as housekeeping.
+ * Everything here answers "the browser assumed something we never asked for".
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Margin is a relationship between two things. It belongs to a layout rule,
+   never to an element's own default. */
+:where(body, h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, ol, ul, pre) {
+  margin: 0;
+}
+
+:where(ol, ul)[role="list"] {
+  list-style: none;
+  padding-inline-start: 0;
+}
+
+html {
+  /* Anchor links and scroll-to land under sticky chrome without a JS offset. */
+  scroll-padding-block-start: var(--scroll-inset, 0);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-block-size: 100svb;
+}
+
+/* Replaced elements are block-level in every layout we build; inline-baseline
+   defaults leave a phantom descender gap under every image. */
+:where(img, picture, svg, video, canvas, audio, iframe, embed, object) {
+  display: block;
+  max-inline-size: 100%;
+}
+
+:where(img, picture, svg, video) {
+  block-size: auto;
+}
+
+/* Form controls do not inherit type. They should. */
+:where(input, button, textarea, select) {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+:where(textarea:not([rows])) {
+  min-block-size: 8lh;
+}
+
+/* Long unbroken tokens — URLs, hashes, IDs — must not widen their container. */
+:where(p, li, dd, figcaption, h1, h2, h3, h4, h5, h6) {
+  overflow-wrap: break-word;
+}
+
+:where(table) {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* Keep the focus ring. Never `outline: none` without a replacement — the ring
+   is the only thing telling a keyboard user where they are. */
+:where(:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Somebody who asked for less movement did not ask for less information:
+   collapse durations, do not remove the state change. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

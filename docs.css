@@ -1,0 +1,130 @@
+/*
+ * docs.css — styling for this documentation page only
+ * ---------------------------------------------------------------------------
+ * Never ships with the system. Kept out of src/ so it is obvious that nothing
+ * here is a component: the docs site is a CONSUMER of the design system, and
+ * keeping the two apart is the only way to notice when the docs are propping
+ * themselves up with styles the system does not actually provide.
+ *
+ * It still reads system tokens only — no literals — so if a token is wrong,
+ * this page shows it.
+ */
+
+@layer docs {
+  .docs-bar {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 10;
+    background-color: var(--surface);
+    border-block-end: 1px solid var(--hairline);
+    padding-block: var(--space-12);
+  }
+
+  .docs-bar .frame {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-12);
+  }
+
+  .docs-wordmark {
+    font-weight: var(--weight-strong);
+  }
+
+  .docs-nav {
+    margin-inline-start: auto;
+    gap: var(--space-16);
+  }
+
+  .docs-nav a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .docs-nav a:hover {
+    text-decoration: underline;
+  }
+
+  /* A plain key. Stands in until the real control lands in the components
+     layer — at which point this rule is deleted, not extended. */
+  .docs-key {
+    background-color: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-key);
+    padding: var(--space-4) var(--space-12);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .docs-key:hover {
+    background-color: color-mix(in srgb, var(--ink) 6%, var(--surface));
+  }
+
+  /* --- Foundation displays ------------------------------------------------ */
+
+  .docs-swatch {
+    display: flex;
+    flex-direction: column;
+    gap: var(--stack-tight);
+  }
+
+  .docs-swatch__chip {
+    block-size: var(--space-40);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-sheet);
+  }
+
+  .docs-swatch__name {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  .docs-swatch__role {
+    font-size: var(--text-xs);
+    color: var(--sub);
+  }
+
+  .docs-defs {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-8) var(--space-16);
+    align-items: baseline;
+    max-inline-size: var(--measure);
+  }
+
+  .docs-defs dt {
+    font-size: var(--text-lg);
+    white-space: nowrap;
+  }
+
+  .docs-defs dd {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--sub);
+  }
+
+  .docs-rung {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+  }
+
+  .docs-rung__bar {
+    block-size: var(--space-8);
+    background-color: var(--accent);
+    border-radius: 1px;
+  }
+
+  .docs-rung__name {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    inline-size: 9ch;
+  }
+
+  .docs-rung__px {
+    font-size: var(--text-xs);
+    color: var(--sub);
+  }
+}

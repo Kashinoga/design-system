@@ -1,0 +1,146 @@
+/*
+ * base — what a bare HTML element looks like with no class on it
+ * ---------------------------------------------------------------------------
+ * A document written in plain markup and linked to styles.css should already be
+ * readable and on-brand. Classes are for things markup cannot express, not for
+ * making the ordinary work.
+ */
+
+body {
+  background-color: var(--page);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  font-weight: var(--weight-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- Headings -------------------------------------------------------------
+   The ladder is bought with size and weight, not a second face. Past the third
+   level a heading is smaller than the prose it introduces, so weight has to say
+   "heading" once size no longer can. The sixth adds italic. */
+
+:where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-display);
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-normal);
+}
+
+h2 {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-strong);
+}
+
+h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-strong);
+}
+
+h4,
+h5 {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-strong);
+}
+
+h6 {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-strong);
+  font-style: italic;
+}
+
+/* --- Prose ---------------------------------------------------------------- */
+
+p {
+  text-wrap: pretty;
+}
+
+:where(p, ul, ol, dl, blockquote, pre, table, figure) {
+  max-inline-size: var(--measure);
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.16em;
+  text-decoration-thickness: from-font;
+}
+
+strong,
+b {
+  font-weight: var(--weight-strong);
+}
+
+small {
+  font-size: var(--text-sm);
+  color: var(--sub);
+}
+
+blockquote {
+  font-family: var(--font-display);
+  border-inline-start: 1px solid var(--hairline);
+  padding-inline-start: var(--space-16);
+}
+
+hr {
+  border: 0;
+  border-block-start: 1px solid var(--hairline);
+  margin-block: var(--space-32);
+}
+
+/* --- Source text ----------------------------------------------------------
+   Mono means source, not "technical". A label describing a technical thing is
+   still a label and takes the body face. Mono is for characters the user could
+   literally type into a document. */
+
+:where(code, kbd, samp, pre) {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+pre {
+  overflow-x: auto;
+  padding: var(--space-16);
+  background-color: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sheet);
+}
+
+pre code {
+  font-size: inherit;
+}
+
+/* --- Figures --------------------------------------------------------------
+   Numerals only: figures, counters, tallies, version numbers, margin marks.
+   Never body or table text. A unit is a label — the figure takes this face and
+   the unit does not, and the space between them is a real non-breaking
+   character, never a margin. A gap is not a space: it looks identical and
+   produces "0001min" in the accessibility tree and on copy-paste. */
+
+.numeral {
+  font-family: var(--font-numeral);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* --- Tables --------------------------------------------------------------- */
+
+th {
+  text-align: start;
+  font-weight: var(--weight-strong);
+}
+
+:where(th, td) {
+  padding: var(--space-8) var(--space-12);
+  border-block-end: 1px solid var(--hairline);
+}
+
+/* --- Selection ------------------------------------------------------------ */
+
+::selection {
+  background-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
