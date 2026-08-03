@@ -120,7 +120,11 @@
   .docs-rung__name {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
-    inline-size: 9ch;
+    /* 11ch, not 9ch: "--space-12" is ten characters and was wrapping. ch is the
+       width of "0", and this face's hyphen is wider, so the column needs slack
+       over the raw character count. */
+    inline-size: 11ch;
+    white-space: nowrap;
   }
 
   .docs-rung__px {
