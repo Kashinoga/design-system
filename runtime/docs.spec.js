@@ -156,7 +156,7 @@ test("a tier width is an absolute ceiling on the whole box", async ({ page }) =>
      at all: the gutter appears only when the viewport is narrower than the tier
      and the frame goes fluid. */
   const TIERS = [
-    { viewport: 2560, ceiling: 2160 },
+    { viewport: 2560, ceiling: 1440 },
     { viewport: 1440, ceiling: 1200 },
     { viewport: 1000, ceiling: 1200 },
     { viewport: 700, ceiling: 864 },

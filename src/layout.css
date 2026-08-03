@@ -105,11 +105,11 @@
   }
 }
 
-@media (min-width: 137.5rem) {
-  /* 2200 = 2160 + 2 x 20. The hard ceiling: past this the page stops growing.
-     A reader at 2160 is already moving their head to follow a line rather than
-     their eyes, and a frame that keeps widening stops being readable long
-     before the monitor stops being wide. */
+@media (min-width: 92.5rem) {
+  /* 1480 = 1440 + 2 x 20. The hard ceiling: past this the page stops growing.
+     A reader is already moving their head to follow a line rather than their
+     eyes, and a frame that keeps widening stops being readable long before the
+     monitor stops being wide. */
   .frame {
     --frame-max: var(--width-cap);
   }
@@ -141,9 +141,9 @@
 /* --- Grid: as many columns as fit, but never more than five --------------
    An item grid is a flow, not a region division: it places as many things as
    fit at a minimum size and the count falls out of the width. Left alone that
-   count keeps climbing — at the 2160 cap a 224px minimum fits eight across, and
-   eight is past the point where a row reads as a row. The eye stops taking it
-   in at a glance and starts scanning it like a table.
+   count keeps climbing — at the ceiling a 224px minimum fits six or more across,
+   and past five a row stops reading as a row. The eye stops taking it in at a
+   glance and starts scanning it like a table.
 
    So there is a ceiling on the count as well as a floor on the size. The
    arithmetic does it without a media query: force each track to be at least a

@@ -350,7 +350,7 @@ test("every tier is a whole number of one unchanging column", async ({ page }) =
   expect(px.standard).toBe(px.column * 11);
   expect(px.reference).toBe(px.column * 18);
   expect(px.large).toBe(px.column * 25);
-  expect(px.cap).toBe(px.column * 45);
+  expect(px.cap).toBe(px.column * 30);
 
   /* Seven columns, because there is no half of fifteen. 15 = 4 + 7 + 4 puts the
      text centred with a margin column each side. */

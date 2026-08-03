@@ -173,13 +173,20 @@
             Standard   11 columns   528   the measure alone
             Reference  18 columns   864   + one apparatus column
             Large      25 columns  1200   + the second, centred
-            Cap        45 columns  2160   the ceiling
+            Cap        30 columns  1440   the ceiling
 
      THE CAP IS THE ONE JUDGEMENT, and it is worth saying plainly that nothing
      below derives it. Every other number here is forced by the step under it.
      This one is a decision — that a page should stop growing before a reader
-     moves their head rather than their eyes. 2160 is 45 whole columns, so the
+     moves their head rather than their eyes. 1440 is 30 whole columns, so the
      decision costs the grid nothing.
+
+     One consequence, because it is not obvious: 30 is EVEN, so the cap cannot
+     centre the 11-column measure with equal whole flanks — 30 minus 11 is 19,
+     and half of 19 is not a column. The reading layout therefore stays at its
+     derived 25 columns and sits centred inside the wider frame; the cap is
+     headroom for things that are not prose, such as a wide table or a
+     dashboard. 29 or 31 columns would centre, and 1440 does not.
 
      The unit still never changes. A tier says how many columns there are, never
      how wide one is, which is the metric-paper property: the unit survives the
@@ -190,12 +197,12 @@
   --tier-standard: 11;
   --tier-reference: 18;
   --tier-large: 25;
-  --tier-cap: 45;
+  --tier-cap: 30;
 
   --width-standard: 33rem; /* 528  = 11 columns */
   --width-reference: 54rem; /* 864  = 18 */
   --width-large: 75rem; /* 1200 = 25 */
-  --width-cap: 135rem; /* 2160 = 45 */
+  --width-cap: 90rem; /* 1440 = 30 */
 
   /* 20, chosen so the CAPPED count divides cleanly. Five tracks in 1200 come
      out 224 each and five in 2160 come out 416 — both whole, and those are the
