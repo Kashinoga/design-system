@@ -56,6 +56,41 @@ test("components read semantic tokens, never primitives", () => {
   }
 });
 
+test("comment markers are balanced in every stylesheet", () => {
+  // A stray close-comment marker reopens the file as raw CSS, and the parser's
+  // error recovery silently eats everything up to the next semicolon — which is
+  // one whole declaration. Nothing looks broken: the rest of the file still
+  // applies and the token just quietly resolves to nothing. Caught once the hard
+  // way, when --font-body went missing and every paragraph fell back to Times.
+  const FILES = ["reset.css", "tokens.css", "base.css", "layout.css", "components.css", "utilities.css"];
+
+  for (const name of FILES) {
+    const text = src(name);
+    let depth = 0;
+
+    for (let i = 0; i < text.length - 1; i++) {
+      if (text[i] === "/" && text[i + 1] === "*") {
+        assert.equal(depth, 0, `${name}: nested /* at index ${i} — CSS comments do not nest`);
+        depth++;
+        i++;
+      } else if (text[i] === "*" && text[i + 1] === "/") {
+        assert.equal(depth, 1, `${name}: stray */ at index ${i} — closes a comment that was never opened`);
+        depth--;
+        i++;
+      }
+    }
+
+    assert.equal(depth, 0, `${name}: unterminated comment — the rest of the file is inert`);
+  }
+});
+
+test("every type token is declared exactly once", () => {
+  for (const token of ["--font-body", "--font-display", "--font-mono", "--font-numeral"]) {
+    const declarations = [...tokens.matchAll(new RegExp(`^\\s*${token}:`, "gm"))];
+    assert.equal(declarations.length, 1, `${token} is declared ${declarations.length} times`);
+  }
+});
+
 test("the cascade layer order is declared before anything is imported", () => {
   const entry = readFileSync(fileURLToPath(new URL("../styles.css", import.meta.url)), "utf8");
   const layerLine = entry.indexOf("@layer ");

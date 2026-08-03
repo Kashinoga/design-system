@@ -77,7 +77,8 @@
      The ui-* generics resolve to the platform's real UI faces on WebKit and
      Chromium. Firefox implements only system-ui, so the plain generic behind
      each one catches it — and that generic is the user's own configured font,
-     which is still a system-provided face and arguably the more correct one. */
+     which is still a system-provided face and arguably the more correct one.
+
      Native means the platform's UI face, and no platform sets its headings in a
      serif — so --font-display defaults to the same stack as --font-body rather
      than to ui-serif. The two are written out in full rather than aliased
