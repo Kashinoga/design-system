@@ -58,7 +58,7 @@
    size: 1240 is 1200 plus its two gutters. Below it the frame is capped at the
    18-column tier, which cannot hold two rails and a measure. */
   .docs-shell {
-    --docs-rail: calc(4 * var(--column)); /* 192 */
+    --docs-rail: calc(3 * var(--column)); /* 144 */
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }

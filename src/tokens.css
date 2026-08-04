@@ -143,27 +143,26 @@
         clears the 48px minimum target size. 2[s] is 32 and too small; 4[s] is
         64 and wider than anything demands.
 
-     4. THE MEASURE — 10 columns = 480px, about 56 characters. Readable prose is
+     4. THE MEASURE — 11 columns = 528px, about 61 characters. Readable prose is
         45 to 75 characters, and whole columns of 48 give 45, 50, 56, 61, 67 and
-        73 inside that band.
+        73 inside that band. Eleven is taken from those because it is ODD, and an
+        odd measure is what lets the reading layout have a true centre.
 
-        It was ELEVEN, chosen from that set because it is odd and an odd measure
-        gives the reading layout a true centre. Ten replaced it to buy something
-        worth more: two columns of prose beside both rails. The content region
-        is the frame less two four-column rails — 30 - 8 = 22 columns — and two
-        measures with the tightest sane gutter must fit inside it:
+        It went to TEN for one revision, to fit two prose columns beside rails
+        four columns wide, and came back. The lever was wrong. Two measures and
+        a gutter share the content region, so a column taken off the GUTTER
+        splits between them and buys half a column each — while a column taken
+        off a RAIL is taken off BOTH rails, and buys a whole column each. The
+        rails are twice the lever the gutter is, and they are chrome, which is
+        the cheaper thing to spend.
 
-            (22 - 2) / 2 = 10 columns
+            3  +  11  +  2  +  11  +  3   =  30 columns
+            rail   text  gut   text  rail
 
-        So ten is not a preference either. It is the largest measure that fits
-        two columns in the room the rails leave, and the arithmetic had exactly
-        one column of slack in it.
-
-        WHAT IT COST: 10 is even, so a centred measure with equal whole flanks
-        no longer works at every tier. It still works at the ceiling — 10 + 10 +
-        10 = 30 — and fails at the 25-column tier, where (25 - 10) / 2 is 7.5.
-        That tier shows one prose column anyway, so nothing on screen depends on
-        it today; the property is simply no longer guaranteed.
+        So the ceiling holds two full measures, the gutter keeps its 96px, every
+        edge lands on a column line, and the measure keeps the odd count the
+        centring rule depends on. Narrowing the gutter would have bought two and
+        a half characters and put the text edge off-grid.
 
      5. THE READING LAYOUT — one apparatus column each side of the text:
 
@@ -239,7 +238,7 @@
      in the ELEMENT own font, so it was never 68 characters of anything. It was
      68 zeroes of whichever face the platform supplied, which is why prose
      measured 586.5px against code at 538.4px on the same page. */
-  --measure: 30rem; /* 480 = 10 columns */
+  --measure: 33rem; /* 528 = 11 columns */
 
   /* === SPACE ==============================================================
      Space is the primary means of expression in this system. Grouping,
@@ -401,8 +400,8 @@
   /* Seven columns each. 25 = 7 + 11 + 7 puts the text centred with one
      apparatus column on each side, which is the shape an odd total makes
      possible and an even one does not. */
-  --sidenote-width: 18rem; /* 288 = 6 columns */
-  --toc-width: 18rem; /* 288 = 6 columns */
+  --sidenote-width: 21rem; /* 336 = 7 columns */
+  --toc-width: 21rem; /* 336 = 7 columns */
 
   /* --- Radius ------------------------------------------------------------ */
   --radius-sheet: 2px;
