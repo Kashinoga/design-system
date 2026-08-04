@@ -137,88 +137,86 @@
 
      2. THE RHYTHM UNIT — [s], 16px. The minimum space between two elements.
 
-     3. THE COLUMN — 48px = 3[s]. This is the real bottom, and the thing that
-        fixes it is the touch target: the narrowest column still has to hold
-        something a finger can hit. 48 is the smallest multiple of [s] that
-        clears the 48px minimum target size. 2[s] is 32 and too small; 4[s] is
-        64 and wider than anything demands.
+     3. THE COLUMN — 64px = 4[s]. Two constraints meet here and only one value
+        satisfies both.
 
-     4. THE MEASURE — 15 columns = 720px, about 84 characters.
+        The content area is 1024 (step 4), so the column must divide 1024
+        exactly — which means it must be a power of two: 32, 64 or 128. And it
+        must hold a touch target, which is 48px minimum. 32 fails that; 128 is
+        coarse enough that a single column is most of a paragraph. 64 is the
+        only one left, and it happens to land on 4[s], so the column stays a
+        whole number of rhythm units.
 
-        THIS IS OUTSIDE THE BAND, and the file should say so rather than quietly
-        widen the band to fit. Continuous prose is readable from 45 to 75
-        characters; past roughly 75 the return sweep starts to fail, because the
-        eye has to travel far enough left that it loses which line it came from.
-        84 is past that.
+        This replaces an earlier derivation that made the column 48 = 3[s], "the
+        smallest multiple of [s] that clears the touch target". That was sound
+        when nothing downstream was fixed. Once the content width became a
+        stated goal it became the stronger constraint, and 48 does not divide
+        1024 — 1024 / 48 is 21.33.
 
-        It is a deliberate choice for a REFERENCE document rather than a
-        mistake. This system is for technical documents that are scanned as much
-        as read — code samples, tables, definition lists — and those want width
-        for their own reasons, not for the prose wrapped around them. A wide
-        measure trades continuous-reading comfort for fewer wrapped code lines
-        and fewer two-line table cells. Documentation sites commonly sit here.
+     4. THE CONTENT AREA — 16 columns = 1024px. This is the one number chosen
+        rather than derived, and the whole grid is built to serve it.
 
-        What would bring it back inside the band, if the reading ever starts to
-        feel like work: 13 columns is 624 and 72 characters, and 12 is 576 and
-        67, which is the middle of the band and where this sat before.
+        16 columns is also Carbon's count, which is not a coincidence: a
+        power-of-two content width and a column that divides it can only give a
+        power-of-two column count.
 
-        15 is odd, so it centres in the 25-column tier (5 + 15 + 5) but not in
-        the 22-column content region or at the 30-column ceiling.
+        THE MEASURE IS THE CONTENT AREA. Prose fills 1024, about 119 characters,
+        which is far outside the 45-to-75 band that continuous reading wants.
+        Said plainly rather than dressed up: this is a reference surface, not a
+        reading one. Code samples, wide tables and definition lists get the room
+        and paragraphs pay for it.
 
-     5. THE READING LAYOUT — one apparatus column each side of the text:
+        The ladder back, if reading takes priority again: 9 columns is 576 and
+        67 characters, the middle of the band; 10 is 640 and 74, the top of it.
+        Both divide the content area evenly.
 
-            6  +  15  +  6  =  27 columns  =  1296
+     5. THE READING LAYOUT — one apparatus column each side of the content:
+
+            3  +  16  +  3  =  22 columns  =  1408
             |      |      |
             |      |      +-- LOCAL: this document. Contents, sidenotes,
             |      |             citations, the figure that needs room.
-            |      +--------- the measure
+            |      +--------- the content area
             +---------------- GLOBAL: the whole site. Navigation that is the
                               same on every page.
 
-        The two flanks hold the left global nav and the right local nav, which
-        the docs page now builds. Whatever lands in them inherits a whole-column
-        edge for free.
-
-        At 27 columns this is 1296, which no longer fits the 1200 Large tier —
-        the full three-region document now needs the 1440 ceiling. That is a
-        direct consequence of the wider measure and worth knowing before a page
-        is built expecting it at Large.
+        Three columns is 192, which is what the rails already were — the change
+        of column size did not move them, because 3 x 64 and 4 x 48 are the same
+        number. That is the metric-paper property paying off: the layout is
+        described in counts, so re-deriving the unit left the picture intact.
 
      6. THE TIERS — each one adds a region, not a device:
 
-            Standard   11 columns   528   the measure alone
-            Reference  18 columns   864   + one apparatus column
-            Large      25 columns  1200   + the second, centred
-            Cap        30 columns  1440   the ceiling
+            Compact     8 columns   512   the content area, halved
+            Standard   12 columns   768   most of it
+            Reference  16 columns  1024   the content area, whole
+            Full       22 columns  1408   + both rails, and the ceiling
 
-     THE CAP IS THE ONE JUDGEMENT, and it is worth saying plainly that nothing
-     below derives it. Every other number here is forced by the step under it.
-     This one is a decision — that a page should stop growing before a reader
-     moves their head rather than their eyes. 1440 is 30 whole columns, so the
-     decision costs the grid nothing.
+        THE CEILING IS NOW DERIVED, which it never was before. Every previous
+        version picked a round number — 1200, then 2160, then 1440 — and said
+        plainly that nothing below it forced the choice. Here the page stops
+        growing when the layout is complete: content area plus both rails is 22
+        columns, and there is nothing further to add. A page that kept widening
+        past it would only be adding margin.
 
-     One consequence, because it is not obvious: 30 is EVEN, so the cap cannot
-     centre the 11-column measure with equal whole flanks — 30 minus 11 is 19,
-     and half of 19 is not a column. The reading layout therefore stays at its
-     derived 25 columns and sits centred inside the wider frame; the cap is
-     headroom for things that are not prose, such as a wide table or a
-     dashboard. 29 or 31 columns would centre, and 1440 does not.
+        1408 is 32px under the 1440 that was picked by hand before, which is a
+        reasonable check on both.
 
      The unit still never changes. A tier says how many columns there are, never
      how wide one is, which is the metric-paper property: the unit survives the
      change of size, so a layout scales by counting rather than by recomputing.
      Carbon states it as "fixed grids use multiplication". */
-  --column: 3rem; /* 48 = 3[s], one touch target */
+  --column: 4rem; /* 64 = 4[s], and the only divisor of 1024 that clears 48 */
 
-  --tier-standard: 11;
-  --tier-reference: 18;
-  --tier-large: 25;
-  --tier-cap: 30;
+  --tier-standard: 8;
+  --tier-reference: 12;
+  --tier-large: 16;
+  --tier-cap: 22;
 
-  --width-standard: 33rem; /* 528  = 11 columns */
-  --width-reference: 54rem; /* 864  = 18 */
-  --width-large: 75rem; /* 1200 = 25 */
-  --width-cap: 90rem; /* 1440 = 30 */
+  --width-standard: 32rem; /*  512 = 8 columns */
+  --width-reference: 48rem; /*  768 = 12 */
+  --width-large: 64rem; /* 1024 = 16, the content area */
+  --width-cap: 88rem; /* 1408 = 22, + both rails */
 
   /* 20, chosen so the CAPPED count divides cleanly. Five tracks in 1200 come
      out 224 each and five in 2160 come out 416 — both whole, and those are the
@@ -229,7 +227,7 @@
      No gap makes every count whole; 1fr distribution cannot promise that. The
      one that must always hold is that tracks plus gaps sum to the container
      exactly, and that is what the runtime test asserts. */
-  --column-gap: var(--space-20); /* 20 */
+  --column-gap: var(--space); /* 16 — five tracks in 1024 come out 192 each */
 
   /* Eleven columns — see step 4 of the derivation above. 528px, about 61
      characters, and odd so the reading layout can centre.
@@ -238,7 +236,7 @@
      in the ELEMENT own font, so it was never 68 characters of anything. It was
      68 zeroes of whichever face the platform supplied, which is why prose
      measured 586.5px against code at 538.4px on the same page. */
-  --measure: 45rem; /* 720 = 15 columns */
+  --measure: 64rem; /* 1024 = 16 columns, the whole content area */
 
   /* === SPACE ==============================================================
      Space is the primary means of expression in this system. Grouping,
@@ -400,8 +398,8 @@
   /* Seven columns each. 25 = 7 + 11 + 7 puts the text centred with one
      apparatus column on each side, which is the shape an odd total makes
      possible and an even one does not. */
-  --sidenote-width: 18rem; /* 288 = 6 columns */
-  --toc-width: 18rem; /* 288 = 6 columns */
+  --sidenote-width: 12rem; /* 192 = 3 columns */
+  --toc-width: 12rem; /* 192 = 3 columns */
 
   /* --- Radius ------------------------------------------------------------ */
   --radius-sheet: 2px;

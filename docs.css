@@ -58,7 +58,7 @@
    size: 1240 is 1200 plus its two gutters. Below it the frame is capped at the
    18-column tier, which cannot hold two rails and a measure. */
   .docs-shell {
-    --docs-rail: calc(4 * var(--column)); /* 192 */
+    --docs-rail: calc(3 * var(--column)); /* 192 */
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
@@ -79,7 +79,7 @@
      read as belonging to the window rather than to the document. A nav you have
      to track across empty space to reach reads as belonging to the window; 192
      is close enough to feel attached. */
-  @media (min-width: 77.5rem) {
+  @media (min-width: 90.5rem) {
     .docs-shell {
       grid-template-columns: var(--docs-rail) minmax(0, 1fr) var(--docs-rail);
       align-items: start;

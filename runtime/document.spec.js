@@ -207,7 +207,7 @@ test("the contents list stacks when narrow and rails when wide", async ({ page }
   await mount(page, 600, 600);
   const narrow = await read();
 
-  await mount(page, 1600, 1400);
+  await mount(page, 1800, 1600);
   const wide = await read();
 
   expect(narrow.above, "narrow must put the contents above the article").toBe(true);
@@ -248,7 +248,7 @@ test("a sidenote is inline when narrow and in the margin when wide", async ({ pa
   await mount(page, 480, 480);
   const narrow = await read();
 
-  await mount(page, 1600, 1400);
+  await mount(page, 1800, 1600);
   const wide = await read();
 
   expect(narrow.float, "a narrow container must keep the note in the flow").toBe("none");

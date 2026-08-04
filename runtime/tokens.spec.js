@@ -346,18 +346,18 @@ test("every tier is a whole number of one unchanging column", async ({ page }) =
     return out;
   });
 
-  expect(px.column).toBe(48);
-  expect(px.standard).toBe(px.column * 11);
-  expect(px.reference).toBe(px.column * 18);
-  expect(px.large).toBe(px.column * 25);
-  expect(px.cap).toBe(px.column * 30);
+  expect(px.column).toBe(64);
+  expect(px.standard).toBe(px.column * 8);
+  expect(px.reference).toBe(px.column * 12);
+  expect(px.large).toBe(px.column * 16);
+  expect(px.cap).toBe(px.column * 22);
 
   /* Seven columns, because there is no half of fifteen. 15 = 4 + 7 + 4 puts the
      text centred with a margin column each side. */
-  expect(px.measure).toBe(px.column * 15);
-  expect(px.sidenote).toBe(px.column * 6);
-  expect(px.toc).toBe(px.column * 6);
-  expect(px.measure + px.sidenote + px.toc).toBe(px.column * 27);
+  expect(px.measure).toBe(px.column * 16);
+  expect(px.sidenote).toBe(px.column * 3);
+  expect(px.toc).toBe(px.column * 3);
+  expect(px.measure + px.sidenote + px.toc).toBe(px.column * 22);
 
   for (const [name, v] of Object.entries(px)) {
     expect(Number.isInteger(v), ` = px`).toBe(true);

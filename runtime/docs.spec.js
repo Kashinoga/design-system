@@ -107,12 +107,24 @@ test("text blocks share one edge, and non-text may run wider", async ({ page }) 
   expect(defs.left, "a definition list must share its paragraph's edge").toBe(prose.left);
   expect(defs.right, "a definition list must share its paragraph's edge").toBe(prose.right);
 
-  /* Anything that is not text still takes the region it needs, so a five-column
-     swatch grid is not squeezed into a reading measure. */
+  /* Anything that is not text takes the region it needs, so a swatch grid is
+     never squeezed into a reading measure. Greater-or-equal rather than
+     strictly greater, because whether prose is NARROWER than the region depends
+     on the measure — and now that the measure IS the content area, it is not.
+     The invariant that holds either way is that non-text is never narrower. */
   const grid = await box("#swatches");
 
   expect(grid.left).toBe(prose.left);
-  expect(grid.width).toBeGreaterThan(prose.width);
+  expect(grid.width).toBeGreaterThanOrEqual(prose.width);
+
+  /* Report whether --measure is still doing anything here. When prose fills the
+     region, the token has stopped being a constraint and is only a ceiling that
+     never gets reached — worth seeing in the run rather than discovering later. */
+  const constrains = prose.width < grid.width;
+  console.log(
+    `  [measure] prose ${prose.width} in a ${grid.width} region — ` +
+      (constrains ? "constraining" : "NOT constraining, prose fills the region"),
+  );
 });
 
 test("a section title is an h1, and only the banner takes the display size", async ({ page }) => {
@@ -157,9 +169,9 @@ test("the columns primitive still pairs subsections when given the room", async 
      the primitive stays in the system and stays tested. An untested primitive
      rots the moment the page that exercised it stops.
 
-     1536 is the width where two measures and their gutter fit exactly:
-     15 + 2 + 15 = 32 columns — wider than the 1440 ceiling, so this form is
-     now only reachable in a container that is not the page frame. */
+     2176 is the width where two measures and their gutter fit exactly:
+     16 + 2 + 16 = 34 columns. The measure is the whole content area now, so
+     this form is only reachable in a container that is not the page frame. */
   const cols = await page.evaluate(() => {
     /* A fresh element rather than a clone of the page's own grid. Cloning drags
        along whatever the page happens to be doing to that node, and the point
@@ -167,7 +179,7 @@ test("the columns primitive still pairs subsections when given the room", async 
        measures and check what it does. */
     const host = document.createElement("div");
     host.className = "columns";
-    host.style.cssText = "position:absolute;visibility:hidden;inline-size:1536px";
+    host.style.cssText = "position:absolute;visibility:hidden;inline-size:2176px";
     host.innerHTML = "<div class='prose'><h2>a</h2><p>a</p></div>".repeat(4);
     document.body.append(host);
     const grid = host;
@@ -212,7 +224,7 @@ test("the columns primitive still pairs subsections when given the room", async 
   /* The gutter is three grid columns, so two measures plus it is 25 columns —
      the reading layout exactly. */
   expect(cols.gap).toBe(cols.column * 2);
-  expect(cols.measure * 2 + cols.gap).toBe(cols.column * 32);
+  expect(cols.measure * 2 + cols.gap).toBe(cols.column * 34);
 
   /* At least one row genuinely carries two subsections, or the whole feature
      is inert and this test is watching nothing. */
@@ -317,10 +329,10 @@ test("a tier width is an absolute ceiling on the whole box", async ({ page }) =>
      at all: the gutter appears only when the viewport is narrower than the tier
      and the frame goes fluid. */
   const TIERS = [
-    { viewport: 2560, ceiling: 1440 },
-    { viewport: 1440, ceiling: 1200 },
-    { viewport: 1000, ceiling: 1200 },
-    { viewport: 700, ceiling: 864 },
+    { viewport: 2560, ceiling: 1408 },
+    { viewport: 1440, ceiling: 1024 },
+    { viewport: 1000, ceiling: 1024 },
+    { viewport: 700, ceiling: 768 },
   ];
 
   for (const { viewport, ceiling } of TIERS) {
@@ -347,7 +359,7 @@ test("a tier width is an absolute ceiling on the whole box", async ({ page }) =>
        with nothing shaved off. */
     if (viewport >= ceiling + 40) {
       expect(box.outer, `frame should fill its tier at ${viewport}px`).toBe(ceiling);
-      expect(box.outer % 48, "the frame must be a whole number of columns").toBe(0);
+      expect(box.outer % 64, "the frame must be a whole number of columns").toBe(0);
     }
   }
 });

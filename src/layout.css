@@ -50,13 +50,13 @@
 }
 
 /* --- Frame: the one max width, and it is ABSOLUTE -----------------------
-   A tier width is a hard ceiling on the whole box. 1200 means 1200 of anything
-   — margins and padding included — not 1200 of content that then grows to 1240
-   once the gutter is added.
+   A tier width is a hard ceiling on the whole box. 1408 means 1408 of anything
+   — margins and padding included — not 1408 of content that then grows once the
+   gutter is added.
 
    That creates an arithmetic problem worth stating, because it has no solution
-   by compromise: 1200 total with a 20px gutter leaves 1160 of content, and
-   1160 / 48 is 24.2 columns. A ceiling, an outer gutter and whole columns
+   by compromise: a tier total with a 20px gutter taken out of it is no longer a
+   whole number of columns — 1408 less 40 is 1368, and 1368 / 64 is 21.375. A ceiling, an outer gutter and whole columns
    cannot all be true at once.
 
    The way out is the rule this system already uses one level down, where
@@ -68,15 +68,15 @@
 
        min(tier, 100% - 2 x gutter)
 
-   At 1400 that is min(1200, 1360) = 1200: twenty-five whole columns, 100px of
-   leftover each side. At 1000 it is min(1200, 960) = 960: the gutter bites and
-   the frame is fluid. The ceiling is never exceeded by anything. */
+   At 1500 that is min(1408, 1460) = 1408: twenty-two whole columns, with the
+   leftover as margin. At 1200 it is min(1408, 1160) = 1160: the gutter bites
+   and the frame is fluid. The ceiling is never exceeded by anything. */
 .frame {
   inline-size: min(var(--frame-max), 100% - 2 * var(--gutter));
   margin-inline: auto;
 }
 
-/* The four tiers. A FIXED grid: the column stays 48px and the tier changes how
+/* The four tiers. A FIXED grid: the column stays 64px and the tier changes how
    many of them there are, so every width is whole at every size and a layout
    scales by counting rather than by recomputing.
 
@@ -84,29 +84,32 @@
    this is the one measurement in the system that genuinely is about the
    viewport. Everything inside the frame asks its container instead.
 
-   The breakpoints are the tier width plus its gutters — the point at which the
-   next tier actually fits, rather than a number chosen from a device table.
+   Each breakpoint is the tier width plus its two gutters — the width at which
+   the next tier actually fits, rather than a number from a device table. Below
+   the first, the frame is fluid and capped by --width-standard.
 
    Between two breakpoints the frame is fluid, capped by the lower tier, so
    there is leftover viewport either side. That is what a FIXED grid does: it
    quantises. The alternative is fluid columns, which cannot be whole pixels at
    an arbitrary width, and whole pixels is the constraint that was chosen. */
-@media (min-width: 35.5rem) {
-  /* 568 = 528 + 2 x 20 */
+@media (min-width: 50.5rem) {
+  /* 808 = 768 + 2 x 20 */
   .frame {
     --frame-max: var(--width-reference);
   }
 }
 
-@media (min-width: 56.5rem) {
-  /* 904 = 864 + 2 x 20 */
+@media (min-width: 66.5rem) {
+  /* 1064 = 1024 + 2 x 20 — the content area, whole, still without rails. */
   .frame {
     --frame-max: var(--width-large);
   }
 }
 
-@media (min-width: 92.5rem) {
-  /* 1480 = 1440 + 2 x 20. The hard ceiling: past this the page stops growing.
+@media (min-width: 90.5rem) {
+  /* 1448 = 1408 + 2 x 20. The hard ceiling, and the first version of it that
+     is DERIVED: the page stops growing when the layout is complete — content
+     area plus both rails, with nothing further to add.
      A reader is already moving their head to follow a line rather than their
      eyes, and a frame that keeps widening stops being readable long before the
      monitor stops being wide. */
@@ -425,7 +428,7 @@
    that the region sizes describe cannot be built. Taking the gap out of the
    region instead keeps every edge on a division and costs the region its gap's
    worth of content width, which is the honest trade. */
-@container (min-inline-size: 63rem) {
+@container (min-inline-size: 76rem) {
   .document {
     grid-template-columns: var(--toc-width) minmax(0, 1fr);
     column-gap: 0;
@@ -473,7 +476,7 @@ figure > * + figcaption {
 
    25 = 7 + 11 + 7 is the whole layout in one line: a contents column, a text
    column, a notes column, tiling the tier with nothing left over. */
-@container (min-inline-size: 63rem) {
+@container (min-inline-size: 76rem) {
   .document aside {
     float: inline-end;
     clear: inline-end;
