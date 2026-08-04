@@ -257,6 +257,60 @@ test("the superbar and the content share both edges", async ({ page }) => {
   expect(edges.reserved, "docs.js must publish a scrollbar width").not.toBe("");
 });
 
+test("the structure sample is real markup, not a sketch", async ({ page }) => {
+  await page.goto("/index.html");
+
+  /* A code sample in a design system is a specification: somebody will copy it.
+     So it has to survive the parser, which the earlier shorthand version could
+     not have — it had no closing tags at all, and the tree it implied was one
+     the browser would never build. Parse the printed text and check the shape
+     that comes back is the shape that was written. */
+  const parsed = await page.evaluate(() => {
+    const source = document.querySelector("#structure pre code").textContent;
+    const doc = new DOMParser().parseFromString(source, "text/html");
+    const root = doc.body.firstElementChild;
+
+    const shape = (el) =>
+      [...el.children].map((c) => ({ tag: c.tagName, children: shape(c) }));
+
+    return {
+      source,
+      rootTag: root?.tagName,
+      rootClass: root?.className,
+      /* Nothing left over. A parser that had to restructure would leave the
+         remainder as extra siblings of the root. */
+      strayTopLevel: doc.body.children.length,
+      figureInsideParagraph: !!root?.querySelector("p figure"),
+      emptyParagraphs: [...(root?.querySelectorAll("p") ?? [])].filter(
+        (p) => !p.textContent.trim(),
+      ).length,
+      order: [...(root?.children ?? [])].map((c) => c.tagName),
+      articleOrder: [...(root?.querySelector("article")?.children ?? [])].map((c) => c.tagName),
+      shape: shape(root ?? doc.body),
+    };
+  });
+
+  /* Every element the sample opens, it closes. An unclosed tag shows up as a
+     tag count that does not match. */
+  const opens = [...parsed.source.matchAll(/<([a-z][\w-]*)(?=[\s>])/g)].map((m) => m[1]);
+  const closes = [...parsed.source.matchAll(/<\/([a-z][\w-]*)>/g)].map((m) => m[1]);
+  const VOID = new Set(["img", "br", "hr", "input", "meta", "link"]);
+  const needClosing = opens.filter((t) => !VOID.has(t)).sort();
+
+  expect(needClosing, "every non-void element must be closed").toEqual(closes.sort());
+
+  /* And the tree it produces is the one the system documents. */
+  expect(parsed.rootTag).toBe("DIV");
+  expect(parsed.rootClass).toBe("document");
+  expect(parsed.strayTopLevel, "the parser had to move something").toBe(1);
+  expect(parsed.order).toEqual(["NAV", "ARTICLE"]);
+  expect(parsed.articleOrder).toEqual(["HEADER", "SECTION", "FOOTER"]);
+
+  /* The defect the structure review turned up, guarded in the sample too. */
+  expect(parsed.figureInsideParagraph).toBe(false);
+  expect(parsed.emptyParagraphs).toBe(0);
+});
+
 test("a tier width is an absolute ceiling on the whole box", async ({ page }) => {
   /* A ceiling that excludes its own margins and padding is not a ceiling. 1200
      has to mean 1200 of everything, which is why the frame carries no padding

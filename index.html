@@ -188,16 +188,42 @@ P
       <section id="structure" class="prose">
         <h1>Structure</h1>
         <p class="measure sub">
-          One class, on the article. Everything inside is plain semantic markup — an author writes
+          One class, on the wrapper. Everything inside is plain semantic markup — an author writes
           a document, not a set of class names, and the structure stays legible in the source with
-          no stylesheet to decode it.
+          no stylesheet to decode it. The sample below is real markup rather than a sketch: a test
+          parses it and checks the browser gives back the tree it was given.
         </p>
-        <pre><code>&lt;article class="document"&gt;
-  &lt;header&gt;    the document banner — title, authors, abstract
-  &lt;section&gt;   a division of the document
-    &lt;p&gt; &lt;figure&gt;&lt;figcaption&gt; &lt;aside&gt;
-  &lt;footer&gt;    colophon, references, revision date
-&lt;/article&gt;</code></pre>
+        <pre><code>&lt;div class="document"&gt;
+  &lt;nav aria-label="Contents"&gt;
+    &lt;ol&gt;
+      &lt;li&gt;&lt;a href="#division"&gt;A division&lt;/a&gt;&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/nav&gt;
+
+  &lt;article&gt;
+    &lt;!-- The banner: title, authors, abstract. --&gt;
+    &lt;header&gt;
+      &lt;h1&gt;Title&lt;/h1&gt;
+      &lt;p&gt;Authors&lt;/p&gt;
+    &lt;/header&gt;
+
+    &lt;section id="division"&gt;
+      &lt;h2&gt;A division&lt;/h2&gt;
+      &lt;p&gt;A paragraph.&lt;/p&gt;
+
+      &lt;figure&gt;
+        &lt;img src="chart.svg" alt="" /&gt;
+        &lt;figcaption&gt;Figure 1&lt;/figcaption&gt;
+      &lt;/figure&gt;
+
+      &lt;aside&gt;A note or a citation.&lt;/aside&gt;
+    &lt;/section&gt;
+
+    &lt;footer&gt;
+      &lt;p&gt;Colophon, references, revision date.&lt;/p&gt;
+    &lt;/footer&gt;
+  &lt;/article&gt;
+&lt;/div&gt;</code></pre>
         <p class="measure sub">
           The article's own <code>&lt;header&gt;</code> <em>is</em> the banner; they are not two
           elements. A banner outside the article is not part of the document — a reader who copies
