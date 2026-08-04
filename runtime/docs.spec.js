@@ -156,12 +156,10 @@ test("prose subsections share a row, at the measure, on the grid", async ({ page
   await page.setViewportSize({ width: 1600, height: 900 });
   await page.goto("/index.html");
 
-  /* Measured in a container wide enough to hold two measures, NOT in the docs
-     page's own content column. With both rails present that column is five
-     eighths of the frame — 900px at the ceiling — and two measures plus their
-     three-column gutter need 1200. The primitive is what is under test here;
-     whether this particular page is wide enough to show two columns is a
-     separate question, and the answer today is no. */
+  /* 1056 is not an arbitrary probe width — it is the real content region at the
+     ceiling: 30 columns less two four-column rails. Two measures and a gutter
+     now fit inside it exactly, 10 + 2 + 10 = 22, which is the whole point of
+     dropping the measure from eleven columns to ten. */
   const cols = await page.evaluate(() => {
     /* A fresh element rather than a clone of the page's own grid. Cloning drags
        along whatever the page happens to be doing to that node, and the point
@@ -169,7 +167,7 @@ test("prose subsections share a row, at the measure, on the grid", async ({ page
        measures and check what it does. */
     const host = document.createElement("div");
     host.className = "columns";
-    host.style.cssText = "position:absolute;visibility:hidden;inline-size:1200px";
+    host.style.cssText = "position:absolute;visibility:hidden;inline-size:1056px";
     host.innerHTML = "<div class='prose'><h2>a</h2><p>a</p></div>".repeat(4);
     document.body.append(host);
     const grid = host;
@@ -213,8 +211,8 @@ test("prose subsections share a row, at the measure, on the grid", async ({ page
 
   /* The gutter is three grid columns, so two measures plus it is 25 columns —
      the reading layout exactly. */
-  expect(cols.gap).toBe(cols.column * 3);
-  expect(cols.measure * 2 + cols.gap).toBe(cols.column * 25);
+  expect(cols.gap).toBe(cols.column * 2);
+  expect(cols.measure * 2 + cols.gap).toBe(cols.column * 22);
 
   /* At least one row genuinely carries two subsections, or the whole feature
      is inert and this test is watching nothing. */

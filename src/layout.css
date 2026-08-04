@@ -196,19 +196,24 @@
 
    A subsection that carries something wider than prose — a swatch grid, a wide
    table — takes .span-all and gets the row to itself. */
-/* The gutter between two text columns is THREE grid columns, and that number is
-   forced rather than picked:
+/* The gutter between two text columns is TWO grid columns, and that number is
+   what was left rather than what was wanted:
 
-       11  +  3  +  11  =  25 columns  =  1200
+       4   +  10  +  2  +  10  +  4   =  30 columns  =  1440
+       rail   text   gut   text  rail
 
-   Two measures with a three-column gutter is exactly the reading layout. The
-   two-column form of a section fills the derived width and nothing has to be
-   nudged to make it line up.
+   The rails take eight columns and the content region is the remaining
+   twenty-two, so two measures and their gutter have to fit in 22. At a measure
+   of ten that leaves exactly two.
 
-   It is also the right gutter typographically. Two text columns need a wide
-   channel between them or the eye jumps the gap mid-line and reads across; 144
-   is comfortably past that. The row gap is a section gap, because vertically
-   these are still separate subsections. */
+   96px is still a sound channel — four times the 24px leading, where the
+   typographic minimum is about two. Below that the eye jumps the gap mid-line
+   and reads straight across from one column into the other, which is the
+   failure a gutter exists to prevent. There was no room to be generous, but
+   there was enough to be correct.
+
+   The row gap stays a section gap, because vertically these are still separate
+   subsections rather than two columns of one flow. */
 .columns {
   display: grid;
   /* min(measure, 100%) and not the bare measure. A fixed 528px track is wider
@@ -224,7 +229,7 @@
      Fixed tracks were tried first and are wrong for exactly that reason: with
      one track the swatch grid came out 528 wide inside a 900 region. */
   grid-template-columns: repeat(auto-fill, minmax(min(var(--measure), 100%), 1fr));
-  gap: var(--gap-section) calc(3 * var(--column));
+  gap: var(--gap-section) calc(2 * var(--column));
   align-items: start;
 }
 
@@ -420,7 +425,7 @@
    that the region sizes describe cannot be built. Taking the gap out of the
    region instead keeps every edge on a division and costs the region its gap's
    worth of content width, which is the honest trade. */
-@container (min-inline-size: 54rem) {
+@container (min-inline-size: 48rem) {
   .document {
     grid-template-columns: var(--toc-width) minmax(0, 1fr);
     column-gap: 0;
@@ -468,7 +473,7 @@ figure > * + figcaption {
 
    25 = 7 + 11 + 7 is the whole layout in one line: a contents column, a text
    column, a notes column, tiling the tier with nothing left over. */
-@container (min-inline-size: 54rem) {
+@container (min-inline-size: 48rem) {
   .document aside {
     float: inline-end;
     clear: inline-end;
