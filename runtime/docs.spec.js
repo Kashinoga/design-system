@@ -157,8 +157,8 @@ test("the columns primitive still pairs subsections when given the room", async 
      the primitive stays in the system and stays tested. An untested primitive
      rots the moment the page that exercised it stops.
 
-     1152 is the width where two measures and their gutter fit exactly:
-     11 + 2 + 11 = 24 columns. */
+     1248 is the width where two measures and their gutter fit exactly:
+     12 + 2 + 12 = 26 columns. */
   const cols = await page.evaluate(() => {
     /* A fresh element rather than a clone of the page's own grid. Cloning drags
        along whatever the page happens to be doing to that node, and the point
@@ -166,7 +166,7 @@ test("the columns primitive still pairs subsections when given the room", async 
        measures and check what it does. */
     const host = document.createElement("div");
     host.className = "columns";
-    host.style.cssText = "position:absolute;visibility:hidden;inline-size:1152px";
+    host.style.cssText = "position:absolute;visibility:hidden;inline-size:1248px";
     host.innerHTML = "<div class='prose'><h2>a</h2><p>a</p></div>".repeat(4);
     document.body.append(host);
     const grid = host;
@@ -211,7 +211,7 @@ test("the columns primitive still pairs subsections when given the room", async 
   /* The gutter is three grid columns, so two measures plus it is 25 columns —
      the reading layout exactly. */
   expect(cols.gap).toBe(cols.column * 2);
-  expect(cols.measure * 2 + cols.gap).toBe(cols.column * 24);
+  expect(cols.measure * 2 + cols.gap).toBe(cols.column * 26);
 
   /* At least one row genuinely carries two subsections, or the whole feature
      is inert and this test is watching nothing. */
