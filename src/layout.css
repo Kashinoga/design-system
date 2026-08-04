@@ -425,7 +425,7 @@
    that the region sizes describe cannot be built. Taking the gap out of the
    region instead keeps every edge on a division and costs the region its gap's
    worth of content width, which is the honest trade. */
-@container (min-inline-size: 48rem) {
+@container (min-inline-size: 54rem) {
   .document {
     grid-template-columns: var(--toc-width) minmax(0, 1fr);
     column-gap: 0;
@@ -473,7 +473,7 @@ figure > * + figcaption {
 
    25 = 7 + 11 + 7 is the whole layout in one line: a contents column, a text
    column, a notes column, tiling the tier with nothing left over. */
-@container (min-inline-size: 48rem) {
+@container (min-inline-size: 54rem) {
   .document aside {
     float: inline-end;
     clear: inline-end;

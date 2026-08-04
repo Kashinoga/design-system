@@ -100,21 +100,18 @@ test("text blocks share one edge, and non-text may run wider", async ({ page }) 
       return { left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width) };
     }, sel);
 
-  /* Compare blocks INSIDE one subsection. Since subsections flow into columns,
-     two blocks in different columns are meant to have different edges — the
-     claim is about a block and its neighbours, not about the whole page. */
-  const prose = await box("#faces ~ p, #foundations .prose:has(#faces) p");
+  /* One prose column, so every text block in a section shares both edges. */
+  const prose = await box("#foundations p");
   const defs = await box("#faces");
 
   expect(defs.left, "a definition list must share its paragraph's edge").toBe(prose.left);
   expect(defs.right, "a definition list must share its paragraph's edge").toBe(prose.right);
 
-  /* And a block that carries something wider than prose spans the row instead,
-     so a five-column swatch grid is not squeezed into a reading measure. */
-  const swatchProse = await box("#foundations .prose:has(#swatches) p");
+  /* Anything that is not text still takes the region it needs, so a five-column
+     swatch grid is not squeezed into a reading measure. */
   const grid = await box("#swatches");
 
-  expect(grid.left).toBe(swatchProse.left);
+  expect(grid.left).toBe(prose.left);
   expect(grid.width).toBeGreaterThan(prose.width);
 });
 
@@ -152,14 +149,16 @@ test("a section title is an h1, and only the banner takes the display size", asy
   }
 });
 
-test("prose subsections share a row, at the measure, on the grid", async ({ page }) => {
+test("the columns primitive still pairs subsections when given the room", async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
   await page.goto("/index.html");
 
-  /* 1056 is not an arbitrary probe width — it is the real content region at the
-     ceiling: 30 columns less two four-column rails. Two measures and a gutter
-     now fit inside it exactly, 10 + 2 + 10 = 22, which is the whole point of
-     dropping the measure from eleven columns to ten. */
+  /* The docs page no longer uses .columns — its prose is one column now — but
+     the primitive stays in the system and stays tested. An untested primitive
+     rots the moment the page that exercised it stops.
+
+     1152 is the width where two measures and their gutter fit exactly:
+     11 + 2 + 11 = 24 columns. */
   const cols = await page.evaluate(() => {
     /* A fresh element rather than a clone of the page's own grid. Cloning drags
        along whatever the page happens to be doing to that node, and the point
@@ -167,7 +166,7 @@ test("prose subsections share a row, at the measure, on the grid", async ({ page
        measures and check what it does. */
     const host = document.createElement("div");
     host.className = "columns";
-    host.style.cssText = "position:absolute;visibility:hidden;inline-size:1056px";
+    host.style.cssText = "position:absolute;visibility:hidden;inline-size:1152px";
     host.innerHTML = "<div class='prose'><h2>a</h2><p>a</p></div>".repeat(4);
     document.body.append(host);
     const grid = host;
@@ -212,7 +211,7 @@ test("prose subsections share a row, at the measure, on the grid", async ({ page
   /* The gutter is three grid columns, so two measures plus it is 25 columns —
      the reading layout exactly. */
   expect(cols.gap).toBe(cols.column * 2);
-  expect(cols.measure * 2 + cols.gap).toBe(cols.column * 22);
+  expect(cols.measure * 2 + cols.gap).toBe(cols.column * 24);
 
   /* At least one row genuinely carries two subsections, or the whole feature
      is inert and this test is watching nothing. */

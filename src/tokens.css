@@ -239,7 +239,7 @@
      in the ELEMENT own font, so it was never 68 characters of anything. It was
      68 zeroes of whichever face the platform supplied, which is why prose
      measured 586.5px against code at 538.4px on the same page. */
-  --measure: 30rem; /* 480 = 10 columns */
+  --measure: 33rem; /* 528 = 11 columns */
 
   /* === SPACE ==============================================================
      Space is the primary means of expression in this system. Grouping,
@@ -401,8 +401,8 @@
   /* Seven columns each. 25 = 7 + 11 + 7 puts the text centred with one
      apparatus column on each side, which is the shape an odd total makes
      possible and an even one does not. */
-  --sidenote-width: 18rem; /* 288 = 6 columns */
-  --toc-width: 18rem; /* 288 = 6 columns */
+  --sidenote-width: 21rem; /* 336 = 7 columns */
+  --toc-width: 21rem; /* 336 = 7 columns */
 
   /* --- Radius ------------------------------------------------------------ */
   --radius-sheet: 2px;
