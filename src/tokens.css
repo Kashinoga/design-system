@@ -143,31 +143,31 @@
         clears the 48px minimum target size. 2[s] is 32 and too small; 4[s] is
         64 and wider than anything demands.
 
-     4. THE MEASURE — 12 columns = 576px, about 67 characters. Readable prose is
-        45 to 75 characters, and whole columns of 48 give 45, 50, 56, 61, 67 and
-        73 inside that band. Twelve is taken because 66 is the number the whole
-        convention is built around — the middle of the band rather than an end
-        of it — and 67 is the closest a whole column comes to it.
+     4. THE MEASURE — 15 columns = 720px, about 84 characters.
 
-        It has been 11 and it has been 10, both times because something else
-        needed the room: 10 to fit two prose columns beside four-column rails,
-        11 when that constraint lifted. Neither was chosen for readability.
-        Twelve is, and it should be the one that stops moving.
+        THIS IS OUTSIDE THE BAND, and the file should say so rather than quietly
+        widen the band to fit. Continuous prose is readable from 45 to 75
+        characters; past roughly 75 the return sweep starts to fail, because the
+        eye has to travel far enough left that it loses which line it came from.
+        84 is past that.
 
-        WHAT CHANGED WITH IT: 12 is even, so the odd-centring argument that
-        picked 11 no longer applies — but it centres where it now matters
-        anyway. In the 22-column content region: 5 + 12 + 5. At the 30-column
-        ceiling: 9 + 12 + 9. It does not centre in the 25-column tier, which
-        shows one prose column regardless.
+        It is a deliberate choice for a REFERENCE document rather than a
+        mistake. This system is for technical documents that are scanned as much
+        as read — code samples, tables, definition lists — and those want width
+        for their own reasons, not for the prose wrapped around them. A wide
+        measure trades continuous-reading comfort for fewer wrapped code lines
+        and fewer two-line table cells. Documentation sites commonly sit here.
 
-        WHAT IT COSTS: two prose columns need 12 + 2 + 12 = 26 columns, and the
-        content region between two rails is 22. So the two-column form is now
-        available only on a page without rails. That is the trade for a measure
-        chosen by reading rather than by what was left over.
+        What would bring it back inside the band, if the reading ever starts to
+        feel like work: 13 columns is 624 and 72 characters, and 12 is 576 and
+        67, which is the middle of the band and where this sat before.
+
+        15 is odd, so it centres in the 25-column tier (5 + 15 + 5) but not in
+        the 22-column content region or at the 30-column ceiling.
 
      5. THE READING LAYOUT — one apparatus column each side of the text:
 
-            6  +  12  +  6  =  24 columns  =  1152
+            6  +  15  +  6  =  27 columns  =  1296
             |      |      |
             |      |      +-- LOCAL: this document. Contents, sidenotes,
             |      |             citations, the figure that needs room.
@@ -179,10 +179,10 @@
         the docs page now builds. Whatever lands in them inherits a whole-column
         edge for free.
 
-        This layout fits inside every tier from Large upward: 24 columns is 1152
-        and Large is 1200, with a column spare either side. The page shell uses
-        four-column rails rather than six, which is a page-level choice sitting
-        on top of the same grid — the primitive does not force it.
+        At 27 columns this is 1296, which no longer fits the 1200 Large tier —
+        the full three-region document now needs the 1440 ceiling. That is a
+        direct consequence of the wider measure and worth knowing before a page
+        is built expecting it at Large.
 
      6. THE TIERS — each one adds a region, not a device:
 
@@ -238,7 +238,7 @@
      in the ELEMENT own font, so it was never 68 characters of anything. It was
      68 zeroes of whichever face the platform supplied, which is why prose
      measured 586.5px against code at 538.4px on the same page. */
-  --measure: 36rem; /* 576 = 12 columns */
+  --measure: 45rem; /* 720 = 15 columns */
 
   /* === SPACE ==============================================================
      Space is the primary means of expression in this system. Grouping,
