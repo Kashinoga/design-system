@@ -196,21 +196,21 @@
 
    A subsection that carries something wider than prose — a swatch grid, a wide
    table — takes .span-all and gets the row to itself. */
-/* The gutter between two text columns is TWO grid columns:
+/* The gutter between two text columns is TWO grid columns, and that number is
+   what was left rather than what was wanted:
 
-       3  +  11  +  2  +  11  +  3   =  30 columns  =  1440
-       rail  text  gut   text  rail
+       4   +  10  +  2  +  10  +  4   =  30 columns  =  1440
+       rail   text   gut   text  rail
 
-   96px is four times the 24px leading, where the typographic minimum is about
-   two. Below that the eye jumps the channel mid-line and reads straight across
-   from one column into the next, which is the failure a gutter exists to
-   prevent.
+   The rails take eight columns and the content region is the remaining
+   twenty-two, so two measures and their gutter have to fit in 22. At a measure
+   of ten that leaves exactly two.
 
-   It is deliberately NOT the thing that gets squeezed when room runs short.
-   Two measures and a gutter share the content region, so a column off the
-   gutter splits between them and buys half a column each; a column off a RAIL
-   is taken off both rails and buys a whole column each. The rails are twice the
-   lever, and they are chrome, which is the cheaper thing to spend.
+   96px is still a sound channel — four times the 24px leading, where the
+   typographic minimum is about two. Below that the eye jumps the gap mid-line
+   and reads straight across from one column into the other, which is the
+   failure a gutter exists to prevent. There was no room to be generous, but
+   there was enough to be correct.
 
    The row gap stays a section gap, because vertically these are still separate
    subsections rather than two columns of one flow. */
@@ -425,7 +425,7 @@
    that the region sizes describe cannot be built. Taking the gap out of the
    region instead keeps every edge on a division and costs the region its gap's
    worth of content width, which is the honest trade. */
-@container (min-inline-size: 54rem) {
+@container (min-inline-size: 48rem) {
   .document {
     grid-template-columns: var(--toc-width) minmax(0, 1fr);
     column-gap: 0;
@@ -473,7 +473,7 @@ figure > * + figcaption {
 
    25 = 7 + 11 + 7 is the whole layout in one line: a contents column, a text
    column, a notes column, tiling the tier with nothing left over. */
-@container (min-inline-size: 54rem) {
+@container (min-inline-size: 48rem) {
   .document aside {
     float: inline-end;
     clear: inline-end;
