@@ -50,71 +50,64 @@
 }
 
 /* --- Frame: the one max width, and it is ABSOLUTE -----------------------
-   A tier width is a hard ceiling on the whole box. 1408 means 1408 of anything
-   — margins and padding included — not 1408 of content that then grows once the
+   The ceiling is a hard ceiling on the whole box. 1280 means 1280 of anything —
+   margins and padding included — not 1280 of content that then grows once the
    gutter is added.
 
-   That creates an arithmetic problem worth stating, because it has no solution
-   by compromise: a tier total with a 20px gutter taken out of it is no longer a
-   whole number of columns — 1408 less 40 is 1368, and 1368 / 64 is 21.375. A ceiling, an outer gutter and whole columns
-   cannot all be true at once.
+   So the frame carries NO PADDING. The gutter is expressed by shrinking the
+   box, never by insetting its contents:
 
-   The way out is the rule this system already uses one level down, where
-   regions tile and the gutter lives inside one as padding rather than between
-   two as a gap. Applied to the frame: there is no padding. The frame IS the
-   tier width, the columns tile it exactly, and the gutter appears only when the
-   viewport is narrower than the tier — which is the only time it is needed,
-   because above it the leftover viewport is already margin.
+       min(ceiling, 100% - 2 x gutter)
 
-       min(tier, 100% - 2 x gutter)
+   At 1500 that is min(1280, 1468) = 1280, with the leftover viewport as margin.
+   At 900 it is min(1280, 868) = 868: the gutter bites and the frame goes fluid.
+   The ceiling is never exceeded by anything, and the gutter appears only when
+   it is needed — above the ceiling the leftover viewport is already margin.
 
-   At 1500 that is min(1408, 1460) = 1408: twenty-two whole columns, with the
-   leftover as margin. At 1200 it is min(1408, 1160) = 1160: the gutter bites
-   and the frame is fluid. The ceiling is never exceeded by anything. */
+   This is MDN's wrapper recipe with the max-width made conditional. Their
+   version is `max-width` plus `margin-inline: auto`; the min() form is the same
+   idea with the gutter folded in, so there is one declaration to read instead
+   of a width and a padding that have to be held in your head together. */
 .frame {
   inline-size: min(var(--frame-max), 100% - 2 * var(--gutter));
   margin-inline: auto;
 }
 
-/* The four tiers. A FIXED grid: the column stays 64px and the tier changes how
-   many of them there are, so every width is whole at every size and a layout
-   scales by counting rather than by recomputing.
+/* The steps. Each one adds a REGION, not a device — the frame grows when a rail
+   starts to fit and at no other time.
 
    Media queries, not container queries, and the distinction is not pedantry:
    this is the one measurement in the system that genuinely is about the
    viewport. Everything inside the frame asks its container instead.
 
-   Each breakpoint is the tier width plus its two gutters — the width at which
-   the next tier actually fits, rather than a number from a device table. Below
-   the first, the frame is fluid and capped by --width-standard.
+   Each breakpoint is the width it enables plus the two gutters, so it fires
+   exactly when the thing it turns on actually fits, rather than at a number
+   from a device table.
 
-   Between two breakpoints the frame is fluid, capped by the lower tier, so
-   there is leftover viewport either side. That is what a FIXED grid does: it
-   quantises. The alternative is fluid columns, which cannot be whole pixels at
-   an arbitrary width, and whole pixels is the constraint that was chosen. */
-@media (min-width: 50.5rem) {
-  /* 808 = 768 + 2 x 20 */
+   Below the first breakpoint there is no query at all. The frame is already
+   `min(768, 100% - 32)`, which is fluid all the way down and needs nothing said
+   about it. The previous grid stepped DOWN here to a smaller fixed tier, and
+   that was the fixed grid quantising: a 700px window showed 512px of text with
+   94px of blank page either side. Fluid is simply better, and it is what the
+   MDN recipes do. */
+@media (min-width: 64rem) {
+  /* 1024 = 992 + 2 x 16 — the content, plus one apparatus rail. XGA exactly. */
   .frame {
-    --frame-max: var(--width-reference);
+    --frame-max: calc(var(--measure) + var(--rail));
   }
 }
 
-@media (min-width: 66.5rem) {
-  /* 1064 = 1024 + 2 x 20 — the content area, whole, still without rails. */
-  .frame {
-    --frame-max: var(--width-large);
-  }
-}
+@media (min-width: 82rem) {
+  /* 1312 = 1280 + 2 x 16. The ceiling, and the one number here that is DERIVED
+     rather than chosen: the page stops growing when the layout is complete —
+     the content, its own margin either side, and both rails. Nothing further
+     to add.
 
-@media (min-width: 90.5rem) {
-  /* 1448 = 1408 + 2 x 20. The hard ceiling, and the first version of it that
-     is DERIVED: the page stops growing when the layout is complete — content
-     area plus both rails, with nothing further to add.
      A reader is already moving their head to follow a line rather than their
      eyes, and a frame that keeps widening stops being readable long before the
      monitor stops being wide. */
   .frame {
-    --frame-max: var(--width-cap);
+    --frame-max: var(--width-page);
   }
 }
 
@@ -144,9 +137,13 @@
 /* --- Grid: as many columns as fit, but never more than five --------------
    An item grid is a flow, not a region division: it places as many things as
    fit at a minimum size and the count falls out of the width. Left alone that
-   count keeps climbing — at the ceiling a 224px minimum fits six or more across,
+   count keeps climbing — a 224px minimum fits six across in a 1400px container,
    and past five a row stops reading as a row. The eye stops taking it in at a
    glance and starts scanning it like a table.
+
+   The page frame no longer reaches that width, so the cap rarely binds on a
+   page. It still binds in a wide embed or a print sheet, and a primitive is not
+   allowed to depend on the frame it happens to be used in today.
 
    So there is a ceiling on the count as well as a floor on the size. The
    arithmetic does it without a media query: force each track to be at least a
@@ -170,7 +167,7 @@
         max(
           var(--grid-min, 16rem),
           calc(
-            (100% - (var(--grid-cols-max, 5) - 1) * var(--grid-gap, var(--column-gap))) /
+            (100% - (var(--grid-cols-max, 5) - 1) * var(--grid-gap, var(--gap-within))) /
               var(--grid-cols-max, 5)
           )
         ),
@@ -179,7 +176,16 @@
       1fr
     )
   );
-  gap: var(--grid-gap, var(--column-gap));
+  /* --gap-within, not --gap-region. The cards in an item grid are LIKE THINGS —
+     one flow of one kind — so they take the gap that separates items of a group.
+     A region gap here would say the swatches were different kinds of thing from
+     each other, which is the opposite of what a grid of them means.
+
+     This read --gap-region until the region gap doubled, at which point every
+     swatch grid on the page would have inherited a boundary it has no business
+     drawing. The two values had been equal, which is exactly how a wrong token
+     survives: it costs nothing until one of them moves. */
+  gap: var(--grid-gap, var(--gap-within));
 }
 
 /* --- Columns: prose subsections flowing into rows -----------------------
@@ -187,11 +193,18 @@
    independent blocks, so on a wide page they should sit beside each other
    instead of each taking a full row and leaving two thirds of the tier empty.
 
-   The track is a FIXED measure, not a 1fr share. That distinction is the whole
-   rule: 1fr would stretch each column to half the tier — 710px at the ceiling —
-   and prose past its measure is the one thing the measure exists to prevent. A
-   fixed track means two columns of 528 with the remainder left as margin, which
-   is the correct trade. Space is cheaper than an unreadable line.
+   The track is A MEASURE WIDE AT MINIMUM, and that floor is the whole rule. A
+   plain 1fr share would halve whatever it is given — two 576px columns in the
+   page frame — and prose past its measure is the one thing a measure exists to
+   prevent. With the floor in place a container that cannot hold two measures
+   gets one column and leaves the remainder as margin, which is the correct
+   trade. Space is cheaper than an unreadable line.
+
+   Two measures and their gutter need 1600, and the page frame stops at 1216. So
+   this primitive does not fire on the docs page at any viewport, and the runtime
+   suite builds a 1600px container by hand to keep testing it. It is not dead —
+   it is waiting for a consumer with more room than a page frame: a two-up print
+   sheet, a wide embed, a second monitor turned sideways.
 
    auto-fill rather than auto-fit, so the column structure does not collapse
    when a row has one item in it and the last block on a page stays the width of
@@ -199,30 +212,32 @@
 
    A subsection that carries something wider than prose — a swatch grid, a wide
    table — takes .span-all and gets the row to itself. */
-/* The gutter between two text columns is TWO grid columns, and that number is
-   what was left rather than what was wanted:
+/* The gutter between two text columns is A SECTION GAP, the same 64 the rows
+   already use:
 
-       4   +  10  +  2  +  10  +  4   =  30 columns  =  1440
-       rail   text   gut   text  rail
+       768  +  64  +  768   =  1600
+       text    gut    text
 
-   The rails take eight columns and the content region is the remaining
-   twenty-two, so two measures and their gutter have to fit in 22. At a measure
-   of ten that leaves exactly two.
+   One value on both axes, because these are two subsections either way round —
+   side by side or one above the other, the relationship between them is the
+   same and the gap that states it should be too.
 
-   96px is still a sound channel — four times the 24px leading, where the
-   typographic minimum is about two. Below that the eye jumps the gap mid-line
-   and reads straight across from one column into the other, which is the
-   failure a gutter exists to prevent. There was no room to be generous, but
-   there was enough to be correct.
+   64 clears the typographic minimum comfortably. That minimum is about twice
+   the leading, so 48 here; below it the eye jumps the gap mid-line and reads
+   straight across from one column into the other, which is the failure a gutter
+   exists to prevent. MDN's own multi-column example uses 20px, so 64 between
+   two 768px columns is generous by the standard the platform documents.
 
-   The row gap stays a section gap, because vertically these are still separate
-   subsections rather than two columns of one flow. */
+   It was 128, being two columns of the grid that has now gone, and before that
+   96 for the same reason on a 48px column. Neither number was ever chosen —
+   each was the width of whatever the grid had left over. */
 .columns {
   display: grid;
-  /* min(measure, 100%) and not the bare measure. A fixed 528px track is wider
-     than a phone, and a grid track wider than its container does not wrap — it
-     overflows, and the whole page scrolls sideways. Caught at 320px, where it
-     hung 228px off the edge. */
+  /* min(measure, 100%) and not the bare measure. A 768px track is wider than a
+     phone, and a grid track wider than its container does not wrap — it
+     overflows, and the whole page scrolls sideways. Caught at 320px against a
+     528px measure, where it hung 228px off the edge; the same fault at today's
+     measure would hang 448px off it. */
   /* minmax, so a lone track FILLS its region rather than sitting at a measure
      with slack beside it. Prose still stops at the measure — base.css caps every
      text block — so the track being wider costs the reading width nothing, and
@@ -230,9 +245,10 @@
      squeezed into a reading column.
 
      Fixed tracks were tried first and are wrong for exactly that reason: with
-     one track the swatch grid came out 528 wide inside a 900 region. */
+     one track the swatch grid came out one measure wide inside a wider region —
+     528 in 900, when the measure was 528. */
   grid-template-columns: repeat(auto-fill, minmax(min(var(--measure), 100%), 1fr));
-  gap: var(--gap-section) calc(2 * var(--column));
+  gap: var(--gap-section);
   align-items: start;
 }
 
@@ -248,12 +264,15 @@
 
 /* --- Prose: the document rhythm -----------------------------------------
    The reading primitive. Put it on anything that holds a document and the
-   blocks inside it space themselves: one unit between everything, two units
-   before a new top level heading.
+   blocks inside it space themselves: two units between every pair, headings
+   included.
 
-   Use .prose for documents and .flow for lists of like things. .flow gives one
-   gap and knows nothing about what it separates; .prose knows that a heading
-   starts a section and that a heading under a heading does not.
+   Use .prose for documents and .flow for lists of like things. The two now
+   agree on the number and still differ in scope: .flow spaces items of one
+   kind, .prose spaces the blocks of a document. .prose used to know that a
+   heading starts a section and that a heading under a heading does not; that
+   ranking was given up for a flat rhythm — see the rule below for what it
+   cost.
 
    The first child gets no space above it. `* + *` gives that for free, and it
    is why this uses adjacent siblings instead of a gap: a flex gap would also
@@ -280,71 +299,49 @@
 
 /* The rhythm is written once and worn by two things: .prose on any container,
    and every part of a .document. A second copy would drift. */
-/* Two units between blocks, not one.
+/* ONE GAP, and there are no exceptions to it. Every block in the rhythm sits
+   two units below the block before it, whatever either of them is.
 
-   One was the drafted model and it was right until the leading came off. A
-   16px gap plus ~8px of half-leading reads as 24; trimmed, the same 16 reads as
-   16, and two paragraphs at 16 apart run together. The number did not change
-   its meaning — the rendering finally matched it, and the honest value turned
-   out to be twice what the untrimmed page needed.
+   Two units and not one. One was the drafted model and it was right until the
+   leading came off. A 16px gap plus ~8px of half-leading reads as 24; trimmed,
+   the same 16 reads as 16, and two paragraphs at 16 apart run together. The
+   number did not change its meaning — the rendering finally matched it, and the
+   honest value turned out to be twice what the untrimmed page needed.
 
-   The ladder is 16 / 32 / 64, doubling at each step:
+   A p + p EXCEPTION was tried here and taken back out. The argument for it was
+   that two paragraphs in a row are one voice continuing where every other pair
+   is a change of kind, so the pair could afford one unit. It reads as a real
+   distinction on paper and did not earn its place on the page: it put a second
+   number into a rhythm whose whole value is that there is only one, and the
+   trimmed 16 is the gap that was already found to run two paragraphs together.
+   Recorded so the reasoning does not have to be had a third time.
+
+   WHAT THIS REPLACED, because it was deliberate and the next reader should not
+   restore it by accident. There were three more rules here, and they built an
+   asymmetry around headings:
 
        heading -> its content     1 unit    16
        block   -> block           2 units   32
        content -> a new heading   4 units   64
+       heading -> heading         1 unit    16   (one title block)
 
-   The asymmetry still comes from above the heading, and it is now unmissable:
-   a heading sits four times closer to what it names than to what it follows. */
+   The argument was that a heading belongs to what FOLLOWS it, and the only way
+   to say so with space is to put more above than below. That argument is sound
+   and the asymmetry did work. It was given up on purpose, for a flat rhythm:
+   one number down the whole column, no ratio to learn and none to maintain.
+
+   Know what it costs. A heading now sits equidistant between the block above
+   and the block below, so nothing but its size and weight says which side it
+   belongs to — where the old model said it with space as well. That is a real
+   loss of signal and it is the trade that was chosen, not an oversight.
+
+   Group internals are NOT part of this. A list's items, a definition list, the
+   swatch grid — those are items of one group and stay at --gap-within, because
+   grouping by proximity only reads while the gap inside a group is clearly
+   tighter than the gap between them. Flattening reached the blocks, not the
+   groups inside them. */
 :is(.prose, .document > article > :is(header, section, footer)) > * + * {
   margin-block-start: var(--space-x2);
-}
-
-/* A heading sits ON what it introduces — the one gap that stays a single unit.
-   Equal specificity to the heading rule below, so source order decides; this
-   comes first and the heading-pair rule overrides it. */
-:is(.prose, .document > article > :is(header, section, footer)) > :is(h1, h2, h3, h4, h5, h6) + * {
-  margin-block-start: var(--space);
-}
-
-/* Any heading that follows content starts something new, so it stacks a second
-   unit — not h1 alone.
-
-   The drafted model showed the doubled gap on h1 only, but it had no case of a
-   heading after a paragraph. On the page it reads wrong at every level: a
-   subheading one unit below the paragraph above it and one unit above the
-   paragraph below it floats between them, and a reader cannot tell which side
-   it belongs to. A heading belongs to what FOLLOWS it, and the only way to say
-   so with space is to put more above than below. */
-:is(.prose, .document > article > :is(header, section, footer))
-  > *
-  + :is(h1, h2, h3, h4, h5, h6) {
-  margin-block-start: var(--space-x4);
-}
-
-/* There is deliberately NO rule tightening the gap below a heading. One went in
-   and came straight back out, and the reason is worth keeping: it looked
-   necessary only because the leading had not been trimmed yet. A heading with
-   ~9px of dead space under it needed a 4px margin to look right, so the margin
-   was compensating for a measurement error. Once base.css trimmed the leading
-   off every block in the rhythm, 4px read as cramped and one unit read as
-   correct — which is what the drafted model said in the first place.
-
-   The asymmetry that matters is still there, and it comes entirely from the
-   doubled gap ABOVE a heading. One unit below, two units above: the heading is
-   closer to what it names than to what it follows.
-
-   A heading directly under another heading is one unit. The pair is a single
-   title block.
-
-   :is() rather than :where() on purpose. :where() has no specificity, so this
-   rule would lose to the two above and a heading after a heading would take the
-   wrong gap. :is() takes the specificity of its strongest argument, so this
-   wins. */
-:is(.prose, .document > article > :is(header, section, footer))
-  > :is(h1, h2, h3, h4, h5, h6)
-  + :is(h1, h2, h3, h4, h5, h6) {
-  margin-block-start: var(--space);
 }
 
 /* --- Document: the reading structure ------------------------------------
@@ -421,14 +418,19 @@
    ancestor the query never matches and the stacked form stays, which is a
    degraded layout rather than a broken one. */
 /* Regions TILE. The gap lives inside a region as padding, never between them as
-   a grid gap — that is what lets the halving arithmetic close.
+   a grid gap — that is what lets the arithmetic close.
 
-   A quarter for the contents, a half for the text and a quarter for the notes
-   is exactly 1200. Add a 32px gap between each and it is 1264, so the layout
-   that the region sizes describe cannot be built. Taking the gap out of the
-   region instead keeps every edge on a division and costs the region its gap's
-   worth of content width, which is the honest trade. */
-@container (min-inline-size: 76rem) {
+   224 for the contents, 768 for the text and 224 for the notes is 1216 — the
+   three regions, with nothing left over between them. Add a --gap-region
+   between each and it is
+   1280 against a 1216 ceiling, so the layout that the region sizes describe
+   cannot be built at all. Taking the gap out of a region instead keeps every
+   edge where the derivation puts it, and costs that region its gap's worth of
+   content width. That is the honest trade, and the doubled gap made it a real
+   one: the rail gives up 32 of its 224 and keeps 192 to set a list in, while
+   the text keeps all 768. The apparatus pays for the boundary, because the
+   apparatus is what can afford to. */
+@container (min-inline-size: 62rem) {
   .document {
     grid-template-columns: var(--toc-width) minmax(0, 1fr);
     column-gap: 0;
@@ -436,7 +438,7 @@
   }
 
   .document > nav {
-    padding-inline-end: var(--column-gap);
+    padding-inline-end: var(--gap-region);
   }
 
   .document > nav {
@@ -470,13 +472,15 @@ figure > * + figcaption {
   font-size: var(--text-sm);
 }
 
-/* 54rem = 864 = 18 columns, derived rather than chosen. The contents rail takes
-   7 of the 25 columns, leaving the article 18. The text is 11 and the note is
-   7, and 11 + 7 = 18 exactly. Below that the note has no margin to move into.
+/* 62rem = 992, derived rather than chosen: the text at its full measure plus one
+   apparatus rail, 768 + 224. Below that the note has no margin to move into, so
+   it stays in the flow.
 
-   25 = 7 + 11 + 7 is the whole layout in one line: a contents column, a text
-   column, a notes column, tiling the tier with nothing left over. */
-@container (min-inline-size: 76rem) {
+   The query on .document above is the same 992 read from the other end — a
+   contents rail plus an article at its full measure. Two different regions,
+   one threshold, because both are asking the same question: is there room here
+   for the text AND one column of apparatus? */
+@container (min-inline-size: 62rem) {
   .document aside {
     float: inline-end;
     clear: inline-end;
@@ -484,7 +488,7 @@ figure > * + figcaption {
        quarter as padding, exactly as the contents rail does. Regions tile; the
        gap lives inside one. */
     inline-size: var(--sidenote-width);
-    padding-inline-start: var(--column-gap);
+    padding-inline-start: var(--gap-region);
     margin-inline-end: calc(-1 * var(--sidenote-width));
     margin-block-start: 0;
   }

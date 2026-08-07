@@ -180,14 +180,39 @@ blockquote {
   padding-inline-start: var(--space-24);
 }
 
-/* A thematic break is a break. Drawing a line through it states in ink what the
-   gap already states in space, and the gap states it in every theme, at every
-   contrast setting, and in print. The element stays — it is the semantics that
-   matter, and a screen reader announces it either way. */
+/* A DRAWN thematic break, and this element used to draw nothing.
+
+   The old rule kept <hr> for its semantics and gave it no line, on the argument
+   that a gap already states a break and states it in every theme, at every
+   contrast setting, and in print. That argument is right about every OTHER
+   boundary in this system and wrong about this one, for a reason the escalation
+   itself supplies: a border is correct when the boundary IS the content. An
+   <hr> has no other content. It is not a heading that could be made to look
+   like a break, or a group that a gap could hold apart — the boundary is the
+   whole of what the element is, so there is nothing else for it to be made of.
+
+   That is the same clause --hairline was written for, and this is now its
+   second use on the page beside the wordmark's separator.
+
+   Drawn as a BACKGROUND on a 1px box, not as a border. Not to slip past the
+   no-lines guard — the guard is amended to know about this — but because a
+   border would make the element's size depend on which edge carried it, and a
+   thematic break should be one pixel tall whichever way it is drawn.
+
+   NO MARGIN OF ITS OWN, on EITHER axis. The block margin was --gap-section on
+   both sides, which was harmless while the element was invisible and doubles
+   the gap now that the rhythm also spaces it.
+
+   The inline margin is the one that actually broke it. A UA stylesheet ships
+   `margin-inline: auto` on hr, and an auto inline margin inside a flex column
+   shrinks the item to its content — which, for a rule, is nothing at all. The
+   element measured 0 wide and drew no line, while every value on it looked
+   correct. Zeroing only the block axis left that in place. */
 hr {
   border: 0;
-  block-size: 0;
-  margin-block: var(--gap-section);
+  block-size: 1px;
+  background-color: var(--hairline);
+  margin: 0;
 }
 
 /* --- Source text ----------------------------------------------------------
@@ -200,14 +225,49 @@ hr {
   font-size: var(--text-sm);
 }
 
+/* A code word in a sentence gets the same well a code block gets, at the size
+   of one word. The face alone was carrying it, and a face is not enough: mono
+   inside a line of prose says "this is set differently", not "this is a thing
+   you would type". The wash says the second, because it is the same wash the
+   block below the paragraph uses, and a reader who has seen one recognises the
+   other.
+
+   The recess is the whole treatment. No border, because the fill already
+   supplies the edge, and no weight change, because the word is not emphasis.
+
+   NOT inside a <pre>. A block is already a well, and a well per word inside it
+   would tile the sample with a hundred little boxes. */
+:where(code):not(pre code) {
+  background-color: var(--recessed);
+  border-radius: var(--radius-sheet);
+  /* Padding-inline only. A chip that also pads the block axis grows the line
+     box it sits in, so one code word in a paragraph opens the leading on that
+     line alone and the text ripples around it. The recess reads at a quarter
+     unit either side and costs the rhythm nothing. */
+  padding-inline: var(--space-4);
+}
+
 /* The surface change and the padding together make the block. A border round it
    was a third statement of a boundary already made twice — and the padding is
    the one doing the real work, because it is what stops the code touching the
-   edge and reading as page text. */
+   edge and reading as page text.
+
+   RECESSED, not --surface. It was a white sheet on a grey page, which read
+   correctly for exactly as long as the page stayed grey. The moment a consumer
+   laid the text on a sheet of its own — which is what the docs page now does,
+   and what the Text Editor has always done — a white block on white paper had
+   nothing left to say. --recessed is a wash rather than a colour, so it steps
+   back from whatever it is laid on and cannot be caught out that way again.
+
+   The direction flipped and the distance did not: a code block used to sit one
+   step lighter than its ground and now sits one step darker, by about the same
+   amount. Pressed into the page rather than laid on it, which is the more
+   honest metaphor anyway — a sample is part of the document, not a card
+   floating above it. */
 pre {
   overflow-x: auto;
   padding: var(--space-16);
-  background-color: var(--surface);
+  background-color: var(--recessed);
   border-radius: var(--radius-sheet);
 }
 

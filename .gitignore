@@ -15,6 +15,7 @@ blob-report/
 !/.gitignore
 !/README.md
 !/index.html
+!/favicon.svg
 !/styles.css
 !/docs.css
 !/docs.js

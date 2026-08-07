@@ -11,12 +11,12 @@ import { test, expect } from "@playwright/test";
  */
 
 const SEMANTIC = [
-  "--ink", "--sub", "--page", "--surface", "--hairline",
+  "--ink", "--sub", "--page", "--surface", "--recessed", "--hairline",
   "--accent", "--emerald", "--ruby", "--topaz",
   "--font-body", "--font-display", "--font-mono", "--font-numeral",
   "--text-xs", "--text-sm", "--text-base", "--text-lg", "--text-xl", "--text-2xl",
   "--leading-tight", "--leading-body", "--weight-normal", "--weight-strong",
-  "--measure", "--gutter", "--frame-max",
+  "--measure", "--rail", "--width-page", "--gutter", "--frame-max", "--gap-region",
   "--space", "--space-x2", "--space-x3", "--space-x4",
   "--gap-tight", "--gap-within", "--gap-between", "--gap-section",
   "--radius-sheet", "--radius-key",
@@ -27,7 +27,10 @@ const SEMANTIC = [
 
 const RUNGS = [2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48, 56, 64, 80];
 
-const TIERS = ["--gap-tight", "--gap-within", "--gap-between", "--gap-section"];
+/* --gap-section left this ladder when it dropped from four units to two. It is
+   a reason at --gap-between's value now, the same standing --gap-region has —
+   see the note on the matching source test in test/tokens.test.js. */
+const TIERS = ["--gap-tight", "--gap-within", "--gap-between"];
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/index.html");
@@ -164,11 +167,16 @@ test("the grouping tiers stay twice-apart once the browser has resolved them", a
   }
 });
 
-test("a document keeps the beat: one unit everywhere, two before a new H1", async ({ page }) => {
-  /* The source test checks that the two tokens are 2:1. This builds the exact
-     document from the model and measures what a browser put on the screen,
-     which is the only place the :is() specificity trick can be proved to work —
-     get that wrong and an H1 after a heading silently takes the doubled gap. */
+test("a document keeps the beat: two units between every pair of blocks", async ({ page }) => {
+  /* The source test checks the rule is in the file. This builds the exact
+     document from the model and measures what a browser put on the screen.
+
+     The rhythm is flat: every block sits two units below the one before it,
+     headings and consecutive paragraphs alike. That makes this test cheaper to
+     state and MORE necessary, not less — a single stray override is invisible
+     in the file and obvious here. Four rules have been removed from this rhythm
+     over time, the last of them a p + p exception. This is what stops one of
+     them growing back. */
   const gaps = await page.evaluate(() => {
     const host = document.createElement("div");
     host.className = "prose";
@@ -192,35 +200,34 @@ test("a document keeps the beat: one unit everywhere, two before a new H1", asyn
       probe.style.width = `var(${t})`;
       return parseFloat(getComputedStyle(probe).width);
     };
-    const units = { unit: read("--space"), double: read("--space-x2"), quad: read("--space-x4") };
+    const units = { unit: read("--space"), double: read("--space-x2") };
     probe.remove();
 
     host.remove();
     return { out, units };
   });
 
-  /* Heading spacing is asymmetric, and that is the whole point: MORE above a
-     heading than below it. Equal space on both sides leaves the heading
-     floating between two blocks with no way to tell which one it names. */
-  const { unit, double, quad } = gaps.units;
+  const { unit, double } = gaps.units;
 
   /* An ordered list, not a map — H2->P occurs twice and a map would collapse
-     the two into one, quietly halving what this test checks. */
+     the two into one, quietly halving what this test checks.
+
+     Every pair carries the same number on purpose; the pairs are spelled out
+     anyway because the ones that used to differ are exactly the ones a
+     regression would hit. A p + p exception was tried and reverted. */
   expect(gaps.out).toEqual([
-    { pair: "H1->P", gap: unit }, //    a heading sits ON what it introduces
-    { pair: "P->P", gap: double }, //   two units between blocks
-    { pair: "P->H1", gap: quad }, //    four units above — a heading starts something new
-    { pair: "H1->H2", gap: unit }, //   a heading under a heading is one title block
-    { pair: "H2->P", gap: unit },
-    { pair: "P->H2", gap: quad }, //    every level, not h1 alone
-    { pair: "H2->P", gap: unit },
+    { pair: "H1->P", gap: double }, //  was one unit — a heading sat ON its content
+    { pair: "P->P", gap: double },
+    { pair: "P->H1", gap: double }, //  was four units
+    { pair: "H1->H2", gap: double }, // was one unit — the title-block pair
+    { pair: "H2->P", gap: double },
+    { pair: "P->H2", gap: double }, //  was four units, at every level
+    { pair: "H2->P", gap: double },
   ]);
 
-  /* The ladder doubles at each step — 16 / 32 / 64 — and the asymmetry is
-     asserted as a relationship so a future retune cannot quietly flatten it.
-     A heading must sit closer to what it names than to what it follows. */
+  /* Stated as a relationship, not as 32, so a retune of [s] carries the rhythm
+     with it instead of stranding a literal. */
   expect(double).toBe(unit * 2);
-  expect(quad).toBe(unit * 4);
 });
 
 test("the leading is trimmed off every block in the rhythm", async ({ page }) => {
@@ -299,32 +306,54 @@ test("every length token lands on a whole pixel", async ({ page }) => {
   const LENGTHS = [
     "--text-xs", "--text-sm", "--text-base", "--text-lg", "--text-xl", "--text-2xl",
     "--measure", "--gutter", "--frame-max", "--sidenote-width", "--toc-width",
-    "--column", "--width-standard", "--width-reference", "--width-large", "--width-cap", "--column-gap",
+    "--rail", "--width-page", "--gap-region",
     "--space", "--space-x2", "--space-x3", "--space-x4",
     "--gap-tight", "--gap-within", "--gap-between", "--gap-section",
     "--radius-sheet", "--radius-key", "--focus-ring-width", "--focus-ring-offset",
   ];
 
-  const fractional = await page.evaluate((names) => {
+  const measured = await page.evaluate((names) => {
     const probe = document.createElement("div");
     document.body.append(probe);
-    const bad = [];
+    const out = {};
     for (const n of names) {
       probe.style.width = `var(${n})`;
-      const px = parseFloat(getComputedStyle(probe).width);
-      if (!Number.isInteger(px)) bad.push(`${n} = ${px}px`);
+      out[n] = parseFloat(getComputedStyle(probe).width);
     }
     probe.remove();
-    return bad;
+    return out;
   }, LENGTHS);
 
+  const fractional = Object.entries(measured)
+    .filter(([, px]) => !Number.isInteger(px))
+    .map(([n, px]) => `${n} = ${px}px`);
+
   expect(fractional).toEqual([]);
+
+  /* And EVEN, not merely whole — the 2px atom. A value that has to be halved on
+     the way to the screen should not produce a fraction doing it: a centred box,
+     a gap split between two edges, a mark lifted by half its own height. Half of
+     an odd number is where the fractions come back in.
+
+     The type scale is exempt, and only the type scale. A font size answers to
+     the face and to the line pitch it has to stay whole against, not to this
+     rule — 21 and 25 are legitimate line boxes, and forcing every size even to
+     avoid them would be the tail wagging the dog. What must not happen is a
+     control taking its height FROM one of those line boxes, which is how the
+     superbar key came to be 33px. */
+  const odd = Object.entries(measured)
+    .filter(([n]) => !n.startsWith("--text-"))
+    .filter(([, px]) => px % 2 !== 0)
+    .map(([n, px]) => `${n} = ${px}px`);
+
+  expect(odd, "every length but the type scale lands on the 2px atom").toEqual([]);
 });
 
-test("every tier is a whole number of one unchanging column", async ({ page }) => {
-  /* The metric-paper property: the unit survives the change of size. One column
-     is 80px at every tier, and the tier only changes how many there are, so
-     nothing is ever divided and nothing can come out fractional. */
+test("the page is the content plus one apparatus rail on each side", async ({ page }) => {
+  /* One number is chosen — the content is 768 — and the ceiling is the only
+     width derived from it. This test is the derivation, executed: if the
+     ceiling ever stops being content + two rails, somebody has picked a round
+     number again and the reason for the page stopping where it stops is gone. */
   const px = await page.evaluate(() => {
     const probe = document.createElement("div");
     document.body.append(probe);
@@ -333,12 +362,10 @@ test("every tier is a whole number of one unchanging column", async ({ page }) =
       return parseFloat(getComputedStyle(probe).width);
     };
     const out = {
-      column: read("--column"),
-      standard: read("--width-standard"),
-      reference: read("--width-reference"),
-      large: read("--width-large"),
-      cap: read("--width-cap"),
       measure: read("--measure"),
+      rail: read("--rail"),
+      pageWidth: read("--width-page"),
+      gapRegion: read("--gap-region"),
       sidenote: read("--sidenote-width"),
       toc: read("--toc-width"),
     };
@@ -346,22 +373,19 @@ test("every tier is a whole number of one unchanging column", async ({ page }) =
     return out;
   });
 
-  expect(px.column).toBe(64);
-  expect(px.standard).toBe(px.column * 8);
-  expect(px.reference).toBe(px.column * 12);
-  expect(px.large).toBe(px.column * 16);
-  expect(px.cap).toBe(px.column * 22);
+  expect(px.measure, "the content width is the one chosen number").toBe(768);
+  expect(px.rail).toBe(224);
 
-  /* Seven columns, because there is no half of fifteen. 15 = 4 + 7 + 4 puts the
-     text centred with a margin column each side. */
-  expect(px.measure).toBe(px.column * 16);
-  expect(px.sidenote).toBe(px.column * 3);
-  expect(px.toc).toBe(px.column * 3);
-  expect(px.measure + px.sidenote + px.toc).toBe(px.column * 22);
+  /* Both apparatus columns are the rail, and they are equal because the layout
+     is symmetrical — the text sits centred with one column of apparatus a
+     side. */
+  expect(px.sidenote).toBe(px.rail);
+  expect(px.toc).toBe(px.rail);
+  expect(px.pageWidth).toBe(px.measure + 2 * px.gapRegion + 2 * px.rail);
+  expect(px.pageWidth).toBe(1280);
 
   for (const [name, v] of Object.entries(px)) {
-    expect(Number.isInteger(v), ` = px`).toBe(true);
-    expect(v % px.column, ` is not a whole number of columns`).toBe(0);
+    expect(Number.isInteger(v), `${name} is fractional`).toBe(true);
   }
 });
 
@@ -425,10 +449,17 @@ test("the item grid never exceeds five columns, at any width", async ({ page }) 
 });
 
 test("every line box in the type scale is a whole number of pixels", async ({ page }) => {
-  /* Two ratios cover the system: 1.5 for body, 1.25 for headings. That only
-     works because the heading sizes are multiples of 4 — the ratio and the
-     scale were chosen together, and changing either alone reintroduces
-     fractions. */
+  /* Headings take a RATIO, 1.25, and that only works because the heading sizes
+     are multiples of 4 — the ratio and the scale were chosen together, and
+     changing either alone reintroduces fractions.
+
+     Body takes a PITCH, 18px, and therefore cannot produce a fraction at any
+     size at all. It was a 1.5 ratio until the body line was asked to sit
+     closer; no ratio below 1.5 gives whole boxes at 12, 14 and 16 together,
+     because 14 carries a factor of 7. The pitch is checked here anyway rather
+     than assumed, because "it cannot be fractional" is exactly the kind of
+     claim that stops being true when somebody changes the token back to a
+     number. */
   const boxes = await page.evaluate(() => {
     const probe = document.createElement("span");
     probe.textContent = "x";
@@ -465,17 +496,84 @@ test("nothing in the system layers draws a line", async ({ page }) => {
      a shorthand, a UA default the reset failed to clear, an inherited edge. */
   const lined = await page.evaluate(() => {
     const SIDES = ["Top", "Right", "Bottom", "Left"];
-    /* No allowlist. The last border on the page — around the colour swatches —
-       went when the card behind them was tinted instead. Nothing is exempt. */
+
+    /* ONE exemption, and it is narrow on purpose. base.css rules no table and
+       says why, then names the case it is deferring: a table wide enough that
+       the eye loses its row between the first column and the last is a tracking
+       problem, not a grouping one, and the answer is "a component decision —
+       zebra banding or rules". The foundation tables are that case and took the
+       rules; see .docs-table in docs.css.
+
+       So the exemption is for cells of a .docs-table and nothing else. A border
+       on the table box, on a swatch, on a key, on a rail — still a failure, and
+       still caught. The last border to go from this page was the one round the
+       colour swatches, which went when the card behind them was tinted instead;
+       nothing has been made easier for the next one. */
+    const sanctioned = (el) => el.matches(".docs-table :is(th, td)");
+
     return [...document.querySelectorAll("main *, footer *")]
       .filter((el) => {
         const cs = getComputedStyle(el);
         return SIDES.some((s) => parseFloat(cs[`border${s}Width`]) > 0);
       })
+      .filter((el) => !sanctioned(el))
       .map((el) => `${el.tagName.toLowerCase()}${el.className ? "." + el.className : ""}`);
   });
 
   expect([...new Set(lined)]).toEqual([]);
+
+  /* And the exemption is not a hole: the cells it covers must actually be ruled
+     with the token, or a stray border could hide inside it. A guard that opens
+     a door has to check what walks through. */
+  const rules = await page.evaluate(() => {
+    const hairline = getComputedStyle(document.documentElement).getPropertyValue("--hairline").trim();
+    const probe = document.createElement("div");
+    probe.style.color = hairline;
+    document.body.append(probe);
+    const resolved = getComputedStyle(probe).color;
+    probe.remove();
+
+    const cells = [...document.querySelectorAll(".docs-table tbody tr + tr th")];
+    return {
+      count: cells.length,
+      allHairline: cells.every(
+        (el) => getComputedStyle(el).borderTopColor === resolved,
+      ),
+    };
+  });
+
+  expect(rules.count, "no ruled table rows found — did the tables render?").toBeGreaterThan(0);
+  expect(rules.allHairline, "a table rule is drawn in something other than --hairline").toBe(true);
+
+  /* The thematic breaks, which this guard cannot see at all. An <hr> draws its
+     line as a BACKGROUND on a 1px box, so it has no border for the sweep above
+     to find — it would pass whether it were drawn, mis-drawn, or invisible.
+
+     Invisible is not hypothetical: it shipped that way. The element carried the
+     UA's margin-inline: auto, which inside a flex column shrinks an item to its
+     content, and a rule has none. Every computed value looked right and the
+     line was 0 wide. So width is asserted here as well as colour. */
+  const breaks = await page.evaluate(() => {
+    const hairline = getComputedStyle(document.documentElement).getPropertyValue("--hairline").trim();
+    const probe = document.createElement("div");
+    probe.style.color = hairline;
+    document.body.append(probe);
+    const resolved = getComputedStyle(probe).color;
+    probe.remove();
+
+    return [...document.querySelectorAll("main hr")].map((hr) => ({
+      width: Math.round(hr.getBoundingClientRect().width),
+      height: Math.round(hr.getBoundingClientRect().height),
+      painted: getComputedStyle(hr).backgroundColor === resolved,
+    }));
+  });
+
+  expect(breaks.length, "no thematic breaks found").toBeGreaterThan(0);
+  for (const b of breaks) {
+    expect(b.painted, "a thematic break is not drawn in --hairline").toBe(true);
+    expect(b.height, "a thematic break must be one pixel tall").toBe(1);
+    expect(b.width, "a thematic break collapsed to nothing").toBeGreaterThan(100);
+  }
 });
 
 test("light-dark() actually switches, in both directions", async ({ page }) => {
@@ -504,4 +602,240 @@ test("light-dark() actually switches, in both directions", async ({ page }) => {
 
   expect(luma(light.page)).toBeGreaterThan(luma(light.ink));
   expect(luma(dark.page)).toBeLessThan(luma(dark.ink));
+});
+
+test("the desk keeps its three levels apart, on both stocks", async ({ page }) => {
+  /* The failure this exists for: --recessed was mixed toward --ink, and --ink
+     flips with the scheme, so the wash darkened its ground on light stock and
+     LIGHTENED it on dark — the one direction --surface is already travelling.
+     On dark the rails composited to rgb(27 27 28) against a sheet of
+     rgb(26 26 28), one part in 255 apart, and the three-column desk read as one
+     wide surface again. Every declared value was correct; only the composite
+     was wrong.
+
+     So this reads PIXELS, not computed styles. --recessed is translucent, and a
+     translucent colour tells you nothing about what the eye receives — which is
+     precisely how the collision got through. Sampling the painted page is the
+     only assertion that could have caught it. */
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  const sample = async () => {
+    const shot = await page.screenshot();
+    return page.evaluate(async (dataUrl) => {
+      const img = new Image();
+      img.src = dataUrl;
+      await img.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+
+      /* The screenshot is in device pixels and the rects are in CSS pixels. */
+      const scale = img.width / window.innerWidth;
+      const at = (x, y) => {
+        const d = ctx.getImageData(Math.round(x * scale), Math.round(y * scale), 1, 1).data;
+        return [d[0], d[1], d[2]];
+      };
+
+      const shell = document.querySelector(".docs-shell").getBoundingClientRect();
+      const sheet = document.querySelector(".docs-column").getBoundingClientRect();
+      /* The shell is as tall as the document, so its own midpoint is nowhere
+         near the screenshot. Sample down the middle of the VIEWPORT instead. */
+      const y = Math.round(window.innerHeight / 2);
+
+      return {
+        /* Outside the shell entirely — bare page. */
+        page: at(4, y),
+        /* Midway across the band the shell leaves showing left of the sheet. */
+        rail: at(shell.left + (sheet.left - shell.left) / 2, y),
+        /* Inside the sheet's own gutter, so no glyph can land on the sample. */
+        sheet: at(sheet.left + 10, y),
+      };
+    }, `data:image/png;base64,${shot.toString("base64")}`);
+  };
+
+  const luma = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+  for (const scheme of ["light", "dark"]) {
+    await page.emulateMedia({ colorScheme: scheme });
+    const px = await sample();
+
+    /* THE DIRECTION IS NOT THE SAME ON BOTH STOCKS, and asserting that it was
+       is what this test used to get wrong.
+
+       On light stock the sheet is the lightest ground and the rails step DOWN
+       off it. On dark stock the sheet is the darkest ground — it has to be, to
+       reach 20:1 on the text — and the rails step UP off it. What is true in
+       both is the ORDER, stated relative to the sheet: the page sits between
+       the sheet and the rails, and each is clearly clear of the next.
+
+       Pinning the direction instead of the order is how a scheme-specific fact
+       gets frozen into a guard and blocks the palette from moving. */
+    const away = (a, b) => (luma(px.sheet) > luma(px.page) ? luma(b) - luma(a) : luma(a) - luma(b));
+
+    /* Each step only has to be a real step, and 2 is the floor for that. The
+       light page sits exactly 4 off its sheet — 251 against 255 — so a stricter
+       figure here would be asserting a palette detail rather than the order.
+       The distance a reader actually judges is the total, below. */
+    expect(away(px.page, px.sheet), `${scheme}: the page is not clear of the sheet`)
+      .toBeGreaterThan(2);
+    expect(away(px.rail, px.page), `${scheme}: the rail is not clear of the page`)
+      .toBeGreaterThan(2);
+
+    /* The one the reader actually sees: which column is the work. Four steps is
+       not a threshold anybody tuned — it is a floor well under the real
+       separation on both stocks and well over the one-part-in-255 that a
+       collision between the rails and the sheet once produced. */
+    expect(Math.abs(luma(px.sheet) - luma(px.rail)), `${scheme}: the sheet does not stand off the rails`)
+      .toBeGreaterThan(4);
+  }
+});
+
+test("stacked corners are concentric: outer radius = inner radius + the gap", async ({ page }) => {
+  /* Two rounded boxes, one inside the other, hold their gap along the edges and
+     open out into the corner unless the outer curve is the inner curve plus the
+     gap. The colour swatch was the case that prompted this: a 2px chip in a 2px
+     card with 8px of padding measured 8 along the edges and 11.3 into the
+     corner, and the card appeared to pinch its own contents.
+
+     Equal radii are the easy way to reach that, because using one radius token
+     for both reads as consistency. So the guard finds the stacks itself rather
+     than naming the pair that was wrong — the next one will be built by the
+     same reasoning somewhere else. */
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  /* PER CORNER, and only where a corner is actually shared.
+
+     This started as one comparison per pair, using the tightest of the four
+     insets. That over-reached the moment the page grew a control inside a
+     rounded container: a copy button sitting 4px below the top of a code block
+     and 12px in from its side was demanded to be concentric with it, when the
+     two corners are nowhere near each other. It also failed a <pre> whose top
+     corners are deliberately square because a header bar covers them.
+
+     A corner is made by two sides. It is only concentric with the corner
+     outside it when BOTH those sides are inset by the same amount — that is the
+     definition, not a convenience. Where the two insets differ, the corners are
+     not a pair and there is no ratio to be right or wrong about, so the guard
+     says nothing rather than inventing a rule. */
+  const stacks = await page.evaluate(() => {
+    const CORNERS = [
+      ["TopLeft", "top", "left"],
+      ["TopRight", "top", "right"],
+      ["BottomRight", "bottom", "right"],
+      ["BottomLeft", "bottom", "left"],
+    ];
+    const radiusOf = (el, corner) =>
+      parseFloat(getComputedStyle(el)[`border${corner}Radius`]) || 0;
+    const anyRadius = (el) => CORNERS.some(([c]) => radiusOf(el, c) > 0);
+    const name = (el) =>
+      el.tagName.toLowerCase() + (el.className ? `.${String(el.className).trim().split(/\s+/)[0]}` : "");
+
+    const out = [];
+    for (const el of document.querySelectorAll("*")) {
+      if (!anyRadius(el)) continue;
+
+      /* The nearest rounded ANCESTOR, not the parent: an unrounded wrapper in
+         between does not break the stack, it just holds it. */
+      let outer = el.parentElement;
+      while (outer && !anyRadius(outer)) outer = outer.parentElement;
+      if (!outer) continue;
+
+      const inner = el.getBoundingClientRect();
+      const box = outer.getBoundingClientRect();
+      const inset = {
+        top: inner.top - box.top,
+        left: inner.left - box.left,
+        right: box.right - inner.right,
+        bottom: box.bottom - inner.bottom,
+      };
+
+      /* A corner pair also needs the child to be AT the corner. An inline code
+         word 660px inside the sheet had its bottom and right insets coincide at
+         the same number, which satisfied the equal-insets test above and asked
+         for a 662px radius on the sheet. Two insets matching by accident is not
+         a nesting.
+
+         A quarter of the parent's shorter side is the bound, and it is relative
+         rather than a pixel count so it holds for a 130px swatch card and an
+         800px sheet alike. Inside that, a child is in the corner; beyond it, the
+         child is somewhere in the middle of a box that happens to contain it. */
+      const reach = Math.min(box.width, box.height) / 4;
+
+      for (const [corner, sideA, sideB] of CORNERS) {
+        const a = inset[sideA];
+        const b = inset[sideB];
+        /* A child that breaks out of its parent is not a stack. */
+        if (a < 0 || b < 0) continue;
+        /* Two different insets cannot make one concentric corner. */
+        if (Math.abs(a - b) > 0.5) continue;
+        if (a > reach) continue;
+
+        out.push({
+          pair: `${name(outer)} > ${name(el)} [${corner}]`,
+          outerR: radiusOf(outer, corner),
+          innerR: radiusOf(el, corner),
+          gap: Math.round(a * 10) / 10,
+        });
+      }
+    }
+    return out;
+  });
+
+  /* Assert the count before the geometry. A guard that finds no stacks looks
+     exactly like a guard that passes, and this page has generated content —
+     one failed script and there is nothing left to check. */
+  expect(stacks.length, "no radius stacks found — did the swatch grid render?").toBeGreaterThan(0);
+
+  const off = stacks
+    .filter((s) => Math.abs(s.outerR - (s.innerR + s.gap)) > 0.5)
+    .map((s) => `${s.pair}: outer ${s.outerR} should be ${s.innerR} + ${s.gap} = ${s.innerR + s.gap}`);
+
+  expect([...new Set(off)]).toEqual([]);
+});
+
+test("nothing sets type larger than the line box it is given", async ({ page }) => {
+  /* --leading-body is a PITCH, 18px, not a ratio. That guarantees a whole line
+     box at every body size and creates one obligation in exchange: anything
+     setting type ABOVE the body range must state its own leading, or its lines
+     are shorter than its letters and consecutive lines overlap.
+
+     One element on this page does that — the type specimen at --text-lg — and it
+     was silently broken once already. Renaming the table from #faces to
+     #docs-faces left the rule pointing at a selector that no longer matched, so
+     the specimen quietly dropped to body size and body leading. Every test
+     passed: nothing asserted the specimen, and an overlap is not an error.
+
+     This asserts the CONDITION rather than the specimen, so it catches the next
+     element to go above the body sizes as well as this one. */
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/index.html");
+  await page.waitForLoadState("networkidle");
+
+  const tight = await page.evaluate(() => {
+    const bad = new Map();
+    for (const el of document.querySelectorAll("body *")) {
+      if (!el.textContent.trim()) continue;
+      /* Only elements with their own text, or the measurement describes a
+         container whose children carry the type. */
+      const ownText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+      if (!ownText) continue;
+
+      const cs = getComputedStyle(el);
+      const size = parseFloat(cs.fontSize);
+      const lead = parseFloat(cs.lineHeight);
+      if (!Number.isFinite(lead)) continue;
+
+      /* A line box shorter than the type it holds. 1.05 rather than 1.0 because
+         a box exactly the height of the em is already touching. */
+      if (lead < size * 1.05) {
+        const key = el.tagName.toLowerCase() + (el.className ? `.${String(el.className).trim().split(/\s+/)[0]}` : "");
+        bad.set(key, `${size}px type in a ${lead}px box`);
+      }
+    }
+    return [...bad];
+  });
+
+  expect(tight).toEqual([]);
 });

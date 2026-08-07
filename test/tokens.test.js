@@ -112,7 +112,22 @@ test("each grouping tier is at least twice the one below it", () => {
      apart with 8px inside them are not two groups, they are one group with a
      wobble. Without this ratio the system quietly drifts back into needing
      borders to say what the spacing failed to. */
-  const TIERS = ["--gap-tight", "--gap-within", "--gap-between", "--gap-section"];
+
+  /* --gap-section is deliberately NOT on this list, and that is a change worth
+     stating rather than leaving as an absence. It was four units and it is two
+     now, level with --gap-between, so it no longer climbs the ladder.
+
+     It is a reason, not a rung — the same standing --gap-region has always had,
+     and for the same cause: equal to --gap-between today, named apart because
+     it does a different job, kept out of here so the guard measures the ladder
+     rather than the vocabulary. The ladder is still three rungs and still
+     doubles: 4, 16, 32.
+
+     What the guard can no longer tell you is that a section reads as a section.
+     That rank was spent on a flat column, on purpose. If it is ever wanted
+     back, --gap-section climbs again and comes back onto this list — it does
+     not become a border. */
+  const TIERS = ["--gap-tight", "--gap-within", "--gap-between"];
   const px = TIERS.map((tier) => ({ tier, value: rungOf(tier) }));
 
   for (let i = 1; i < px.length; i++) {

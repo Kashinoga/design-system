@@ -3,12 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kashinoga Design System</title>
+    <!-- Page first, site last. A tab strip truncates from the RIGHT, so the
+         word that survives being one of twenty open tabs is the one that says
+         which page this is — not the one that repeats on every page of the
+         site. -->
+    <title>Design System | Kashinoga</title>
     <meta
       name="description"
-      content="The Kashinoga Design System — foundations, components and the reasoning behind them."
+      content="The Kashinoga Design System: foundations, components and the reasoning behind them."
     />
     <meta name="color-scheme" content="light dark" />
+
+    <!-- One icon, in SVG, answering the colour scheme from inside the file. No
+         .ico and no size ladder: a vector needs neither, and every raster in a
+         favicon set is a copy that can fall out of step with the others. -->
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 
     <!-- The system itself. One file, six layers. -->
     <link rel="stylesheet" href="styles.css" />
@@ -23,15 +32,58 @@
     <header class="docs-bar">
       <div class="frame row">
         <!-- Written in its own case in the markup, not uppercased in CSS, so it
-             can be selected, searched and spoken as the name. -->
-        <span class="docs-wordmark">Kashinoga</span>
-        <span class="sub">Design System</span>
+             can be selected, searched and spoken as the name.
+
+             The mark and the name are ONE element. They are one thing — the mark
+             does not say anything the name does not, so a screen reader that
+             announced both would announce the site twice. <img alt=""> makes it
+             decorative, which is what it is.
+
+             Same file as the favicon, not a copy of it. A second copy of a mark
+             is a mark that will drift, and this one already carries the
+             scheme-aware colour it needs. -->
+        <!-- The mark, the name and the descriptor are ONE lockup, so they are
+             one element with their own spacing. The bar's own gap then separates
+             the lockup from the controls, which is the only boundary left in
+             here that space has to carry. -->
+        <span class="docs-lockup">
+          <span class="docs-wordmark">
+            <img class="docs-mark" src="favicon.svg" alt="" width="24" height="24" />
+            Kashinoga
+          </span>
+
+          <!-- A drawn rule, and the first of the page's separators. It is the
+               third step of the escalation used where the third step is
+               actually correct: the boundary here IS the content. A separator
+               has no other job — there is nothing else for it to be. The same
+               clause now covers the thematic break above each section title.
+
+               Empty, and hidden from the accessibility tree, because it is not a
+               word. The name and the descriptor are separate elements either
+               way, so a reader hears "Kashinoga, Design System" and the rule
+               adds nothing to say.
+
+               It was a literal "|" first, on the argument that a real character
+               survives a copy where CSS cannot. True, but it was answering a
+               question nobody asked: the clipboard now gets "Kashinoga Design
+               System", which is the NAME of the thing. A pipe in the middle of
+               it was never the wanted result. -->
+          <span class="docs-sep" aria-hidden="true"></span>
+
+          <span class="sub">Design System</span>
+        </span>
 
         <!-- The section links moved to the global nav on the left. A superbar
              that also carries navigation is doing two jobs, and the left rail
              is where the grid already reserved room for one of them. -->
 
-        <button type="button" id="scheme-toggle" class="docs-key" aria-pressed="false">
+        <button
+          type="button"
+          id="scheme-toggle"
+          class="docs-key"
+          aria-pressed="false"
+          data-tip-align="end"
+        >
           <span id="scheme-label">Auto</span>
         </button>
       </div>
@@ -45,13 +97,20 @@
         <!-- GLOBAL: the same on every page. Sticky, so it is reachable from
              anywhere in a long document without scrolling back. -->
         <nav class="docs-rail docs-global" aria-label="Sections">
-          <p class="docs-rail__title">Sections</p>
-          <ul role="list">
-            <li><a href="#foundations">Foundations</a></li>
-            <li><a href="#structure">Structure</a></li>
-            <li><a href="#components">Components</a></li>
-            <li><a href="#principles">Principles</a></li>
-          </ul>
+          <!-- The BAND is the <nav>; the list inside it is what sticks. The two
+               cannot be the same element. A sticky box is only as tall as its
+               contents, so a painted band that also sticks stops level with the
+               last link and reads as a card floating on the page rather than as
+               the stock the sheet is laid beside. -->
+          <div class="docs-rail__inner">
+            <p class="docs-rail__title">Sections</p>
+            <ul role="list">
+              <li><a href="#foundations">Foundations</a></li>
+              <li><a href="#structure">Structure</a></li>
+              <li><a href="#components">Components</a></li>
+              <li><a href="#principles">Principles</a></li>
+            </ul>
+          </div>
         </nav>
 
         <div class="docs-column">
@@ -63,121 +122,224 @@
           point, <code>styles.css</code>, in six cascade layers: reset, tokens, base, layout,
           components, utilities.
         </p>
-        <p class="measure sub">
-          <strong>Status:</strong> scaffold. The foundations below are neutral placeholders with
-          the final structure in place. Nothing has been migrated from Pixelite yet.
-        </p>
+        <!-- A callout, not a paragraph with a bold word at the front. The label
+             says what KIND of note this is, and a kind is not emphasis: bold
+             would make the first word loud and still leave the reader to work
+             out that the sentence after it has a different status from the
+             prose around it. The label and the fill say it outright.
+
+             The kind sits in a header bar, the same one a code block wears to
+             name its language. Both say what the block below them is, so both
+             say it the same way. -->
+        <aside class="docs-callout measure">
+          <p class="docs-callout__head">Scaffold</p>
+          <div class="docs-callout__body">
+            <p>
+              The foundations below are neutral placeholders with the final structure in place.
+              Nothing from Pixelite is here yet.
+            </p>
+          </div>
+        </aside>
       </header>
 
       <!-- ================================================================ -->
+      <!-- A thematic break before each section title: the markdown "---". It is a
+           SIBLING of the sections rather than a child of one, because the break
+           comes BETWEEN two divisions. A break living inside the division it
+           opens would be announcing that division rather than separating it
+           from the one before. -->
+      <hr />
+
       <section id="foundations" class="prose">
         <h1>Foundations</h1>
-          <h2>Colour</h2>
-          <p class="measure sub">
-            One accent plus three answering inks. The accent means <em>you are here</em> — a state,
-            never an outcome. The three answers are named as stones, and that constraint is what
-            stops the palette growing a fifth ambiguous shade. Every swatch is read live from the
-            stylesheet, so this table cannot drift from the source.
-          </p>
-          <div id="swatches" class="grid" style="--grid-min: 12rem"></div>
-          <h2>Type</h2>
-          <p class="measure sub">
-            Four faces, four jobs, no overlap. A reader should be able to tell what kind of thing
-            they are looking at before reading it. Every stack defaults to a face the platform
-            already provides — no webfont, no network request, no flash of unstyled text. Body and
-            display agree for now because no platform sets its headings in a serif; they stay
-            separate tokens so one can move without the other.
-          </p>
-          <dl id="faces" class="docs-defs"></dl>
           <h2>Space</h2>
-          <p class="measure sub">
-            Space is the primary means of expression here. Grouping, delineation and separation —
-            the work a border would normally do — are done with space, and a border is what you
-            reach for only when space cannot reach. A rule says a boundary once, in one colour,
-            and then has to be maintained in every theme it survives into; a gap says it in every
-            theme, at every contrast setting, and in print, for free.
+          <p class="measure">
+            Space is the primary means of expression in this system. Space does the work that a
+            border usually does. It groups items, it divides them, and it ranks them. Use a border
+            only when space cannot do the work.
           </p>
-          <p class="measure sub">
-            Three steps, in order — take the first that works and stop.
-            <strong>Space</strong> groups, separates and ranks; it is the answer for nearly
-            everything. <strong>Colour</strong> takes over when distance cannot carry it: no gap
-            makes a word look pressable, and sticky chrome has no fixed distance to the content it
-            must be told apart from, but a fill of its own separates it at any scroll offset.
-            <strong>A border</strong> only when the boundary <em>is</em> the content, and no fill
-            can supply an edge because the fill is the subject. The colour swatches above looked
-            like that case — white chips on a white sheet — until the card behind them was tinted
-            instead. There is no border anywhere on this page.
+          <p class="measure">
+            A rule states a boundary one time, in one colour. You must then keep that colour
+            correct in each theme that the rule stays in. A gap states the same boundary in each
+            theme, at each contrast setting, and in print. A gap costs nothing.
+          </p>
+          <p class="measure">
+            There are three steps, in this order. Take the first step that works, then stop.
+          </p>
+          <p class="measure">
+            <strong>Space</strong> groups, divides and ranks. It is the answer for almost all
+            cases.
+          </p>
+          <p class="measure">
+            <strong>Colour</strong> takes over when distance cannot do the work. No gap can make a
+            word look pressable. Sticky chrome has no fixed distance from the content, but a fill
+            of its own divides it at each scroll position.
+          </p>
+          <p class="measure">
+            <strong>A border</strong> is correct only when the boundary <em>is</em> the content,
+            and no fill can supply an edge. This occurs when the fill is the subject. The colour
+            swatches below looked like this case: white chips on a white sheet. A tint on the card
+            behind them removed the need for the border.
+          </p>
+          <p class="measure">
+            This page draws lines in three places, and each one is the same case. The rule between
+            the wordmark and the descriptor in the bar above is a separator. The break above each
+            section title is a separator. Both have one function only: to be a boundary. There is
+            nothing else for them to be made of.
+          </p>
+          <p class="measure">
+            The third place is the rules in the tables below. A table wide enough that the eye
+            loses its row between the first column and the last is a tracking problem, not a
+            grouping problem, and space cannot answer it. That case is named in
+            <code>src/base.css</code>, which rules no table itself and leaves the decision to the
+            component.
           </p>
           <h3>The Quantum</h3>
-          <p class="measure sub">
-            At least one <code>[s]</code> sits between any two elements. Nothing that separates two
-            things may go below it. It is a floor and not a default because the failure is
-            one-sided: too much air is a judgement you can disagree with, but too little is a
-            rendering fault — the eye reads the pair as one object and the structure of the page
-            disappears. With no borders left to recover it, there is nothing to fall back on.
+          <p class="measure">
+            At least one <code>[s]</code> goes between any two elements. Nothing that divides two
+            things can go below this value. It is a floor, not a default, because the failure is
+            one-sided. Too much air is a judgement that you can disagree with. Too little air is a
+            fault: the eye reads the two items as one object, and the structure of the page
+            disappears. No borders remain to correct it, so there is nothing to fall back on.
           </p>
-          <p class="measure sub">
-            Everything else counts in whole units. <code>--space</code> is one unit;
-            <code>--space-x2</code> is two. The <code>x</code> matters:
-            <code>--space-2</code> is already the 2px rung, so a count could otherwise be read as a
-            measurement. <code>--gap-tight</code> is the one value below the floor, and it is not a
-            separation — a label and its field are one control, not two elements.
+          <p class="measure">
+            All other values count in whole units. <code>--space</code> is one unit.
+            <code>--space-x2</code> is two units. The <code>x</code> is necessary, because
+            <code>--space-2</code> is already the 2px rung. Without the <code>x</code>, you could
+            read a count as a measurement.
+          </p>
+          <p class="measure">
+            <code>--gap-tight</code> is the one value below the floor, and it is not a division. A
+            label and its field are one control, not two elements.
           </p>
           <h3>Grouping</h3>
-          <p class="measure sub">
-            A rung is a size; these are relationships, and they are what actually replaces the
-            border. Proximity only groups if the gaps are clearly unequal — two groups 10px apart
-            with 8px inside them are not two groups, they are one group with a wobble. So each
-            tier must be at least twice the one below it, and that ratio is asserted.
+          <p class="measure">
+            A rung is a size. These tiers are relationships, and they are what replaces the border.
+            Proximity groups items only if the gaps are clearly unequal. Two groups 10px apart with
+            8px inside them are not two groups. They are one group with a fault in it. Each tier
+            must therefore be at least twice the tier below it. A test asserts this ratio.
           </p>
-          <div id="grouping" class="stack" style="--stack-gap: var(--gap-within)"></div>
+          <div class="docs-table-scroll" role="region" aria-labelledby="grouping-caption" tabindex="0">
+            <table id="docs-grouping" class="docs-table">
+            <caption id="grouping-caption" class="visually-hidden">The grouping tiers, their sizes and what each separates</caption>
+            <thead>
+              <tr>
+                <th scope="col">Token</th>
+                <th scope="col">Size</th>
+                <th scope="col">Measure</th>
+                <th scope="col">What it separates</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          </div>
           <h3>Document rhythm</h3>
-          <p class="measure sub">
-            The prose axis. The grouping tiers rank parts of an interface; this sets the beat of a
-            document you read from top to bottom. Everything gets one unit. A new
-            <code>h1</code> gets two. A heading under a heading stays close, because the pair is one
-            title block. Put <code>.prose</code> on a container and its blocks space themselves.
+          <p class="measure">
+            This is the prose axis. The grouping tiers rank the parts of an interface. This rhythm
+            sets the beat of a document that you read from top to bottom. Each block goes two units
+            below the block before it. Headings are not a special case. Put <code>.prose</code> on
+            a container, and the blocks inside it space themselves.
           </p>
-          <pre><code>H1
-[s]
-P
-[s]
-P
-[s]
-[s]      &lt;- two units: a heading after content starts something new
-H2
-[s]
-H3       &lt;- one unit: a heading under a heading is one title block
-[s]
-P
-[s]</code></pre>
-          <p class="measure sub">
-            <code>.prose</code> has no tokens of its own — it reads <code>--space</code> and
-            <code>--space-x2</code> directly, because two names for one value is drift waiting to
-            happen. The doubled gap is the only signal that a new section starts, so the multiple
-            is exact: a value that merely looks bigger would make the section break a matter of
-            opinion.
+          <p class="measure">
+            There is one number, and no ratio to learn. An earlier model ranked the gaps. It put
+            one unit below a heading and four units above it, so that a heading stayed nearer to
+            the content it named than to the content before it. That model worked. It was replaced
+            on purpose, to get a flat column.
+          </p>
+          <p class="measure">
+            The change has a cost. A heading now sits at an equal distance from the block above and
+            the block below. Only its size and its weight show what it is attached to. Space no
+            longer helps.
+          </p>
+          <p class="measure">
+            A group is not a block. This rhythm applies <em>between</em> blocks. The items inside
+            one group stay at <code>--gap-within</code>. List items, the faces above and the
+            swatches below are all such items. Proximity groups items only while the gap inside a
+            group stays clearly smaller than the gap around it.
+          </p>
+          <p class="measure">
+            <code>.prose</code> has no tokens of its own. It reads <code>--space-x2</code>
+            directly, because two names for one value will cause drift.
           </p>
           <h3>The scale</h3>
-          <p class="measure sub">
-            2px base, and the name is the pixel count — <code>--space-12</code> is 12px at a 16px
-            root. A rung whose name lies is worse than no name, so the identity is asserted in
-            <code>test/tokens.test.js</code>. Strides widen as the scale climbs, because a 2px
-            difference is decisive at 8px and invisible at 64px; they may never narrow.
+          <p class="measure">
+            The base is 2px, and the name of each rung is its pixel count. <code>--space-12</code>
+            is 12px at a 16px root. A rung with a name that lies is worse than a rung with no name,
+            so <code>test/tokens.test.js</code> asserts the identity. The steps get larger as the
+            scale climbs, because a 2px difference is clear at 8px and invisible at 64px. The steps
+            must never get smaller.
           </p>
-          <div id="scale" class="stack" style="--stack-gap: var(--gap-within)"></div>
+          <div class="docs-table-scroll" role="region" aria-labelledby="scale-caption" tabindex="0">
+            <table id="docs-scale" class="docs-table">
+            <caption id="scale-caption" class="visually-hidden">Every rung of the spacing scale and the pixel count it resolves to</caption>
+            <thead>
+              <tr>
+                <th scope="col">Token</th>
+                <th scope="col">Size</th>
+                <th scope="col">Measure</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          </div>
+          <h2>Type</h2>
+          <p class="measure">
+            There are four faces and four jobs. No face takes a second job. A reader must be able
+            to see what kind of item they are looking at before they read it.
+          </p>
+          <p class="measure">
+            Each stack defaults to a face that the platform supplies. There is no webfont, no
+            network request, and no flash of unstyled text. Body and display use the same stack at
+            present, because no platform sets its headings in a serif. They stay separate tokens,
+            so that one can change without the other.
+          </p>
+          <div class="docs-table-scroll" role="region" aria-labelledby="faces-caption" tabindex="0">
+            <table id="docs-faces" class="docs-table">
+            <caption id="faces-caption" class="visually-hidden">The four faces, a specimen of each, and the job it may take</caption>
+            <thead>
+              <tr>
+                <th scope="col">Token</th>
+                <th scope="col">Specimen</th>
+                <th scope="col">Job</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          </div>
+          <h2>Colour</h2>
+          <p class="measure">
+            There is one accent and three answering inks. The accent means <em>you are here</em>.
+            It states a condition, never a result. The three answers have the names of stones. That
+            constraint stops the palette from growing a fifth unclear shade. The page reads each
+            swatch from the live stylesheet, so this table cannot drift from the source.
+          </p>
+          <div id="swatches" class="grid" style="--grid-min: 12rem"></div>
       </section>
 
       <!-- ================================================================ -->
+      <!-- A thematic break before each section title: the markdown "---". It is a
+           SIBLING of the sections rather than a child of one, because the break
+           comes BETWEEN two divisions. A break living inside the division it
+           opens would be announcing that division rather than separating it
+           from the one before. -->
+      <hr />
+
       <section id="structure" class="prose">
         <h1>Structure</h1>
-        <p class="measure sub">
-          One class, on the wrapper. Everything inside is plain semantic markup — an author writes
-          a document, not a set of class names, and the structure stays legible in the source with
-          no stylesheet to decode it. The sample below is real markup rather than a sketch: a test
-          parses it and checks the browser gives back the tree it was given.
+        <p class="measure">
+          There is one class, and it goes on the wrapper. All the markup inside it is plain and
+          semantic. An author writes a document, not a set of class names, and the structure stays
+          clear in the source with no stylesheet to decode it.
         </p>
-        <pre><code>&lt;div class="document"&gt;
+        <p class="measure">
+          The sample below is real markup, not a sketch. A test parses it and checks that the
+          browser returns the tree it was given.
+        </p>
+        <!-- data-lang names the language; docs.js builds the header from it and
+             adds the copy button. The button is built in script and not written
+             here on purpose: without script it cannot copy anything, and a
+             control that cannot act is absent, not disabled. -->
+        <pre><code data-lang="HTML">&lt;div class="document"&gt;
   &lt;nav aria-label="Contents"&gt;
     &lt;ol&gt;
       &lt;li&gt;&lt;a href="#division"&gt;A division&lt;/a&gt;&lt;/li&gt;
@@ -208,31 +370,39 @@ P
     &lt;/footer&gt;
   &lt;/article&gt;
 &lt;/div&gt;</code></pre>
-        <p class="measure sub">
-          The article's own <code>&lt;header&gt;</code> <em>is</em> the banner; they are not two
-          elements. A banner outside the article is not part of the document — a reader who copies
-          the article loses the title, and a screen reader announcing the article starts at the
-          first paragraph.
+        <p class="measure">
+          The article's own <code>&lt;header&gt;</code> <em>is</em> the banner. They are not two
+          elements. A banner outside the article is not part of the document. A reader who copies
+          the article then loses the title, and a screen reader that announces the article starts
+          at the first paragraph.
         </p>
-        <p class="measure sub">
-          <code>&lt;section&gt;</code> holds the paragraphs and figures. It cannot itself be a
-          paragraph: a <code>&lt;p&gt;</code> may not contain a <code>&lt;figure&gt;</code>, and the
-          parser does not complain — it closes the paragraph, lifts the figure out, and leaves a
-          stray empty <code>&lt;p&gt;</code> behind. Your CSS then styles a tree you did not write.
+        <p class="measure">
+          <code>&lt;section&gt;</code> holds the paragraphs and the figures. It cannot itself be a
+          paragraph, because a <code>&lt;p&gt;</code> cannot contain a
+          <code>&lt;figure&gt;</code>. The parser does not report this. It closes the paragraph,
+          moves the figure out, and leaves an empty <code>&lt;p&gt;</code> behind. Your CSS then
+          styles a tree that you did not write.
         </p>
-        <p class="measure sub">
-          A note belongs beside the line that raises it. An <code>&lt;aside&gt;</code> is an
-          ordinary block in the flow until the container is wide enough to hold a margin column
-          without stealing from the measure. That is a container query, not a media query — a
-          document in a narrow pane on a wide screen has a narrow measure and wants the inline
-          form.
+        <p class="measure">
+          A note belongs beside the line that causes it. An <code>&lt;aside&gt;</code> stays a
+          usual block in the flow until the container is wide enough for a margin column. The
+          margin column must not take width from the measure. Use a container query for this, not a
+          media query. A document in a narrow pane on a wide screen has a narrow measure, and it
+          needs the inline form.
         </p>
       </section>
 
       <!-- ================================================================ -->
+      <!-- A thematic break before each section title: the markdown "---". It is a
+           SIBLING of the sections rather than a child of one, because the break
+           comes BETWEEN two divisions. A break living inside the division it
+           opens would be announcing that division rather than separating it
+           from the one before. -->
+      <hr />
+
       <section id="components" class="prose">
         <h1>Components</h1>
-        <p class="measure sub">
+        <p class="measure">
           Nothing here yet, deliberately. The <code>components</code> layer exists and its place in
           the cascade is settled, so the first component can land without reordering anything.
           Conventions for what goes in it are documented at the top of
@@ -241,51 +411,153 @@ P
       </section>
 
       <!-- ================================================================ -->
+      <!-- A thematic break before each section title: the markdown "---". It is a
+           SIBLING of the sections rather than a child of one, because the break
+           comes BETWEEN two divisions. A break living inside the division it
+           opens would be announcing that division rather than separating it
+           from the one before. -->
+      <hr />
+
       <section id="principles" class="prose">
         <h1>Principles</h1>
-        <ol class="measure stack" style="--stack-gap: var(--space)">
+        <!-- The rule, then its reasoning nested under it. The two used to be one
+             paragraph with the rule in bold, which asked the weight to do a
+             structural job: bold says "read this part first", and what was
+             actually meant is "this sentence is the principle and the rest is
+             why". A nested list says that in the markup, so it survives being
+             read aloud, copied, or restyled — and the bold comes off, because
+             the nesting has taken its job.
+
+             The child is an <ol> and keeps its marker, so the pair reads as an
+             outline — 1., then 1. indented under it — rather than as a stray
+             indented sentence. role="list" is deliberately NOT set here: that is
+             what strips the marker, and the marker is the thing doing the
+             work. -->
+        <!-- NO .stack, and no gap between the items at all. It went two units,
+             then one, and both were wrong in the same way: a gap between two
+             items of one list is spacing spent saying they are separate, when
+             what is true of them is that they are the same list. Five principles
+             pushed apart read as five notices; closed up they read as one set of
+             five, which is what they are.
+
+             Nothing is lost by removing it, because nothing was depending on it.
+             The numbering says where each item starts and the indent says which
+             lines belong under which — the outline carries the whole structure,
+             and it did even while the gap was there. -->
+        <ol class="measure docs-principles">
           <li>
-            <strong>Say only what cannot be guessed.</strong> The audience is technical. Do not
-            caption standard affordances; do document what the platform will not allow.
+            Say only what cannot be guessed.
+            <ol>
+              <li>
+                The audience is technical. Do not caption standard affordances; do document what
+                the platform will not allow.
+              </li>
+            </ol>
           </li>
           <li>
-            <strong>A control that cannot act is absent, not disabled.</strong> Greying out asks
-            the reader to work out why; removing states it.
+            A control that cannot act is absent, not disabled.
+            <ol>
+              <li>Greying out asks the reader to work out why; removing states it.</li>
+            </ol>
           </li>
           <li>
-            <strong>A value copied is a value that will drift.</strong> Publish it as a custom
-            property and read it.
+            A value copied is a value that will drift.
+            <ol>
+              <li>Publish it as a custom property and read it.</li>
+            </ol>
           </li>
           <li>
-            <strong>A gap is not a space.</strong> Spacing a unit or a legend with
-            <code>margin</code> or <code>gap</code> produces text that reads as one word to a
-            screen reader and on copy-paste. Use real characters.
+            A gap is not a space.
+            <ol>
+              <li>
+                Spacing a unit or a legend with <code>margin</code> or <code>gap</code> produces
+                text that reads as one word to a screen reader and on copy-paste. Use real
+                characters.
+              </li>
+            </ol>
           </li>
           <li>
-            <strong>Movement is a feature; a printed manual does not bounce.</strong> Under
-            reduced-motion, keep the state change and drop the sweep — somebody who asked for less
-            movement did not ask for less information.
+            Movement is a feature; a printed manual does not bounce.
+            <ol>
+              <li>
+                Under reduced motion, keep the state change and remove the sweep. A person who asked
+                for less movement did not ask for less information.
+              </li>
+            </ol>
           </li>
         </ol>
       </section>
     </main>
 
-          <footer>
-            <p class="sub">
-              Kashinoga Design System · scaffold ·
-              <span class="numeral">0.0.1</span>
-            </p>
-          </footer>
         </div>
 
         <!-- LOCAL: this page only. Built from the headings by docs.js, because
              a contents list written by hand is a second copy of the document
              and will fall out of step with it. -->
         <nav class="docs-rail docs-local" aria-label="On this page">
-          <p class="docs-rail__title">On this page</p>
-          <ul id="docs-toc" role="list"></ul>
+          <div class="docs-rail__inner">
+            <p class="docs-rail__title">On this page</p>
+            <ul id="docs-toc" role="list"></ul>
+          </div>
         </nav>
+
       </div>
+
+      <!-- OUTSIDE the shell, not merely outside the column, and that is what
+           makes the rails let go. A sticky rail is clamped by its grid
+           CONTAINER rather than by its grid area — measured in all three
+           engines — so a footer given a row inside the shell slid underneath
+           two rails that stayed pinned to the top of the window. As a sibling,
+           the shell's box ends here, and the rails ride up and out as this
+           arrives.
+
+           Outside .frame as well, so the band spans the window. The content
+           inside goes back on .frame to line up with the desk above. -->
+      <footer class="docs-footer">
+        <div class="frame">
+          <div class="docs-footer__cols">
+            <div>
+              <p class="docs-footer__mark">Kashinoga</p>
+              <p class="sub">
+                Human interface guidelines for the web, and the CSS that implements them.
+                One entry point, <code>styles.css</code>, in six cascade layers.
+              </p>
+            </div>
+
+            <nav aria-label="Foundations">
+              <p class="docs-footer__title">Foundations</p>
+              <ul role="list">
+                <li><a href="#space">Space</a></li>
+                <li><a href="#type">Type</a></li>
+                <li><a href="#colour">Colour</a></li>
+              </ul>
+            </nav>
+
+            <nav aria-label="Reference">
+              <p class="docs-footer__title">Reference</p>
+              <ul role="list">
+                <li><a href="#structure">Structure</a></li>
+                <li><a href="#components">Components</a></li>
+                <li><a href="#principles">Principles</a></li>
+              </ul>
+            </nav>
+
+            <div>
+              <p class="docs-footer__title">The source</p>
+              <ul role="list">
+                <li><code>src/tokens.css</code>: every token</li>
+                <li><code>test/</code>: read as text</li>
+                <li><code>runtime/</code>: read as pixels</li>
+              </ul>
+            </div>
+          </div>
+
+          <p class="sub docs-footer__colophon">
+            Kashinoga Design System · scaffold ·
+            <span class="numeral">0.0.1</span>
+          </p>
+        </div>
+      </footer>
     </div>
 
     <script type="module" src="docs.js"></script>

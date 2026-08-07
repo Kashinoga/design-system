@@ -17,73 +17,389 @@
      area that can actually move — it starts under the bar instead of running
      the full height of the window past chrome that never goes anywhere.
 
-     A second thing falls out of this for free: content can no longer pass
-     underneath the bar, because it is clipped at the region's top edge. The
-     boundary between chrome and content stops being a moving one. */
+     The bar OVERLAYS this region rather than sitting above it, so content does
+     pass underneath and the bar frosts what is behind it. That is the reverse
+     of the earlier arrangement, in which the region's top edge clipped
+     everything and the chrome/content boundary was fixed. See .docs-scroll for
+     what the swap bought and what it cost. */
   body {
+    /* Declared here rather than on .docs-bar, because the scroll region has to
+       know it too: the bar overlays the region now, so the region reserves the
+       bar's height as padding and the rails offset their sticky point by it. A
+       height only the bar knew was fine while the bar was a flex row above the
+       region and nothing else had to measure against it. */
+    --docs-bar-height: 2.625rem; /* 42 */
     block-size: 100svb;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+
+    /* Positioned for the same reason .docs-scroll is: so that nothing absolute
+       escapes to the document and gives the window something to scroll. The
+       scroll region catches everything inside it; the skip link is a child of
+       <body> and outside it, so the containment has to start here.
+
+       It costs nothing — body has no offsets — and it makes the rule absolute
+       rather than nearly true. The skip link sits at the top of the document,
+       so it added no scroll range and would have gone on looking harmless until
+       something absolute turned up further down. */
+    position: relative;
   }
 
   .docs-scroll {
     flex: 1 1 auto;
     overflow-y: auto;
-    /* Reserve the scrollbar even when there is nothing to scroll, so the
-       region's width does not change as content grows and the bar above it
-       does not have to be re-measured. */
-    scrollbar-gutter: stable;
+
+    /* POSITIONED, and this one line is a bug fix rather than a convenience.
+
+       .visually-hidden is position: absolute — the skip link and every table's
+       caption. An absolutely positioned box is contained by its nearest
+       POSITIONED ancestor, and there was not one: not this region, not the
+       shell, not the body. So their containing block was the document itself.
+       They were not clipped by body's overflow, and their static positions,
+       thousands of pixels down the document, gave <html> a scrollable height of
+       3470 against a window of 911.
+
+       Nothing showed it. They are one pixel square and clipped to nothing, so
+       the page looked right and the only symptom was elsewhere: the ROOT could
+       now scroll. Clicking a contents link near the end of the document let the
+       browser satisfy the target's scroll-margin by scrolling the region as far
+       as it went and then taking the shortfall out of the window — the whole
+       document slid up and left a band of bare page under the footer that
+       nothing would clear.
+
+       Positioning the region contains them. <html> goes to a scroll range of
+       zero, so there is no longer anywhere for a shortfall to go. */
+    position: relative;
+    /* THE CONTENT PASSES UNDER THE BAR, and that is a reversal.
+
+       It used to be the opposite, deliberately: the bar was a flex row above
+       this region, so the region's top edge clipped everything and "the
+       boundary between chrome and content stops being a moving one". That was
+       true and it is now given up on purpose, because a frost is exactly a
+       moving boundary made legible — it shows the reader that there is more
+       document above the fold, which a hard edge cannot say.
+
+       The region therefore runs the full window and holds its first line clear
+       of the bar with padding. Scrolled, the text slides underneath and the
+       blur reports it.
+
+       The scrollbar still starts under the bar. That was written up here as an
+       unavoidable cost — one edge doing two jobs, no way to keep both — and the
+       claim was wrong. It holds only for the DEFAULT scrollbar; a styled one
+       has a track, and a track takes a top margin. See the scrollbar block
+       below. */
+    padding-block-start: var(--docs-bar-height);
+    /* A column of two: the desk, then the footer under it. The desk takes the
+       slack so a short page still reaches the bottom of the region — which is
+       the job --docs-shell's min-block-size used to do on its own, and cannot
+       any more now that it has a sibling below it to share the region with. */
+    display: flex;
+    flex-direction: column;
+    /* NO scrollbar-gutter, where it used to say "stable". That reserved the
+       scrollbar's width whether or not one was showing, so the region's width
+       could not change as content grew — and it is not needed here, because the
+       scrollbar is styled below and a styled scrollbar always takes its width.
+       Setting both would be one instruction saying the same thing twice. */
     /* Don't hand a scroll gesture that runs out of room here up to the window,
        which has nowhere to go and would only rubber-band. */
     overscroll-behavior: contain;
-    /* Anchor links land inside this container now, and the bar is outside it,
-       so a heading lands at the top of the region with nothing covering it —
-       no offset hack required. */
-    scroll-padding-block-start: var(--gap-within);
+    /* NO scroll-padding here, and that is not an omission. The obvious fix for
+       a bar that covers its own anchors is scroll-padding-block-start on the
+       scroll container, and it does nothing on this one: the value computes to
+       58px and every heading still lands at 0, under the bar. Measured, in a
+       browser, before and after. The region already carries a real
+       padding-block-start of the same bar height, and the scrollport is the
+       padding box, so the inset has nowhere left to inset from.
+
+       The job is done on the TARGETS instead — see the rule below, which does
+       work. A declaration that computes correctly and changes nothing is worse
+       than none: it reads as solved. */
+  }
+
+  /* --- The region's own scrollbar ----------------------------------------
+     THE TRACK STARTS BELOW THE BAR, and that is the real answer to a problem
+     this page first solved by covering it up.
+
+     The reasoning that said it could not be done was sound as far as it went: a
+     scrollbar runs the length of its container's padding box, and that is the
+     same edge that decides where content is clipped, so the two cannot be
+     separated. True of the DEFAULT scrollbar. A styled one has a track, and a
+     track takes a margin.
+
+         margin-block-start: var(--docs-bar-height)
+
+     is the whole trick. The thumb can no longer travel into the bar's 42px,
+     because its track does not go there. Nothing is painted over anything.
+
+     STATE THE WHOLE SET, because styling any ::-webkit-scrollbar part opts the
+     element out of the platform's overlay scrollbars. Half a rule leaves a
+     classic bar with default parts.
+
+     LITERAL COLOURS, and this is the one place in this file that breaks the
+     no-literals habit. Custom properties and color-mix() do not resolve inside
+     ::-webkit-scrollbar parts: the declaration dies silently and the thumb
+     paints nothing at all. The dark arm is therefore written out twice, once
+     for the system preference and once for the forced scheme, because
+     light-dark() cannot reach in here either. */
+  .docs-scroll::-webkit-scrollbar {
+    inline-size: 10px;
+  }
+
+  .docs-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block-start: var(--docs-bar-height);
+  }
+
+  /* The border is transparent and clipped to the padding box, which insets the
+     thumb inside its own lane without a second element to do it. */
+  .docs-scroll::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.28);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    border-radius: 4px;
+  }
+
+  .docs-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.45);
+    background-clip: padding-box;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-scheme="light"]) .docs-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      background-clip: padding-box;
+    }
+    :root:not([data-scheme="light"]) .docs-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+      background-clip: padding-box;
+    }
+  }
+
+  :root[data-scheme="dark"] .docs-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    background-clip: padding-box;
+  }
+
+  :root[data-scheme="dark"] .docs-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+    background-clip: padding-box;
+  }
+
+  /* FIREFOX ONLY, and the guard is not politeness. Firefox has no
+     ::-webkit-scrollbar and no track margins, so its thumb runs the full height
+     and shows through the bar's frost, dimmed. scrollbar-color at least keeps it
+     on the palette.
+
+     It must NOT reach Chromium: a scrollbar-color other than auto DISABLES every
+     ::-webkit-scrollbar rule above it, track margin included, which is the whole
+     mechanism. @supports not selector() is what keeps the two apart. */
+  @supports not selector(::-webkit-scrollbar) {
+    .docs-scroll {
+      scrollbar-color: color-mix(in srgb, var(--ink) 30%, transparent) transparent;
+    }
+  }
+
+  /* Every anchor target clears the bar. scroll-margin sits on the thing being
+     scrolled to rather than on the thing doing the scrolling, and it is honoured
+     where scroll-padding was not: the heading comes to rest at 58, which is the
+     bar plus one within-group gap.
+
+     [id] rather than a list of heading levels, because the global rail links to
+     <section> elements and the local one links to headings. Anything a link can
+     aim at is an anchor target and needs the same clearance. */
+  .docs-scroll [id] {
+    scroll-margin-block-start: calc(var(--docs-bar-height) + var(--gap-within));
   }
 
   /* --- The shell: global rail, text, local rail --------------------------
-   The layout the grid derivation already produced, now with something in it:
+   The layout the width derivation already produced, now with something in it:
 
-       7  +  11  +  7  =  25 columns  =  1200
+       224  +  832  +  224  =  1280
        global   text   local
 
-   Narrow first. Below the width where all three fit, the rails are not shown
-   at all — a rail squeezed to four columns is unreadable, and stacking them
-   above the text puts two lists between the reader and the first paragraph.
-   The superbar keeps the page usable without them.
+   Narrow first, and narrow means STACKED rather than absent: global rail, text,
+   local rail, in that order down the page. Hiding them was the earlier plan and
+   it stopped being possible when the section links moved off the superbar and
+   into the global rail — hiding the rail would now leave the page with no
+   navigation at all. Two short lists either side of the text is the smaller
+   cost.
 
-   The breakpoint is where the frame actually reaches 25 columns, not a device
-   size: 1240 is 1200 plus its two gutters. Below it the frame is capped at the
-   18-column tier, which cannot hold two rails and a measure. */
+   The rails then arrive ONE AT A TIME, at the two widths where the frame itself
+   grows. The page never shows a rail the frame has not made room for, and never
+   leaves room it does not use:
+
+       under 1024   stacked        the frame is content only
+       1024         global rail    the frame is content + one rail
+       1312         both rails     the frame is the sheet + both rails
+
+   Which rail comes first is not arbitrary. The global one is site navigation
+   and is the same on every page, so a reader looking for it expects it in the
+   same place whatever they are reading. The local contents list is rebuilt per
+   page and is the one that can afford to wait. */
   .docs-shell {
-    --docs-rail: calc(3 * var(--column)); /* 192 */
+    --docs-rail: var(--rail);
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+
+    /* Narrow: one column, and the three children stack — global rail, text,
+       local rail. Only the middle one may absorb the leftover height, so the
+       rows are named rather than left implicit.
+
+       Left implicit they are three auto tracks, and a grid shares its free
+       space equally among every auto track it has. The footer then came to rest
+       358px off the bottom in all three engines, because two thirds of the
+       spare height had been handed to the two lists.
+
+       THE FOOTER IS NOT IN HERE, and that is load-bearing rather than tidy —
+       see the note on .docs-footer. A row of its own inside this grid was tried
+       first and does not work: a sticky rail is not clamped by its grid AREA,
+       only by the grid container's own box, so the rails stayed pinned over a
+       footer sitting in the row beneath them. Measured in all three engines. */
+    grid-template-rows: auto 1fr auto;
+
+    /* Fill the scroll region even when the page is short. Without this the
+       shell is only as tall as its content, and a page with two paragraphs on
+       it left the footer floating in the middle of the window with 584px of
+       bare page under it — measured, not guessed.
+
+       100% and not 100svb: the scroll region is the window MINUS the bar, and
+       CSS cannot subtract a height it has not been told. The percentage can,
+       because .docs-scroll is a flex item whose height the flex layout has
+       already resolved.
+
+       flex: 1, and it used to be min-block-size: 100%. The old value said "at
+       least the whole region", which was right while the footer lived inside
+       the shell and wrong the moment it moved out: the desk would still claim
+       the full region, and the footer would sit below the fold on every page,
+       however short. A reader would have had to scroll a two-paragraph document
+       to reach the colophon.
+
+       As a flex item it takes what is LEFT of the region after the footer, so a
+       short page shows both without scrolling and the footer still lands on the
+       bottom edge.
+
+       Grow, never a fixed basis. A long page must still grow past the region
+       and scroll; a ceiling here would clip it. */
+    flex: 1 0 auto;
   }
 
-  /* Four columns each side. 4 + 22 + 4 = 30 columns = 1440, all whole.
+  /* One rail, at the width where the frame first holds one. The track pair is
+     224 + 768, which IS the frame at this step, so the text sits at its full
+     measure and nothing is left over.
 
-     It started as 1fr 5fr 1fr, which is the right PROPORTION but the wrong
-     mechanism: sevenths of 1440 are 205.71, so the content region came out
-     fractional and every track of every grid inside it inherited the fraction.
-     A ratio that has to divide the frame cannot also land on the grid unless
-     the frame happens to be divisible, and 1440 is not divisible by seven.
+     Fixed rail, not a fraction of the frame. It started as 1fr 5fr 1fr, which is
+     the right PROPORTION but the wrong mechanism: sevenths of the frame are
+     fractional, so the text region came out fractional and every track of every
+     grid inside it inherited the fraction. A rail is a fixed thing — it holds a
+     list of words, and its width answers to the words, not to the window.
 
-     Fixed rails of four columns give 1 : 5.5 : 1, which is within a rounding of
-     the ratio asked for and lands exactly on column lines. The proportion was
-     the goal; the arithmetic decides how to reach it.
-
-     Four rather than seven because at seven the rail sat 336 from the text and
-     read as belonging to the window rather than to the document. A nav you have
-     to track across empty space to reach reads as belonging to the window; 192
-     is close enough to feel attached. */
-  @media (min-width: 90.5rem) {
+     The local rail is out of the flow at this step, which is why the row ladder
+     is still `auto 1fr auto`: it is stacked below the text, exactly as it is at
+     the narrow size. */
+  @media (min-width: 64rem) {
     .docs-shell {
-      grid-template-columns: var(--docs-rail) minmax(0, 1fr) var(--docs-rail);
-      align-items: start;
+      grid-template-columns: var(--docs-rail) minmax(0, 1fr);
+      /* Two rows: the text and the local rail beneath it. The first takes the
+         slack, so the shell still reaches the foot of the region. Get this
+         wrong and the spare height lands on the contents list instead, which is
+         the same fault the stacked ladder was written to avoid. */
+      grid-template-rows: 1fr auto;
     }
+
+    /* The global rail spans both rows so it starts at the top of the shell,
+       beside the text rather than above it. Without this it takes the first
+       implicit row on its own and pushes everything down. */
+    .docs-global {
+      grid-row: 1 / -1;
+    }
+  }
+
+  /* Both rails. 224 + 832 + 224 = 1280, and again that IS the frame — the middle
+     track is the SHEET, margin included, not the bare measure.
+
+     224 rather than anything wider because a rail that sits far from the text
+     reads as belonging to the window rather than to the document. A nav you have
+     to track across empty space to reach has stopped being part of what you are
+     reading. */
+  @media (min-width: 82rem) {
+    .docs-shell {
+      /* GUTTERS ALL ROUND, and the frame does not move to get them.
+
+         BELOW THE [s] FLOOR, at 8, and that needs saying because the floor is
+         the base rule of the whole spacing model: nothing that separates two
+         elements may go under one unit.
+
+         What the floor protects against is space being asked to carry a
+         separation on its own. "With no borders left to recover it, there is
+         nothing to fall back on" — that is the reason, and it does not apply
+         here. These three regions are already told apart by colour: a recessed
+         band, a page-coloured gutter and a lit sheet are three different fills
+         meeting at two edges. The gutter is not making the boundary, it is
+         giving the boundary room. Eight is enough for that and sixteen was more
+         than the job needed.
+
+         Anywhere the gap IS the only signal, the floor still stands.
+
+         The rail region was always 224. It gives up the gutter and keeps the
+         rest:
+
+             216  +  8  +  832  +  8  +  216  =  1280
+             band   gap  sheet   gap  band
+
+         Same total, same measure, same 832 sheet. Only the ownership of the 8
+         changed, from the band to the space beside it.
+
+         The gutter shows the PAGE, and that is why the paint had to move off
+         the shell and onto the bands. A shell painted --recessed fills its own
+         gutters with --recessed, which is the rail colour, which is no gutter
+         at all. Unpainted, the shell shows the body through the gap, and the
+         desk reads as three things lying on a surface rather than as one slab
+         cut into stripes. */
+      grid-template-columns:
+        calc(var(--docs-rail) - var(--space-8))
+        minmax(0, 1fr)
+        calc(var(--docs-rail) - var(--space-8));
+      column-gap: var(--space-8);
+      /* The same figure above and below, so the desk is inset on all four sides
+         rather than running off the top and bottom of the region. */
+      padding-block: var(--space-8);
+      /* All three now sit on ONE row, so the stacked ladder above is wrong here:
+         it would hand the spare height to an empty second track and leave the
+         row that holds the page content sized to its content. One track, and it
+         takes everything.
+
+         One track is also what lets the rails go. The shell's box ends where
+         this row ends, the footer is the next thing in the region, and a sticky
+         element IS clamped by its grid container's box — so the rails travel up
+         and out exactly as the footer arrives. */
+      grid-template-rows: 1fr;
+    }
+
+    .docs-global {
+      grid-row: auto;
+    }
+  }
+
+  /* The text column has to STRETCH to the shell's height, or the row it sits in
+     is content-sized and there is no bottom for the footer to reach. That is why
+     `align-items: start` came off the shell above: it start-aligned all three
+     children, and the rails are the only two that want it. They say so
+     themselves now, one rule below. */
+  .docs-column {
+    display: grid;
+    /* ONE row now. It was `1fr auto` — the text taking the slack and the footer
+       sitting under it — and the second track went with the footer when the
+       footer left the column for a band of its own across the shell. A track
+       with nothing in it is not inert documentation; it is a place for the next
+       child added here to land silently and not stretch. */
+    grid-template-rows: 1fr;
+    /* minmax(0, 1fr) and not a bare 1fr. A grid item's automatic minimum size
+       is its content's, so making this element a grid handed <main> a floor of
+       whatever the widest code sample wants to be — 422px of sideways scroll at
+       320px viewport, in all three engines. The row structure is the change
+       being made here; the column had to be pinned to stop it coming with it. */
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /* Sticky, and always present. In a long document the whole point of a rail is
@@ -94,14 +410,42 @@
      would otherwise produce a rail taller than the screen whose bottom half is
      unreachable. overscroll-behavior stops a gesture that runs out of rail from
      grabbing the document behind it. */
+  /* THE BAND. It stretches to the row and paints; it does not stick. Splitting
+     the two jobs is what lets the desk have gutters — see the note on the shell
+     grid. Before the split, the band WAS the sticky element, which meant it had
+     to be painted by the shell behind it, which meant the shell's paint filled
+     the gutters too and there were no gutters to have. */
   .docs-rail {
+    font-size: var(--text-sm);
+  }
+
+  /* The list, and it is the part that follows the reader. Its containing block
+     is the band above, which is a plain stretched box, so it stops exactly at
+     the foot of the desk. */
+  .docs-rail__inner {
     position: sticky;
-    inset-block-start: 0;
+    /* One unit down, matching the gutter above the desk. Pinned at 0 the list
+       would come to rest hard against the bar and close the gap that every
+       other edge of the desk keeps. */
+    /* Measured from the scrollport, which is the region's PADDING box — and
+       that box already starts below the bar, because the region reserves the
+       bar's height there. Adding the bar height again put the list 92px down
+       instead of 50, a whole superbar lower than the gutter it is meant to
+       match. */
+    inset-block-start: var(--space-8);
+    /* As tall as its list and no taller, capped at the window: a page with forty
+       headings would otherwise produce a rail taller than the screen whose
+       bottom half is unreachable. overscroll-behavior stops a gesture that runs
+       out of rail from grabbing the document behind it. */
     max-block-size: 100svb;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding-block: var(--space-x2);
-    font-size: var(--text-sm);
+    /* One unit, the same as the band's inline inset, so the list sits in an
+       even margin inside its band. It was two, which was set when the band was
+       unpainted and its padding was the only thing holding the list off the
+       text. The band has edges now and 32 read as a list that had drifted down
+       from its own top. */
+    padding-block: var(--space);
   }
 
   .docs-rail ul {
@@ -125,22 +469,134 @@
     text-decoration: underline;
   }
 
-  /* One unit of indent, not one grid column. A column is 48 and pushed the
-     nested entries most of the way across a 192 rail, which reads as a second
+  /* One unit of indent. It was a grid column once — 64 of a 192 rail — which
+     pushed the nested entries a third of the way across and read as a second
      list rather than as children of the line above. The rail is chrome and its
      hierarchy only has to be legible, not measured. */
   .docs-rail [data-depth="3"] {
     padding-inline-start: var(--space);
   }
 
-  /* The rails take their gutter from inside their own region, as every region
-     in this system does — never as a gap between two of them. */
+  /* --- [grey] [white] [grey] ----------------------------------------------
+     The desk model, ported from the Text Editor: the reading column is a sheet
+     and the two rails are the stock it is laid on. The sheet is the only white
+     on the page, which is the whole point of it — a reader can see which column
+     is the work before reading a word of it.
+
+     NOT ONE WIDTH MOVES. The grid still tiles 224 + 768 + 224 into 1216 and the
+     measure is still 768. What changes is who PAINTS the region gutter: it was
+     32 of rail, and it is now 32 of sheet. The boundary used to be grey against
+     grey and needed a gap to be visible at all; it is now grey against white,
+     and a colour change needs no gap to be read. So the same 32 does a different
+     job in the same place — it went from being the boundary to being the sheet's
+     own margin round its text.
+
+     THE STOCK IS PAINTED ON THE SHELL, not on the two rails. Painting the rails
+     was the obvious way and it was wrong on sight: a rail is sticky and only as
+     tall as its list, so the grey stopped level with the last link and the whole
+     thing read as a card floating on the page rather than as the stock the sheet
+     is laid on. The shell already fills the scroll region — that is what its
+     min-block-size is for — so painting it once gives two full-height bands and
+     needs no second element to do it. */
+  /* The rails keep their padding, exactly as before. Their gutter is still taken
+     from inside their own region — the arithmetic has not moved. */
   .docs-global {
-    padding-inline-end: var(--column-gap);
+    padding-inline-end: var(--gap-region);
   }
 
   .docs-local {
-    padding-inline-start: var(--column-gap);
+    padding-inline-start: var(--gap-region);
+  }
+
+  /* AT THE FULL STEP ONLY, and that is not a shortcut — it is where the model
+     means anything and the only width where its arithmetic closes.
+
+     Means anything: the desk exists to say which of three columns is the work.
+     With one rail or none there is nothing to tell apart, and the reading column
+     is already the whole page.
+
+     Closes: the sheet has to reach over the gutter on BOTH sides to keep the
+     measure whole, and only the three-column frame has a rail on both sides to
+     reach into. Tried at every width first, and 320px reported 16px of sideways
+     scroll in all three engines — the overhang was hanging off the end of a
+     frame with nothing under it. */
+  @media (min-width: 82rem) {
+    /* THE STOCK, and it is painted on the two bands rather than on the shell.
+
+       It was on the shell, on the argument that a rail is sticky and only as
+       tall as its list — painted on the rail, the stock stopped level with the
+       last link and read as a card floating on the page. That argument was
+       sound and it has been answered rather than overruled: the band and the
+       sticky list are two elements now, so the band can stretch to the row and
+       paint while the list inside it still follows the reader.
+
+       The shell must NOT be painted, which is the point of moving it. A painted
+       shell fills its own column gutters, and a gutter in the rail colour is
+       not a gutter. Unpainted, the body shows through the gap. */
+    .docs-rail {
+      background-color: var(--recessed);
+      /* Rounded now that the gutters have lifted it off the page. A band that
+         tiled edge to edge had no corners to round; one that floats does, and a
+         square corner on a floating panel reads as a panel that has been cut
+         off rather than laid down.
+
+         --radius-key, not --radius-sheet. tokens.css names the two radii as two
+         MATERIALS rather than two sizes: paper barely rounds, moulded plastic
+         rounds more. A floating panel is nearer the second, and at 2px a corner
+         lifted off the page is not visibly a corner at all. The token's name is
+         doing less work than it was, since a desk column is not a key; what it
+         still names correctly is the amount. */
+      border-radius: var(--radius-key);
+    }
+
+    /* The sheet IS its track. It used to overhang by the region gutter on each
+       side — a negative margin given straight back as padding — and that worked
+       in pixels while lying about the structure: the grid lines fell 32 inside
+       the colour boundaries, so the inspector's overlay and the page disagreed
+       about where a column was. A track that has to be corrected by a margin is
+       a track that was measured wrong.
+
+       The tracks are now the bands, so every line the browser draws lands on an
+       edge you can see. All the sheet does here is paint itself and hold its
+       text off its own edge:
+
+           832 track  =  32 padding + 768 measure + 32 padding */
+    .docs-column {
+      background-color: var(--surface);
+      padding-inline: var(--gap-region);
+      /* The same corner the bands take. The sheet floats on the same page they
+         do, so it is the same kind of object and rounds the same amount. */
+      border-radius: var(--radius-key);
+    }
+
+    /* --- A band has edges, so its contents have to stop short of them -------
+       This is new debt the desk created, and it did not exist a step down. A
+       rail used to sit ON the page with nothing to touch: its list started at
+       the frame's edge exactly as the text did, and the two lined up. Paint the
+       band and the same flush edge becomes a fault — the list runs into the
+       stock's outer edge on one side and into the sheet's on the other, and text
+       hard against a colour change reads as text that has been cut off.
+
+       One unit inside the band, both sides, so the list is centred in the 192
+       that stays visible:
+
+           16  +  160  +  16   =  192      the band
+                                +  32      the sheet's overhang
+                                = 224      the rail region, unchanged
+
+       Symmetric, and it overrides the region gutter the rails carry at every
+       narrower step. That gutter existed to hold the list off the TEXT when
+       there was nothing between them; here the sheet's own 32 does that job from
+       its side, and the rail only has to keep clear of the colour change.
+
+       [s] and not the sheet's 32. A rail is chrome; giving it the sheet's inset
+       would spend a third of the list's width saying what the colour change
+       already says. The sheet is content and can afford to be generous — that
+       asymmetry is deliberate, and it is why the list ends up 192 inside a 224
+       band while the text gets 768 inside an 832 one. */
+    .docs-rail {
+      padding-inline: var(--space);
+    }
   }
 
   main {
@@ -150,8 +606,119 @@
     padding-block: var(--space-x2);
   }
 
-  footer {
-    padding-block-end: var(--gap-section);
+  /* --- The footer ---------------------------------------------------------
+     A band under the desk, spanning the window.
+
+     STEP 2, COLOUR, and it earns the step the same way the superbar does. This
+     is not a grouping problem that space could have solved — a gap says "a
+     later part of the same document", and the footer is a DIFFERENT KIND of
+     thing from the text, which is an identity distinction space cannot make at
+     any distance. So it takes a fill, and --recessed is the fill it takes:
+     the same stock the rails are cut from, because a colophon and a set of
+     links are apparatus exactly as the two rails are, and the sheet stays the
+     only white on the page.
+
+     It paints its own, and there is a version of this that did not. While the
+     footer sat inside the shell, the shell's own --recessed showed through and
+     no fill was needed here — true, and it stopped being true the moment the
+     band moved outside the shell to let the rails go. A wash inherited from a
+     parent you no longer have is not inherited.
+
+     No line, still. The fill is the boundary. */
+  /* OUTSIDE THE SHELL, as a sibling in the scroll region, and that placement is
+     the whole feature rather than a matter of taste.
+
+     A sticky element is clamped by its containing block, and for a grid item
+     that ought to be its grid AREA. It is not — measured in Chromium, Gecko and
+     WebKit alike, a sticky grid item roams the whole grid CONTAINER and ignores
+     the area's edge. So a footer given its own row inside .docs-shell left the
+     rails pinned to the top of the window while it slid underneath them, which
+     is exactly the thing this was built to stop.
+
+     A sibling fixes it without a hack. The shell's box now ends where the
+     footer begins, the shell IS the rails' grid container, and clamping against
+     a grid container's own box works everywhere. The rails ride up and out as
+     the footer comes in, which is the behaviour that was asked for.
+
+     Being outside .frame also means the band is full-bleed — it spans the
+     window rather than stopping at the 1280 the desk is centred in — and the
+     content inside it goes back on .frame so it still lines up with the desk
+     above. A footer that stopped at the frame's edge would read as one more
+     column of the document instead of as the end of it. */
+  .docs-footer {
+    padding-block: var(--gap-section);
+    background-color: var(--recessed);
+    font-size: var(--text-sm);
+  }
+
+  /* The band is full width; its contents are not. Same frame the desk uses, so
+     the first footer column starts on the same vertical as the Sections rail
+     and the colophon ends where the local rail does. */
+  .docs-footer > .frame {
+    padding-inline: var(--space);
+  }
+
+  /* Groups side by side, so the gap between them is a between-groups gap and
+     the gap inside each is a within-group one. auto-fit rather than a fixed
+     count: the four columns fold to two and then to one as the band narrows,
+     and no breakpoint has to be written to say so. */
+  .docs-footer__cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--gap-between);
+  }
+
+  /* ONE UNIT INSIDE A COLUMN, said once for every column rather than hung off
+     the elements that happen to be in them.
+
+     It was a margin on __title alone, which spaced the three link columns and
+     silently did nothing for the brand column — that one leads with the
+     wordmark rather than a label, so its heading and its sentence came out
+     touching. A rule that only fits three of four cases was describing the
+     markup, not the rhythm.
+
+     Stated as a gap on the column, every child is one unit from the next
+     whatever it is: mark to sentence, label to list, and the list's own items
+     already agree because they are one more level of the same thing. Half the
+     32 between the columns, which is the rule the whole page runs on — what is
+     inside a group sits at half what separates the groups. */
+  .docs-footer__cols > * {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-within);
+  }
+
+  .docs-footer__cols ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-within);
+  }
+
+  .docs-footer__mark {
+    font-weight: var(--weight-strong);
+  }
+
+  /* The same treatment a rail's title gets, because it is the same job: a label
+     over a list, saying what the list is. No margin — the column's gap above
+     places it. */
+  .docs-footer__title {
+    color: var(--sub);
+    font-size: var(--text-xs);
+  }
+
+  .docs-footer a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .docs-footer a:hover {
+    text-decoration: underline;
+  }
+
+  /* One section gap under the columns, which is the same distance the document
+     above uses between its own blocks. The colophon is a block after a block. */
+  .docs-footer__colophon {
+    margin-block-start: var(--gap-section);
   }
 
   /* STEP 2, COLOUR — but note the reason changed when the shell went in. It is
@@ -167,9 +734,38 @@
      is near-white and it lightens away. One percentage, both directions
      correct. A literal grey would have to be two values and would drift. */
   .docs-bar {
-    flex: none;
-    background-color: color-mix(in srgb, var(--ink) 6%, var(--surface));
-    padding-block: var(--space-12);
+    /* 42, fixed, and stated as a height rather than as padding round whatever
+       happens to be in it.
+
+       A superbar is chrome: it is the same on every page and it should be the
+       same height on every page. Sized by its contents it is not — add a control
+       with one more pixel of padding and the whole page below shifts down, and
+       nothing in the markup says why. A fixed height also gives the scroll
+       region below a fixed size, which is what the sticky footer measures
+       against.
+
+       42 is not on the spacing scale, and it is not meant to be. The scale
+       measures the space BETWEEN two elements; this is the size OF one, which
+       tokens.css exempts in the same breath as it exempts measured type heights.
+       It does land on the 2px atom, which is the rule that does apply.
+
+       The bar holds a 24px line box, so the air is (42 - 24) / 2 = 9 at each
+       edge. 9 is off the atom, which is exactly why it is not written down:
+       centring produces it, and a value nobody declares cannot drift. */
+    /* Out of the flow and over the region. Fixed rather than sticky: the body
+       does not scroll, so there is nothing for a sticky bar to stick to. */
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 2;
+    block-size: var(--docs-bar-height);
+    display: flex;
+    align-items: center;
+
+    /* The chrome fill, named so the frosted version below can be mixed out of
+       it rather than being a second colour that has to be kept in step. */
+    --docs-bar-fill: color-mix(in srgb, var(--ink) 6%, var(--surface));
+    background-color: var(--docs-bar-fill);
 
     /* The bar sits OUTSIDE the scroll region, so its frame centres in the full
        width while main's frame centres in the width MINUS the scrollbar. The
@@ -184,6 +780,35 @@
     padding-inline-end: var(--scrollbar-width, 0px);
   }
 
+  /* THE FROST. The bar keeps its own colour and lets the document show through
+     it, so a reader can see that there is more above the fold than the fold
+     admits. A hard edge cannot say that; it looks the same whether the page is
+     scrolled to the top or halfway down.
+
+     Mixed out of --docs-bar-fill rather than declared as a second colour, so
+     the frosted bar and the solid fallback cannot drift apart. 78% keeps the
+     bar plainly chrome — at much less it starts reading as a tint over the
+     text, which is the failure this is not allowed to have: the wordmark has to
+     stay legible over whatever passes beneath it.
+
+     BEHIND @supports, and the fallback is the point rather than politeness.
+     Without backdrop-filter the translucent fill alone would leave text showing
+     through the bar unblurred and at full contrast, which is worse than no
+     effect at all. Engines that cannot blur keep the opaque bar.
+
+     ONLY WHEN SCROLLED. A bar frosted at rest is translucent over nothing: the
+     document starts below it, so the blur reports a plain page and the bar
+     merely looks weaker than it is. docs.js adds .scrolled once the region has
+     moved, so the effect appears exactly when there is something behind it to
+     show. */
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .docs-bar.scrolled {
+      background-color: color-mix(in srgb, var(--docs-bar-fill) 78%, transparent);
+      -webkit-backdrop-filter: blur(var(--space-8));
+      backdrop-filter: blur(var(--space-8));
+    }
+  }
+
   .docs-bar .frame {
     display: flex;
     flex-wrap: wrap;
@@ -191,8 +816,127 @@
     gap: var(--space);
   }
 
+  /* --- The lockup: mark, name, rule, descriptor ---
+     ONE number sets this whole assembly: the rule is inset from the bar by 12 on
+     all four sides. That fixes its height at 42 - 24 = 18 and its side spacing
+     at 12, so the space around it and the length of it are the same decision
+     rather than two that have to be kept in agreement.
+
+     Taken from the superbar on kashinoga.com/about/work, measured rather than
+     eyeballed: a 1px rule, 18 tall, 12 from the top of a 42px bar and 12 from
+     each neighbour. That page reaches the 12s a different way — a 32px flex gap
+     with a -20 inline margin pulling the rule back in — and the arithmetic is
+     what matters, not the route to it.
+
+     12 is under the [s] floor, and the floor permits it for the reason it always
+     does: this is not a separation. The RULE is the boundary. Space is not being
+     asked to carry anything here, so it is free to be tight, and the floor
+     exists for the case where space is the only thing carrying it. */
+  .docs-lockup {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-12);
+  }
+
+  /* THE ONE LINE ON THIS PAGE, and the third step of the escalation used where
+     the third step is right: the boundary IS the content. A separator has no
+     other job — there is nothing else for it to be, and no amount of space or
+     colour can say "these are two different kinds of thing" as flatly as a rule
+     between them.
+
+     A filled 1px box, not a border property. Same pixels, and the reference
+     implementation does it the same way, but a background cannot be inherited
+     into a shorthand or half-overridden on one edge later.
+
+     Height derived, not stated: the bar less its inset, twice. Change
+     --docs-bar-height and the rule re-fits itself. The token is declared on
+     .docs-bar and inherits down to here, so this rule is bar-only by
+     construction — the calc goes invalid anywhere else and an empty span with no
+     height simply does not paint.
+
+     THE INSET IS WHAT MAKES IT A SEPARATOR. Run the line the full 42 and it
+     stops separating two words and starts dividing the bar into columns — the
+     eye reads it as the edge of a region rather than as punctuation between two
+     labels. DocsShell.svelte hit this on the way to the same 12 and left the
+     finding in a comment: "the full-height line read as a column rule, not a
+     separator." Two implementations, one conclusion. */
+  .docs-sep {
+    /* A 1px flex item is one pixel from vanishing. Without this the rule is the
+       cheapest thing in the row to shrink, and the first time the bar is under
+       pressure it goes to zero — with nothing in the markup to say a separator
+       was ever there. */
+    flex: none;
+    inline-size: 1px;
+    block-size: calc(var(--docs-bar-height) - 2 * var(--space-12));
+    background-color: var(--hairline);
+  }
+
+  /* The mark and the name are one object, so they are laid out as one and
+     spaced with --gap-tight — the rung that sits BELOW the [s] floor precisely
+     because it joins rather than separates. A full unit here would read as two
+     things that happen to be near each other, which is what the floor is for. */
   .docs-wordmark {
     font-weight: var(--weight-strong);
+    display: flex;
+    /* Baseline, and the mark is then lifted off it by the rule below. The
+       obvious `center` is wrong, and measurably so: it centres the mark on the
+       LINE BOX, which is 21px of which only the middle 11 are letterforms. The
+       half-leading is not distributed evenly around the letters — a face carries
+       more ascent than descent — so centring on the line box put the mark's
+       centre at 16.5 where the cap band's centre is 17.
+
+       Half a pixel does not sound like a fault, and on its own it is not. What
+       makes it visible is that the word ends in a descender: the ink of
+       "Kashinoga" runs from the cap top to the foot of the g, and its centre is
+       19. Against that the mark read 2.5px high, which is what you see. */
+    align-items: baseline;
+    gap: var(--gap-tight);
+  }
+
+  /* Sized in em, so the mark tracks the word rather than a pixel value that has
+     to be revisited whenever the bar's type changes. 1.25em is 20 against the
+     16px wordmark: large enough to read as a mark at a glance, small enough that
+     it does not out-rank the name it sits beside.
+
+     Explicit block-size as well as inline-size. The file is square, but an <img>
+     with only one dimension set is a layout shift waiting to happen — the box is
+     0 tall until the SVG arrives, and everything in the bar moves when it does.
+
+     --- The lift ---
+     A replaced element takes its bottom edge as its baseline, so the mark starts
+     sitting ON the baseline like a letter with no descender. Moving it down by
+     half the difference between its own height and the cap height puts its
+     centre exactly on the centre of the cap band:
+
+         (mark - cap) / 2
+
+     100% is the mark's own height and 1cap is the CAP HEIGHT OF THE FACE THIS
+     ELEMENT INHERITS — the browser reads it out of the font file. So this is
+     not a nudge measured on one machine against one face: change the wordmark's
+     size or its family and the lift re-derives itself. That is the whole reason
+     to spend a unit here rather than write translateY(4.4px), which was the same
+     number for exactly this font at exactly this size and a lie everywhere else.
+
+     Cap band and not the full ink band, so the mark sits with the capitals and
+     ignores the descender. That is how a mark is set beside a word: the g hangs
+     below the line, and the reader does not read the mark as hanging with it. */
+  .docs-mark {
+    inline-size: 1.25em;
+    block-size: 1.25em;
+  }
+
+  /* Both marks in the lockup take the same lift, and they have to: they are the
+     two things in it that are shapes rather than words, and a shape sitting on
+     the baseline hangs below the line the words make. Sharing the declaration is
+     also the only way they stay in agreement — written twice, one of them gets
+     tuned and the other does not.
+
+     The rule lands 12 from each edge of the bar this way, which is where the
+     reference implementation puts it. That is a check on both: the cap band of
+     the wordmark is centred in the bar, so centring on the cap band and
+     centring on the bar give the same answer. */
+  :is(.docs-mark, .docs-sep) {
+    translate: 0 calc((100% - 1cap) / 2);
   }
 
   /* The controls sit at the far end. The section links used to push them there
@@ -227,13 +971,37 @@
      a white sheet — but the bar is itself 6%, so the key was two points away
      from its own background and read as a faint rectangle rather than a
      control. Against the bar it needs the same step the page version had. */
+  /* --- 32, stated as a height ---
+     It was 33, and 33 was nobody's decision: 14px of type at a 1.5 ratio is a
+     21px line box, and 21 is odd. Add 6 of padding either side and the control
+     inherits that oddness — 33 is what the arithmetic left, not a size anyone
+     chose. Every value in this system lands on the 2px atom, and a control whose
+     height is decided by a line box cannot promise to.
+
+     So the height is DECLARED and the type sits inside it, which is the same
+     move the superbar makes one rule up and for the same reason: chrome should
+     not resize because its label changed. Set the label a size larger and this
+     key is still 32.
+
+     32 is a rung — the scale reaches it as --space-32 — so the height is a named
+     value rather than a literal. It is also exactly 2[s], which puts the control
+     on the same count as everything else.
+
+     Vertical padding goes to nothing, because it has nothing left to do: with a
+     declared height and centred contents, padding-block would only fight the
+     height for control of the same edge. */
   .docs-key {
     --docs-key-fill: color-mix(in srgb, var(--ink) 8%, var(--surface));
     background-color: var(--docs-key-fill);
     color: var(--ink);
     border: 0;
     border-radius: var(--radius-key);
-    padding: var(--space-6) var(--space-14);
+    block-size: var(--space-32);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-block: 0;
+    padding-inline: var(--space-14);
     font-size: var(--text-sm);
     cursor: pointer;
     transition: background-color var(--duration-fast) var(--ease-out);
@@ -261,13 +1029,24 @@
      --surface and --page read as the pale colours they are, with no line
      anywhere — and it groups each chip with its own label as a bonus, which the
      border never did. There is now no border in the entire page. */
+  /* The card's corner is the chip's corner plus the padding between them, which
+     is the concentric rule from the Radius section of tokens.css and the only
+     place on this page where two rounded boxes actually stack. Both were
+     --radius-sheet, which looked like consistency and was not: identical curves
+     8px apart hold their gap along the edges and open to 11.3 into the corner,
+     so the card appeared to pinch the chip.
+
+     Written as arithmetic rather than as the 10px it resolves to. The number is
+     a CONSEQUENCE of the padding, and the padding is the value someone will
+     change — spelling it out means the corner follows on its own instead of
+     being a literal that quietly stops matching. */
   .docs-swatch {
     display: flex;
     flex-direction: column;
     gap: var(--gap-tight);
     padding: var(--space-8);
     background-color: color-mix(in srgb, var(--ink) 7%, var(--surface));
-    border-radius: var(--radius-sheet);
+    border-radius: calc(var(--radius-sheet) + var(--space-8));
   }
 
   .docs-swatch__chip {
@@ -285,49 +1064,449 @@
     color: var(--sub);
   }
 
-  .docs-defs {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: var(--space);
-    align-items: baseline;
-    max-inline-size: var(--measure);
+  /* UNTRIMMED, and this is the one list on the page that has to be.
+
+     base.css trims the half-leading off every block in the rhythm, and it is
+     right to: a trimmed block makes a 16px margin measure 16px instead of 16
+     plus whatever the face threw in. That argument holds for every block whose
+     separation is a MARGIN. It inverts for a block whose separation is the
+     LEADING itself.
+
+     These items have no margin between them — they are items of one list, and a
+     gap between them was spacing spent saying they are separate. With nothing
+     between them, the leading is the only thing left holding one line off the
+     next, and trimming is precisely the removal of it. The result was not tight,
+     it was overlapping: an item's box ends at the alphabetic baseline, so the
+     descenders of its last line — the p in "platform", the y in "why" — hung
+     into the caps of the principle below. Measured, not guessed; it is visible
+     at a glance in a screenshot.
+
+     Put the leading back and the whole outline lands on one 24px baseline
+     rhythm: line to line inside an item, item to item, and principle to
+     explainer are all the same step, because they are all just lines of one
+     list. That is what "related and closer together" actually looks like — not a
+     smaller gap, but no gap and an even beat.
+
+     MUTED, which is the job the bold used to do — badly. Bold on the rule made
+     the rule loud; what was wanted was the reasoning quieter, which is the same
+     rank stated without shouting. */
+  /* No margin override. One unit was tried here and taken back out: the gap
+     under "Principles" looks larger than the others only because this section
+     opens on a list instead of on a paragraph, and a list's first line starts
+     further in. The distance is the same two units every other block gets. The
+     fix for looking odd was to look again, not to special-case the rhythm. */
+  .docs-principles :is(li, ol) {
+    text-box: normal;
   }
 
-  .docs-defs dt {
-    font-size: var(--text-lg);
-    white-space: nowrap;
-  }
-
-  .docs-defs dd {
-    margin: 0;
-    font-size: var(--text-sm);
+  .docs-principles > li > ol {
+    margin-block-start: 0;
     color: var(--sub);
   }
 
-  .docs-rung {
+  /* --- Hover tips ---------------------------------------------------------
+     A label that appears beside a control when a reader points at it.
+
+     WHERE IT LIVES. This is a component, and the components layer is still
+     empty on purpose, so it sits here for now. It is the strongest candidate to
+     be the first thing that moves into src/components.css when that layer
+     opens; nothing about it is specific to this page.
+
+     DESKTOP ONLY, and that is a capability question rather than a screen-size
+     one. A tip triggered by hover has no trigger on a touch screen: the first
+     tap is the press, so the tip either never shows or flashes as the action
+     fires. (hover: hover) and (pointer: fine) ask the device whether it can
+     point, which is the actual question. A width breakpoint would guess.
+
+     ON FOCUS AS WELL AS HOVER. A tip that only answers a mouse is a tip a
+     keyboard reader cannot reach, and the whole point of it is to explain a
+     control whose meaning is not obvious. :focus-visible rather than :focus, so
+     it does not fire on a mouse press that has just been answered by hover.
+
+     IT IS DECORATION, NOT THE NAME. Every button here carries its own
+     accessible name in real text, and this repeats or extends it for people who
+     can see it. A control that depended on a hover tip to be identifiable would
+     be a control with no name, which no amount of styling fixes.
+
+     INVERTED, because a tip is chrome that floats over content and has to be
+     told apart from anything it lands on. --ink on --page is the one pair
+     guaranteed to inverse whatever is behind it, and both flip with the scheme,
+     so the tip is dark-on-light in one and light-on-dark in the other without
+     either arm being written out. */
+  @media (hover: hover) and (pointer: fine) {
+    [data-tip] {
+      position: relative;
+    }
+
+    [data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      /* Below the control, centred on it. */
+      inset-block-start: calc(100% + var(--space-4));
+      inset-inline-start: 50%;
+      translate: -50% 0;
+
+      background-color: var(--ink);
+      color: var(--page);
+      border-radius: var(--radius-sheet);
+      padding-block: var(--space-4);
+      padding-inline: var(--space-8);
+      font-family: var(--font-body);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-normal);
+      white-space: nowrap;
+
+      /* Never a hit target. A tip that can be hovered sits between the pointer
+         and the control it describes, and the control stops responding. */
+      pointer-events: none;
+      opacity: 0;
+      z-index: 1;
+      transition: opacity var(--duration-fast) var(--ease-out);
+    }
+
+    /* A control at the end of a row gets a tip anchored to that end instead of
+       centred on it. Centred, the scheme toggle's tip hung 18px past the frame
+       the whole page is aligned to — measured, and visible as a label sticking
+       out of the bar's right edge. Both buttons on this page are the last thing
+       in their row, which is the usual place to put a control, so this is the
+       common case rather than an exception. */
+    [data-tip-align="end"]::after {
+      inset-inline-start: auto;
+      inset-inline-end: 0;
+      translate: none;
+    }
+
+    [data-tip]:hover::after,
+    [data-tip]:focus-visible::after {
+      opacity: 1;
+    }
+  }
+
+  /* Keep the state change, drop the sweep. Somebody who asked for less movement
+     did not ask for less information, so the tip still appears — it simply
+     stops fading in. */
+  @media (prefers-reduced-motion: reduce) {
+    [data-tip]::after {
+      transition: none;
+    }
+  }
+
+  /* --- Callouts -----------------------------------------------------------
+     A note that is not part of the argument around it. The fill is doing an
+     identity job, not a grouping one: a gap can say "a later paragraph", and no
+     gap at any size can say "this is a status notice rather than prose". That is
+     the second step of the escalation used where the second step is correct.
+
+     BLUE, because --accent is the ink this system already uses for a condition
+     rather than a result, and a scaffold notice is a condition. The three stone
+     inks are not available for it: emerald, ruby and topaz are outcomes, and
+     saying "still happening" in topaz would claim this page is mid-process when
+     it is simply unfinished.
+
+     TWO WEIGHTS OF THE SAME BLUE, and that is the whole hierarchy. The body
+     takes the accent mixed back toward the page so it reads as tinted prose; the
+     label takes the accent at full strength. The label is therefore the darker
+     of the two on light stock and the brighter on dark, which is the same
+     relationship stated in whichever direction the scheme runs.
+
+     No border. The fill supplies the edge, and it is the fill that carries the
+     meaning anyway.
+
+     THE KIND GOES IN A BAR, the same bar the code block wears. A code sample
+     names its language across the head of the well; a callout names its kind,
+     and those are the same job — a short label that says what the block below
+     it IS, sat on top of the block itself. Two constructions for one job would
+     mean a reader learns the pattern on one component and does not recognise
+     it on the other, so there is one.
+
+     The geometry is copied outright: --space-16 inline, --gap-tight block, the
+     small size, and the same flex row that lets a control sit at the far edge
+     if one is ever added. That copy is the point. A bar that is nearly the code
+     bar reads as a different bar.
+
+     WHAT DIFFERS IS WHICH ARM TAKES THE SECOND STEP, and the content decides
+     it. The code block puts the second recess on the well, because the well
+     holds code and code is content that should sit deeper than the chrome
+     naming it. A callout holds prose, and prose pressed into a well would read
+     as a sample. So the bar takes the second step instead: the same 8% accent
+     mix, applied once to the block and again to its head. One token, twice,
+     which is the code block's construction run in the only direction prose
+     allows. */
+  .docs-callout {
+    background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+    border-radius: var(--radius-sheet);
+    color: color-mix(in srgb, var(--accent) 75%, var(--ink));
+  }
+
+  .docs-callout__head {
     display: flex;
     align-items: center;
-    gap: var(--space);
-  }
-
-  .docs-rung__bar {
-    block-size: var(--space-8);
-    background-color: var(--accent);
-    border-radius: 1px;
-  }
-
-  .docs-rung__name {
-    font-family: var(--font-mono);
+    gap: var(--gap-within);
+    padding-inline: var(--space-16);
+    padding-block: var(--gap-tight);
+    background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+    color: var(--accent);
     font-size: var(--text-xs);
-    /* 11ch, not 9ch: "--space-12" is ten characters and was wrapping. ch is the
-       width of "0", and this face's hyphen is wider, so the column needs slack
-       over the raw character count. */
-    inline-size: 7rem;
+    font-weight: var(--weight-strong);
+    /* The bar owns the top corners now, so it has to round them itself. The
+       block's own radius clips nothing: the head is a sibling fill, not an
+       overflowing child. */
+    border-start-start-radius: var(--radius-sheet);
+    border-start-end-radius: var(--radius-sheet);
+  }
+
+  /* The padding the block used to carry, moved down to the arm that still
+     needs it. Between two paragraphs, half the padding that holds them — the
+     rule the whole page runs on: what is inside a group sits at half what
+     surrounds it.
+
+     --gap-tight was tried first, back when the label was a paragraph above the
+     prose rather than a bar. Four pixels is the right idea and the wrong number
+     between two blocks of running text: both are trimmed to the alphabetic
+     baseline, so descenders hang into the gap and four becomes nearly nothing.
+     --gap-tight is for a label beside its field — which is exactly what it is
+     doing in the head above, and why it survives there. */
+  .docs-callout__body {
+    padding: var(--space-16);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  /* --- Code blocks --------------------------------------------------------
+     A header on the well, holding the language on the left and a copy button on
+     the right.
+
+     ONE WELL, not two boxes. The header takes the same --recessed the <pre>
+     does, and the pre loses its own corners at the top, so the pair reads as one
+     block with a bar across its head. Give the header a fill of its own and the
+     block becomes a card with a title on it, which is a heavier object than a
+     code sample needs to be.
+
+     The bar is chrome, so it takes the small size and the muted ink: it says
+     what the sample is and offers one action, and neither is the thing the
+     reader came to read. */
+  /* No margin rule here, and that is deliberate. A <figure> ships with a UA
+     margin, so zeroing it looked like housekeeping — but reset.css already
+     zeroes it, and .docs-code carries the same specificity as the .prose rhythm
+     rule while loading after it. The redundant zero therefore won, the block
+     lost its two units, and the paragraph above it sat directly on the header.
+     Saying nothing lets the rhythm reach it.
+
+     THE BAR AND THE WELL ARE ONE STEP APART. Both were --recessed and the pair
+     read as one flat slab with text at the top of it. The bar is chrome and the
+     code is content, which is an identity distinction — space cannot state it
+     at any distance, so colour takes it.
+
+     One token, applied twice, rather than a second value invented for the bar.
+     The figure carries one recess and the <pre> adds its own on top, so the bar
+     sits one step back from the sheet and the well sits two. The well is deeper
+     than the bar that names it, which is the right way round, and because the
+     step is the same token in both places it holds on light and dark stock
+     without either arm being tuned by hand. */
+  .docs-code {
+    background-color: var(--recessed);
+    border-radius: var(--radius-sheet);
+  }
+
+  .docs-code__head {
+    display: flex;
+    align-items: center;
+    /* The label goes left and the button right. The status sits between them and
+       is empty until it has something to say, so it takes no room in the resting
+       state and does not push the button off its edge when it fills. */
+    justify-content: space-between;
+    gap: var(--gap-within);
+    /* No fill of its own. The figure's recess shows through here, and the pre
+       below adds a second one — that difference IS the boundary. */
+    padding-inline: var(--space-16);
+    padding-block: var(--gap-tight);
+    font-size: var(--text-xs);
+    color: var(--sub);
+  }
+
+  .docs-code__lang {
+    font-family: var(--font-mono);
+    /* Pushes the status and the button to the far edge without either of them
+       needing a margin of its own. */
+    margin-inline-end: auto;
+  }
+
+  .docs-code__status {
+    font-size: var(--text-xs);
+  }
+
+  /* A quiet control. It carries no fill at rest because the header it sits on is
+     already a surface change, and a fill on a fill is the second statement of a
+     boundary that has been made once. It takes one on hover, which is the point
+     at which the reader has asked whether it is pressable. */
+  .docs-code__copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: none;
+    color: var(--sub);
+    padding: var(--space-4);
+    margin-inline-end: calc(-1 * var(--space-4));
+    border-radius: var(--radius-sheet);
+    cursor: pointer;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .docs-code__copy svg {
+    inline-size: var(--space-16);
+    block-size: var(--space-16);
+  }
+
+  /* The fill the note above promised. It was described and not written, so the
+     radius on this button rounded a corner that was never painted. */
+  .docs-code__copy:hover {
+    color: var(--ink);
+    background-color: var(--recessed);
+  }
+
+  /* The well below the bar. Its top corners go, because the bar now owns them —
+     two rounded boxes stacked leave a notch where they meet. */
+  .docs-code > pre {
+    margin-block-start: 0;
+    border-start-start-radius: 0;
+    border-start-end-radius: 0;
+  }
+
+  /* --- The foundation tables ----------------------------------------------
+     These were a <dl> and two stacks of <div>s, which looked like tables and
+     were not. Nothing said which column was which, so the only reader who could
+     use them was one who already knew — and a screen reader got a run of
+     unlabelled values with no way to ask what the third one meant. They are
+     rows and columns of the same kind of fact, so they are tables, with a
+     column header on every column and the token as each row's own header.
+
+     RULES, AND THE SYSTEM SAYS WHEN. base.css separates rows by air and stops
+     there, and it names the case it is not covering: "on a table wide enough
+     that the eye loses its row between the first column and the last, proximity
+     stops being enough and the boundary becomes a tracking problem rather than
+     a grouping one. That is a component decision — zebra banding or rules — not
+     a reason to rule every table."
+
+     This is that case, arrived at rather than assumed. These tables run the full
+     768 measure and the scale is seventeen rows deep; tracking --space-40 across
+     an empty gutter to the bar that measures it is exactly the eye losing its
+     row. So the component takes the decision base.css deferred, and takes it in
+     docs.css where component decisions belong. The base rule is untouched: a
+     table in this system still ships with no lines on it.
+
+     RULES AND NOT BANDING, of the two the comment offers. Banding tints whole
+     rows, and a tint on a row is a second thing for the eye to sort out on a
+     page whose only other fills mean "this is a different KIND of thing" — the
+     sheet, the rails, the footer. A rule down between two rows says one thing
+     and says it where the ambiguity actually is. --hairline is the token for it,
+     which is the token that already exists for a boundary that IS the content.
+
+     ONE RULE PER BOUNDARY. Not a box, not a grid of cells. A vertical rule would
+     be answering a question nobody asked: the columns are already told apart by
+     their content and by the header over each. */
+  /* A table does not squash. Below about 26rem the four columns stop fitting —
+     measured at 320px, where they hung 67px off the end and took the whole page
+     sideways with them — and none of the three ways out except this one is
+     honest: shrinking the columns turns the tokens into a stack of single
+     characters, and dropping the measure column hides a fact the reader came
+     for.
+
+     Same answer <pre> already gives, which is why it needs no new argument: wide
+     content inside the measure scrolls in a box of its own rather than being
+     squashed or clipped. The page still never scrolls sideways; the table does.
+
+     tabindex, because a scroll container that only a mouse can reach is not
+     reachable. role + aria-labelledby name it off the table's own caption, so
+     the thing a reader lands in announces which table it is rather than being
+     an unnamed box. */
+  .docs-table-scroll {
+    overflow-x: auto;
+  }
+
+  /* AUTO, capped at the measure — not 100% of it.
+
+     100% forces every table to fill the measure whether it has anything to fill
+     it with. The faces and tiers tables do: each ends in running text, which
+     takes the slack and reads better for it. The scale table does not — its last
+     column is the bar, the longest bar is one --space-80 and therefore 80px
+     wide, and 80px is the whole truth of it. Stretched to the measure that
+     column became a 400px lane holding a 40px mark, which reads as a column
+     that lost its contents.
+
+     Sized to content, a table asks for exactly what it can use: the two with a
+     text column still reach the measure because the text pushes them there, and
+     the scale table stops where its bars stop. The rules stop with it, which is
+     correct — a rule spanning empty lane is fencing, not separating. */
+  .docs-table {
+    inline-size: auto;
+    max-inline-size: var(--measure);
+    /* collapse, so the rule between two rows is ONE line and not two abutting
+       ones. Separate borders would double every interior rule and leave it a
+       different weight from the ones at the ends. */
+    border-collapse: collapse;
+  }
+
+  /* The head is a different kind of row from the body, so its rule is the one
+     boundary that carries any weight. Below it, one hairline per row boundary
+     and none under the last — a rule after the final row is fencing the table
+     rather than separating anything. */
+  .docs-table thead th {
+    border-block-end: 1px solid var(--hairline);
+    font-size: var(--text-xs);
+    color: var(--sub);
+    font-weight: var(--weight-normal);
+  }
+
+  .docs-table tbody tr + tr :is(th, td) {
+    border-block-start: 1px solid var(--hairline);
+  }
+
+  /* A row header is a token, so it takes the source face — the same treatment
+     the name column had when this was a stack. */
+  .docs-table tbody th {
+    font-weight: var(--weight-normal);
     white-space: nowrap;
   }
 
-  .docs-rung__px {
-    font-size: var(--text-xs);
-    color: var(--sub);
+  .docs-table :is(th, td) {
+    font-size: var(--text-sm);
+    vertical-align: baseline;
+  }
+
+  /* No column is told to take the slack, and the two rules that tried are both
+     gone. The first gave it to the measure column, which left "what it
+     separates" wrapping every two or three words beside a wide empty lane; the
+     second gave it to whichever column came last, which fixed that table and
+     inflated the scale table's bars instead. Both were picking a winner by
+     position when the thing that actually decides is whether a column holds
+     text. Auto table layout already knows that — it sizes each column to its
+     content and takes the shortfall out of the ones that can wrap. Saying
+     nothing is what lets it. */
+
+  /* --radius-sheet, which is 2px, and it was a literal 1px. 2 is the atom the
+     whole scale is built on and the smallest radius the system names; 1 was
+     half a step below anything the system can express, arrived at by eye rather
+     than chosen. A bar measuring the 2px scale should not have its own corner
+     off it. */
+  .docs-rung__bar {
+    display: inline-block;
+    block-size: var(--space-8);
+    background-color: var(--accent);
+    border-radius: var(--radius-sheet);
+  }
+
+  /* The specimen is the point of the type table, so it is the one cell allowed
+     to be large. Everything else on the row is apparatus about it. */
+  #docs-faces td:first-of-type {
+    font-size: var(--text-lg);
+    /* Its own leading, because --leading-body is a PITCH rather than a ratio.
+       18px is the body line box and this cell sets 20px type, which would put
+       the specimen in a box shorter than its own letters. Every element that
+       goes above the body sizes has to say what its lines are worth; this is
+       the only one on the page that does. */
+    line-height: var(--leading-tight);
+    white-space: nowrap;
   }
 }

@@ -30,12 +30,13 @@
      effect, never by matching the numbers. */
   color-scheme: light dark;
 
-  /* --- Primitive: neutrals (placeholder) --------------------------------- */
+  /* --- Primitive: neutrals (placeholder) ---------------------------------
+     Named light to dark. The dark end was rebuilt to hit a contrast target and
+     the numbers are not arbitrary — see --surface below for the arithmetic. */
   --grey-000: #ffffff;
   --grey-050: #fbfbfb;
-  --grey-100: #f2f2f2;
-  --grey-800: #1a1a1c;
-  --grey-900: #0e0e10;
+  --grey-850: #141416; /* the dark page */
+  --grey-900: #060606; /* the dark sheet: darkest ground in the system */
   --grey-950: #000000;
 
   /* --- Primitive: hues (placeholder) -------------------------------------
@@ -52,17 +53,102 @@
   --topaz-dark: #ffc95c;
 
   /* --- Semantic: ground -------------------------------------------------- */
-  --ink: light-dark(var(--grey-950), var(--grey-100));
+  --ink: light-dark(var(--grey-950), var(--grey-000));
   --sub: color-mix(in srgb, var(--ink) 40%, transparent);
-  --page: light-dark(var(--grey-050), var(--grey-900));
-  --surface: light-dark(var(--grey-000), var(--grey-800));
+  --page: light-dark(var(--grey-050), var(--grey-850));
+
+  /* THE DARK DESK IS INVERTED, and this is the token that says so. On light
+     stock the sheet is the lightest ground and the page sits below it. On dark
+     stock the sheet is the DARKEST ground and the page sits above it, the way a
+     code editor is darker than the panels around it.
+
+     It is a contrast decision, and the arithmetic left no other answer. Text on
+     the sheet measured 15.52:1 on dark against 21:1 on light, and 20:1 was
+     wanted. Both ways of tuning the old palette hit a ceiling below the target:
+     white ink on the old #1a1a1c sheet reaches only 17.38, and the old #f2f2f2
+     ink on a PURE BLACK sheet reaches only 18.76. Nothing in between works
+     either, because those two are the extremes.
+
+     20:1 therefore needs white ink and a sheet at #080808 or darker. The old
+     sheet sat ABOVE the page, so darkening it that far pushed it under the
+     page, and the rails — which sit below the page again — ran out of room
+     entirely. Inverting is not a way around the arithmetic; it is what the
+     arithmetic leaves.
+
+         ink #ffffff on sheet #060606  =  20.26 : 1
+
+     What inverts with it: "recessed" now means LIGHTER on dark stock, because
+     the sheet is the floor and everything else steps up off it. See the note on
+     --recessed, which had to turn round with this. */
+  --surface: light-dark(var(--grey-000), var(--grey-900));
+  /* A SURFACE THAT SITS BELOW THE ONE IT IS ON. Two jobs so far and they are the
+     same job: the stock a rail is cut from, and the well a code block is set
+     into. Both say "this is behind the thing beside it".
+
+     Ported from the Text Editor, which found this the hard way and wrote it
+     down: the rails were once cut from the same white as the sheet, and panes in
+     one white made the desk read as one wide surface with rules drawn on it. The
+     thing you are READING stood level with the two lists that only say where it
+     is. So the rails step back, and the sheet is the only white left.
+
+     That is a HIERARCHY stated in colour, which is the second step of the
+     escalation doing what space cannot: no amount of distance says "this column
+     is the work and those two are about the work". Depth does.
+
+     TRANSLUCENT, and that is the one place this departs from the original. The
+     Text Editor mixes an opaque value out of --page, which is exact on the one
+     ground it was measured against and wrong on every other. A code block wants
+     the same recess and does not sit on the page — it sits on the sheet — and an
+     opaque page-derived grey laid on white is simply the page colour in the
+     wrong place. A wash over nothing lands the same distance from WHATEVER it is
+     laid on, so one token serves the rail on the page and the code block on the
+     sheet.
+
+     THE TWO ARMS POINT IN OPPOSITE DIRECTIONS, and that is correct now for a
+     reason it was not correct before. Read this before changing either arm; the
+     token has been turned round twice and each turn had a different cause.
+
+     It was first mixed toward --ink, on the reading that a recess is "toward the
+     text colour". That was wrong, and provably: on the old dark palette the
+     sheet sat ABOVE the page, so a wash that lightened moved the rails the same
+     way the sheet had already gone. The two met — rails at rgb(27 27 28) against
+     a sheet of rgb(26 26 28), one part in 255 — and the three-column desk read
+     as one surface with rules drawn on it. It was then made black in both arms,
+     which separated them by moving the rails down.
+
+     The dark desk has since inverted, because 20:1 on the sheet could not be
+     reached any other way (see --surface). The sheet is now the DARKEST ground,
+     not the lightest, and "steps back from the sheet" therefore means lighter on
+     dark stock. The old collision cannot come back, because the thing the rails
+     used to collide with has moved to the far side of the page.
+
+     So: black on light stock, white on dark. Not because a shadow changes
+     colour, but because the floor moved. The rule to hold on to is the EFFECT —
+     a recess sits away from the sheet — and the direction that produces it is
+     whatever the desk's arrangement makes it.
+
+     TWO PERCENTAGES, and they are not comparable numbers. The light arm is the
+     Text Editor's 2%, unchanged, and over --page it resolves to the same #f6f6f6
+     that app ships. The dark arm is 3%, set by matching the step in L* rather
+     than the figure: 2% takes the light --page from L* 98.6 to 97.0, and 3%
+     takes the dark --page from L* 7.2 to 10.0. Keep them in step by effect,
+     never by matching the percentages.
+
+     Compare --hairline directly below, which DOES flip. That is not an
+     inconsistency: a hairline is a line drawn in ink and has to be seen against
+     its ground, so it takes the scheme's ink. This is a shadow cast on a ground.
+     Ink flips; shadow does not. */
+  --recessed: light-dark(rgb(0 0 0 / 0.02), rgb(255 255 255 / 0.03));
   /* The last step of the escalation, not the first. Space groups; colour
      separates what space cannot reach; this is only for the case where the
-     boundary IS the content — a white swatch on a white sheet has nothing to
-     show but its own edge, and no fill can supply one because the fill is the
-     subject. Reaching for it to solve a grouping problem means a spacing
-     decision was skipped; reaching for it to make something look pressable
-     means a colour decision was skipped. See the SPACE section below. */
+     boundary IS the content. Two cases qualify, and they are the only two seen
+     so far: a white swatch on a white sheet, which has nothing to show but its
+     own edge because the fill is the subject; and a SEPARATOR, which has no job
+     at all except to be a boundary — there is nothing else for it to be.
+
+     Reaching for it to solve a grouping problem means a spacing decision was
+     skipped; reaching for it to make something look pressable means a colour
+     decision was skipped. See the SPACE section below. */
   --hairline: light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.26));
 
   /* --- Semantic: inks ---------------------------------------------------- */
@@ -113,9 +199,7 @@
      was whole.
 
      Heading sizes are all multiples of 4, which is what lets --leading-tight
-     stay a single ratio: 1.25 x 16, 20, 24 and 36 gives 20, 25, 30 and 45.
-     --leading-body is 1.5, which is whole for 12, 14 and 16 alike. Two ratios
-     cover the whole system, and neither has to be special-cased per level. */
+     stay a single ratio: 1.25 x 16, 20, 24 and 36 gives 20, 25, 30 and 45. */
   --text-xs: 0.75rem; /* 12 */
   --text-sm: 0.875rem; /* 14 */
   --text-base: 1rem; /* 16 */
@@ -124,119 +208,226 @@
   --text-2xl: 2.25rem; /* 36 */
 
   --leading-tight: 1.25; /* headings: 20, 25, 30, 45 */
-  --leading-body: 1.5; /* body: 18, 21, 24 */
+
+  /* A PITCH, not a ratio, and that is the one place this departs from the rest
+     of the type scale.
+
+     It was 1.5, which gave 18, 21 and 24 for the three body sizes. Wanting the
+     16px line closer than 24 is what broke the ratio: 18 over 16 is 1.125, and
+     1.125 x 14 is 15.75 while 1.125 x 12 is 13.5. Two of the three sizes stop
+     landing on a pixel, and the note above this block is exactly about why that
+     is not a rounding detail.
+
+     The arithmetic is not negotiable. For one ratio to give whole line boxes at
+     12, 14 and 16 it must be a multiple of one half, because 14 has a factor of
+     7 that nothing else shares. The only choices are 1.5 and 1.0, and 1.0 sets
+     type solid. There is no tighter ratio; there is only a tighter pitch.
+
+     So this is 18px, and a length inherits as a length: every block that does
+     not override it gets an 18px line box whatever size its text is. All three
+     body sizes land on 18 by construction rather than by a ratio that has to be
+     checked. That is a baseline grid, and it is a stronger guarantee than the
+     one it replaced.
+
+     What it costs: any element that takes a size ABOVE the body range must set
+     its own leading, because 18px under 20px text sets the lines touching. The
+     headings already do, through --leading-tight. The one other case on the
+     docs page is the type specimen, and it says so where it is set. */
+  --leading-body: 18px;
 
   --weight-normal: 400;
   --weight-strong: 600;
 
-  /* === THE GRID, DERIVED FROM THE BOTTOM UP ================================
-     Built upward from the smallest fixed thing, so the page widths are results
-     rather than choices. Each step constrains the next.
+  /* === THE PAGE WIDTHS =====================================================
+     ONE number is chosen. Everything else answers to it.
 
-     1. THE ATOM — 2px. The granularity of any value in the system.
+         THE CONTENT IS 768px ON DESKTOP.
 
-     2. THE RHYTHM UNIT — [s], 16px. The minimum space between two elements.
+     That is the whole model. There is no column grid, no unit, no counting.
 
-     3. THE COLUMN — 64px = 4[s]. Two constraints meet here and only one value
-        satisfies both.
+     --- Why a column grid went, and what it cost to keep ---
+     Three of them were derived here and each was internally sound. The last
+     made the column 64px, the content area 16 columns, the rails 3 each and the
+     ceiling 22 — and the trouble was never the arithmetic. It was that the
+     arithmetic ANSWERED FOR EVERY WIDTH. A rail was 192 because it was three
+     columns, not because 192 holds a line of navigation. The prose gutter was
+     128 because that was what twenty-two columns had left over. Move the
+     content width by one step and all of them moved with it, each still
+     perfectly derived and none of them chosen.
 
-        The content area is 1024 (step 4), so the column must divide 1024
-        exactly — which means it must be a power of two: 32, 64 or 128. And it
-        must hold a touch target, which is 48px minimum. 32 fails that; 128 is
-        coarse enough that a single column is most of a paragraph. 64 is the
-        only one left, and it happens to land on 4[s], so the column stays a
-        whole number of rhythm units.
+     So a width now has to earn its own place. Where a number below has a reason,
+     the reason is a fact about reading or about a hand on a screen. Where it
+     does not, it says so.
 
-        This replaces an earlier derivation that made the column 48 = 3[s], "the
-        smallest multiple of [s] that clears the touch target". That was sound
-        when nothing downstream was fixed. Once the content width became a
-        stated goal it became the stronger constraint, and 48 does not divide
-        1024 — 1024 / 48 is 21.33.
+     --- THE ATOM: 2px ---
+     The one rule that survived the grid, and the only thing every value in the
+     system still has in common. EVERY LENGTH IS A WHOLE, EVEN NUMBER OF PIXELS
+     at a 16px root — widths, heights, gaps, radii, offsets, all of them.
 
-     4. THE CONTENT AREA — 16 columns = 1024px. This is the one number chosen
-        rather than derived, and the whole grid is built to serve it.
+     Whole, because a fraction is not a rounding detail: the browser rounds it
+     per box and per line, so one value pays half a pixel in one place and
+     nothing in another, and nothing in the file explains the difference. Even,
+     because a value that has to be halved — a centred thing, a border either
+     side, a gap split between two edges — should not produce a fraction on the
+     way. runtime/tokens.spec.js asserts the whole half of this on every length
+     token in the system.
 
-        16 columns is also Carbon's count, which is not a coincidence: a
-        power-of-two content width and a column that divides it can only give a
-        power-of-two column count.
+     The rule bites hardest where a value is a RESULT rather than a declaration.
+     Type is the usual culprit: 14px of text at a 1.5 ratio is a 21px line box,
+     and any control sized by that line box inherits the odd number. The answer
+     is to declare the height and let the type sit inside it, which is what both
+     the superbar and the key in docs.css do.
 
-        THE MEASURE IS THE CONTENT AREA. Prose fills 1024, about 119 characters,
-        which is far outside the 45-to-75 band that continuous reading wants.
-        Said plainly rather than dressed up: this is a reference surface, not a
-        reading one. Code samples, wide tables and definition lists get the room
-        and paragraphs pay for it.
+     Type itself is exempt, and only type: em values, line pitch and measured
+     glyph heights answer to the face rather than to this scale.
 
-        The ladder back, if reading takes priority again: 9 columns is 576 and
-        67 characters, the middle of the band; 10 is 640 and 74, the top of it.
-        Both divide the content area evenly.
+     --- The content: 768 ---
+     Chosen, not derived. At the body size that is about 89 characters, which
+     is over the 45-to-75 band that continuous reading wants and knowingly so:
+     this is a reference surface, and code samples, wide tables and definition
+     lists have to fit in it without scrolling sideways. 768 is the width where
+     a sample of ~90 columns of monospace stops wrapping, and it is close enough
+     to the reading band that prose does not visibly suffer.
 
-     5. THE READING LAYOUT — one apparatus column each side of the content:
+     It is also EXACTLY the width MDN sets its own documentation in. Measured, on
+     the Layout cookbook pages at a 1600px viewport: every full-width paragraph
+     in the article comes back 768px at a 16px body size. That is the closest
+     thing the web has to a control group for this kind of page, and it landed on
+     the same number independently.
 
-            3  +  16  +  3  =  22 columns  =  1408
-            |      |      |
-            |      |      +-- LOCAL: this document. Contents, sidenotes,
-            |      |             citations, the figure that needs room.
-            |      +--------- the content area
-            +---------------- GLOBAL: the whole site. Navigation that is the
-                              same on every page.
+     Down from 1024, which was the previous content area and about 119
+     characters. That was past the point where a reader tracks back to the start
+     of the next line reliably.
 
-        Three columns is 192, which is what the rails already were — the change
-        of column size did not move them, because 3 x 64 and 4 x 48 are the same
-        number. That is the metric-paper property paying off: the layout is
-        described in counts, so re-deriving the unit left the picture intact.
+     --- The rail: 224 ---
+     One apparatus column: a contents list, a sidenote, a citation.
 
-     6. THE TIERS — each one adds a region, not a device:
+     224 is MDN's, measured in their inspector rather than guessed: the
+     table-of-contents aside has a content box of 224, with 16 of padding each
+     side making the 256 the tooltip reports. Ours is the content box, and the
+     16 lives inside it here too — regions tile, and a region takes its gutter
+     from its own width.
 
-            Compact     8 columns   512   the content area, halved
-            Standard   12 columns   768   most of it
-            Reference  16 columns  1024   the content area, whole
-            Full       22 columns  1408   + both rails, and the ceiling
+     The region takes its gutter from inside itself, so 224 is what the rail
+     occupies and 192 is what it sets type in — about 25 characters at the small
+     size the rails use: a short heading, or a two-word entry with room to wrap
+     once. Below ~160 a contents entry wraps on nearly every line and the list
+     reads as a paragraph, so the doubled gutter is close to what this width can
+     give up. A wider gap from here means a wider rail, not a narrower list.
 
-        THE CEILING IS NOW DERIVED, which it never was before. Every previous
-        version picked a round number — 1200, then 2160, then 1440 — and said
-        plainly that nothing below it forced the choice. Here the page stops
-        growing when the layout is complete: content area plus both rails is 22
-        columns, and there is nothing further to add. A page that kept widening
-        past it would only be adding margin.
+     It was 192 first, which was three columns of a grid that no longer exists —
+     a leftover rather than a choice. 320 was tried and dropped.
 
-        1408 is 32px under the 1440 that was picked by hand before, which is a
-        reasonable check on both.
+     --- The page: 1280 ---
+     Derived, and the one place derivation is the right answer: the page stops
+     growing when the layout is complete. Content plus its own margin plus an
+     apparatus column on each side is everything there is to show, so a wider
+     page would only add margin twice over.
 
-     The unit still never changes. A tier says how many columns there are, never
-     how wide one is, which is the metric-paper property: the unit survives the
-     change of size, so a layout scales by counting rather than by recomputing.
-     Carbon states it as "fixed grids use multiplication". */
-  --column: 4rem; /* 64 = 4[s], and the only divisor of 1024 that clears 48 */
+         224  +  32  +  768  +  32  +  224   =  1280
+         rail   pad   text    pad   rail
 
-  --tier-standard: 8;
-  --tier-reference: 12;
-  --tier-large: 16;
-  --tier-cap: 22;
+     It lands on WXGA, 1280 x 768, without being made to — and that standard's
+     OTHER dimension is the content width. The page is as wide as a WXGA screen
+     at the moment the layout completes, and the text is as wide as one is tall.
+     Noted rather than claimed as a reason: the number came out of the layout,
+     and the coincidence was found afterwards.
 
-  --width-standard: 32rem; /*  512 = 8 columns */
-  --width-reference: 48rem; /*  768 = 12 */
-  --width-large: 64rem; /* 1024 = 16, the content area */
-  --width-cap: 88rem; /* 1408 = 22, + both rails */
+     What the three columns are:
 
-  /* 20, chosen so the CAPPED count divides cleanly. Five tracks in 1200 come
-     out 224 each and five in 2160 come out 416 — both whole, and those are the
-     two tiers where a grid actually reaches its cap of five. At 16 the same
-     count gives 227.2. A gap is part of the arithmetic, not a decoration
-     applied afterwards.
+         |        |        |
+         |        |        +-- LOCAL: this document. Contents, sidenotes,
+         |        |             citations, the figure that needs room.
+         |        +----------- the content
+         +-------------------- GLOBAL: the whole site. Navigation that is the
+                               same on every page.
 
-     No gap makes every count whole; 1fr distribution cannot promise that. The
-     one that must always hold is that tracks plus gaps sum to the container
-     exactly, and that is what the runtime test asserts. */
-  --column-gap: var(--space); /* 16 — five tracks in 1024 come out 192 each */
+     EVERY TERM IS A GRID TRACK. That is not a style note, it is the constraint
+     that produced this decomposition: the browser draws a line at each track
+     edge, and if a line does not land on a boundary a reader can see, one of the
+     two is wrong. Sizing a column and then correcting it with a margin makes the
+     overlay and the page disagree, and the page is not the one you debug with.
 
-  /* Eleven columns — see step 4 of the derivation above. 528px, about 61
-     characters, and odd so the reading layout can centre.
+     --- The gutter: 16 ---
+     One rhythm unit, [s], from the viewport edge to the frame.
 
-     It was 68ch once, which computed to 586.5px — and ch is the advance of "0"
-     in the ELEMENT own font, so it was never 68 characters of anything. It was
-     68 zeroes of whichever face the platform supplied, which is why prose
-     measured 586.5px against code at 538.4px on the same page. */
-  --measure: 64rem; /* 1024 = 16 columns, the whole content area */
+     It was 20, chosen so that five tracks of a 1200px grid divided cleanly. That
+     grid is gone and the reason went with it, and the replacement reason is the
+     one the spacing scale already gives: one unit is the floor, and nothing here
+     argues for more.
+
+     The gutter is a width, so it answers to the same source as the rest of them,
+     and at 16 the steps below land where the displays do.
+
+     --- The steps between ---
+     Three, and each one adds a region rather than a device:
+
+         fluid          under 800   content, as wide as the window allows
+         768            at 800      the content, whole      <- SVGA,  800x600
+         992            at 1024     + one rail              <- XGA,  1024x768
+         1280           at 1312     + both rails and the sheet's margin
+
+     Each breakpoint is the width it enables plus the two gutters, so it fires
+     exactly when the thing it turns on actually fits. Two of the three then land
+     on named display widths without being made to: the content reaches its full
+     768 exactly at SVGA, and the first rail arrives exactly at XGA.
+
+     XGA is 1024 x 768, which is worth saying out loud — the content width IS
+     that standard's other dimension. The page is as wide as an XGA screen at the
+     moment it can hold the text plus one column of apparatus, and the text is as
+     wide as an XGA screen is tall. One display standard, read both ways.
+
+     The ceiling now lands on WXGA, and it was not tuned to: the sheet gained a
+     margin, the margin was a real term, and 1280 is what the sum came to. A
+     derived value bent to hit a round one is how a system starts lying about
+     which of its numbers were chosen; a derived value that happens to land on one
+     is worth noting and nothing more.
+
+     Below the first step the frame is fluid. It is NOT quantised down to a
+     smaller step, which is what the fixed grid used to do and what left a 700px
+     window showing 512px of text. MDN's layout recipes do the same thing: cap
+     with a max-width, and let the narrow case simply be narrow. */
+  /* All three read off the same source: named display widths, per
+     en.wikipedia.org/wiki/Display_resolution_standards. 768 is XGA's other
+     dimension, and the steps in layout.css then arrive at SVGA and XGA. */
+  --measure: 48rem; /* 768 — the content, and the one number chosen by hand */
+  --rail: 14rem; /* 224 — one apparatus column, measured off MDN's own */
+  /* 1280. Every term is something you can point at on the screen: two rails, the
+     sheet's margin either side of its text, and the text.
+
+     It was measure + 2 rails, and the sheet's margin was smuggled in by giving
+     the rails a padding the sheet then reached back over with a negative one. It
+     added up, and it was a lie about the structure — the grid lines fell 32
+     inside the colour boundaries, so the browser's own overlay disagreed with
+     the page about where a column was. A width that has to be corrected by a
+     margin was measured wrong. */
+  --width-page: calc(var(--measure) + 2 * var(--gap-region) + 2 * var(--rail));
+
+  /* Where two REGIONS of a layout meet — a rail against the text, a sidenote
+     against the column it annotates. Two units, and the doubling is the whole
+     point: a rail and the text are not two items of one list, they are two
+     different KINDS of thing, and the gap has to say so on its own because
+     nothing else is going to. There is no rule down that edge and no change of
+     colour; distance is carrying the entire boundary.
+
+     One unit was not enough to carry it. At 16 the contents list sat as close to
+     the text as the text's own lines sit to each other, and the eye read the
+     rail as a first column of the article rather than as apparatus beside it.
+
+     It doubled to 32 rather than going to some value in between, because the
+     grouping tiers of this system are a doubling ladder and a boundary between
+     kinds has to clear the gap WITHIN a kind by a factor the eye can see. Half a
+     step would have been a wobble.
+
+     Named apart from --gap-between, which is the same 32 today and a different
+     job: that one separates two groups of like things, this one separates two
+     divisions of the page. They will not stay equal forever, and an alias would
+     drag one along when the other moved.
+
+     It was --column-gap at 20, so that five tracks of a 1200px grid came out
+     whole. Both the name and the arithmetic belonged to a column grid that no
+     longer exists. */
+  --gap-region: var(--space-x2); /* 32 */
 
   /* === SPACE ==============================================================
      Space is the primary means of expression in this system. Grouping,
@@ -359,49 +550,121 @@
   --gap-tight: var(--space-4); /* below [s] on purpose — cohesion, not separation */
   --gap-within: var(--space); /* between items of one group */
   --gap-between: var(--space-x2); /* between groups */
-  --gap-section: var(--space-x4); /* between sections — where a rule used to be */
+
+  /* Was four units. It is two now, which puts it level with --gap-between, and
+     that needs saying because the ladder above is a doubling one and this no
+     longer climbs it.
+
+     It has LEFT THE LADDER rather than broken it. --gap-region did the same
+     thing first and for the same reason: the same 32 as --gap-between today,
+     named apart because it does a different job, and kept out of the tier
+     assertion in test/tokens.test.js because it is a reason rather than a rung.
+     Three rungs still double — 4, 16, 32 — and that is the ladder the guard
+     protects. This is a fourth NAME at the third rung's value.
+
+     Know what it costs, because the escalation doctrine has nothing to fall
+     back on: with no rule to draw and no larger gap to spend, a section break
+     and a group break are now the same distance, so nothing in the spacing
+     tells them apart. That was the call — a flat column was wanted more than
+     the extra rank. If a section ever has to reassert itself, the answer is
+     more space here, not a line. */
+  --gap-section: var(--space-x2); /* between sections — where a rule used to be */
 
   /* --- Document rhythm ----------------------------------------------------
-     The prose axis, and it is the base rule with nothing added except one
-     stacking step:
+     The prose axis, and it is one number with no exceptions:
 
          H1              a new top level heading
-         [s]
-         P               one unit after a heading
-         [s]
-         P               one unit between paragraphs
-         [s]
-         [s]             TWO units before the next top level heading
-         H1
-         [s]
-         H2              one unit — a heading under a heading stays close
-         [s]
+         [s][s]
+         P               two units after a heading
+         [s][s]
+         P               two units between paragraphs
+         [s][s]
+         H1              two units before the next top level heading
+         [s][s]
+         H2              two units — headings are not a special case
+         [s][s]
          P
-         [s]
 
-     Everything gets one unit, because one unit is the floor. A new H1 stacks a
-     second. That is the whole model, and its simplicity is the point: a reader
-     learns the beat in the first screen and then reads the structure without
-     looking at it.
+     Every block sits two units below the one before it, whatever either of them
+     is. Its simplicity is the point: a reader learns the beat in the first
+     screen and then reads the structure without looking at it, and there is no
+     ratio to maintain because there is no ratio.
 
-     No tokens of its own — .prose reads --space and --space-x2 directly. Two
-     names for one value is drift waiting to happen, and the [s] notation is
-     already the vocabulary. */
+     This replaced a model that ranked the gaps — one unit below a heading, four
+     above it — so that a heading sat closer to what it named than to what it
+     followed. See layout.css for what that bought and what dropping it costs; a
+     flat rhythm cannot say which side a heading belongs to, and now only size
+     and weight do.
+
+     A GROUP IS NOT A BLOCK. This is the rhythm between blocks. The items inside
+     one group — list items, a definition list, a grid of swatches — stay at
+     --gap-within, because proximity only groups while the gap inside a group is
+     clearly tighter than the gap around it.
+
+     No tokens of its own — .prose reads --space-x2 directly. Two names for one
+     value is drift waiting to happen, and the [s] notation is already the
+     vocabulary. */
 
   /* --- Semantic: layout -------------------------------------------------- */
-  /* The CONTENT width, not the border-box width. The gutter is added on top in
-     layout.css, so the column arithmetic starts from a clean tier width and a
-     change of gutter leaves every column its size. Set per tier below. */
-  --frame-max: var(--width-standard);
-  --gutter: var(--space-20); /* viewport edge to content */
+  /* The frame's ceiling. It starts at the content width, which is the whole
+     page at every size that cannot hold a rail, and layout.css raises it by one
+     rail and then by two as the room appears.
 
-  /* Seven columns each. 25 = 7 + 11 + 7 puts the text centred with one
-     apparatus column on each side, which is the shape an odd total makes
-     possible and an even one does not. */
-  --sidenote-width: 12rem; /* 192 = 3 columns */
-  --toc-width: 12rem; /* 192 = 3 columns */
+     This is the CONTENT width, not the border-box width: the gutter is added on
+     top in layout.css, so the ceiling stays a number you can read off the
+     derivation above and a change of gutter does not silently narrow the
+     text. */
+  --frame-max: var(--measure);
 
-  /* --- Radius ------------------------------------------------------------ */
+  /* One rhythm unit, viewport edge to frame. It was 20, chosen so that five
+     tracks of a 1200px grid divided cleanly; that grid is gone and its reason
+     went with it. [s] is the reason that replaces it — one unit is the floor,
+     and nothing here argues for more.
+
+     It is also a width, so it answers to the same source as the others, and at
+     16 the steps in layout.css land on SVGA and XGA rather than 8px past them. */
+  --gutter: var(--space); /* 16 */
+
+  /* Both are one apparatus column, and they are equal because the layout is
+     symmetrical — 224 + 768 + 224 puts the content centred with one column of
+     apparatus on each side, which is the picture in the derivation above.
+
+     Written out separately rather than one aliased to the other. They are the
+     same width for the same reason, not because either depends on the other,
+     and a contents rail that has to change should not drag the note column with
+     it. Both read --rail, so moving the apparatus width once moves both. */
+  --sidenote-width: var(--rail); /* 192 */
+  --toc-width: var(--rail); /* 192 */
+
+  /* --- Radius -------------------------------------------------------------
+     Two curves, and they are two MATERIALS, not two sizes. Paper barely rounds;
+     moulded plastic rounds more, because that is what a tool leaves behind. So
+     --radius-key is the larger of the two even though a key is the smaller
+     object, and that is not the inversion it looks like — a key and a sheet
+     never share a corner, so there is no gap between them for a ratio to be
+     wrong about. Size is not what picks the number here. Material is.
+
+     WHEN THEY DO SHARE A CORNER, the ratio is the whole of it, and it is not a
+     matter of taste: two curves are concentric when
+
+         outer radius  =  inner radius + the gap between them
+
+     and at every other value the corner lies. Equal radii are the worst case
+     and the easiest to reach by accident, because "use the radius token for
+     both" reads as consistency. It is not. Set a 2px chip in a 2px card with
+     8px of padding and the gap measures 8 along the edges and 11.3 into the
+     corner — the card appears to pinch its own contents, and the two curves
+     read as unrelated because they are.
+
+     Reach for that formula only where one rounded box actually sits INSIDE
+     another. A control on a sheet it does not touch is not a stack, and forcing
+     the arithmetic on it is how a system ends up with a radius scale nobody
+     asked for.
+
+     There is no --radius-outer token here, and there should not be: the answer
+     depends on the padding at the site, which the token layer cannot see. State
+     it as arithmetic where it is used — see .docs-swatch — so that moving the
+     padding moves the corner and the two can never fall out of step. */
   --radius-sheet: 2px;
   --radius-key: 4px;
 
