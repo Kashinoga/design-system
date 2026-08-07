@@ -15,11 +15,19 @@
     "./base": "./src/base.css",
     "./layout": "./src/layout.css",
     "./components": "./src/components.css",
-    "./utilities": "./src/utilities.css"
+    "./utilities": "./src/utilities.css",
+    "./docs.css": "./docs.css",
+    "./docs.js": "./docs.js",
+    "./docs.html": "./index.html",
+    "./favicon.svg": "./favicon.svg"
   },
   "files": [
     "styles.css",
-    "src"
+    "src",
+    "docs.css",
+    "docs.js",
+    "index.html",
+    "favicon.svg"
   ],
   "scripts": {
     "dev": "node tools/serve.js",
