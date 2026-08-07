@@ -96,11 +96,29 @@
        any more now that it has a sibling below it to share the region with. */
     display: flex;
     flex-direction: column;
-    /* NO scrollbar-gutter, where it used to say "stable". That reserved the
-       scrollbar's width whether or not one was showing, so the region's width
-       could not change as content grew — and it is not needed here, because the
-       scrollbar is styled below and a styled scrollbar always takes its width.
-       Setting both would be one instruction saying the same thing twice. */
+    /* STABLE, AND THE REASON IT WAS ONCE REMOVED IS THE REASON IT IS BACK.
+     *
+     * It was taken out on the grounds that the scrollbar below is styled, and a
+     * styled scrollbar always takes its width — so reserving the width as well
+     * was one instruction saying the same thing twice.
+     *
+     * That is true of a scrollbar that is SHOWING. It says nothing about a page
+     * short enough not to have one, and while this system was a single long
+     * document there was no such page to notice. On a site there is. Measured
+     * across a navigation between a short page and a long one: the region gives
+     * up 10px on the long page and takes it back on the short one, the bar
+     * outside it reserves the same 10 to stay aligned, and its centred frame
+     * therefore moves 5px sideways every time you follow a link. Worse on the
+     * way back — the reserved width outlives the scrollbar that justified it,
+     * so the bar and the text below it disagree until something forces a
+     * remeasure.
+     *
+     * Reserved always, the region's client box is the same width on every page,
+     * the compensation outside it is a constant, and nothing moves. The cost is
+     * a gutter of empty track on a page too short to scroll, which is the
+     * correct trade: an always-present margin is invisible, and a margin that
+     * appears and disappears is the thing a reader actually sees. */
+    scrollbar-gutter: stable;
     /* Don't hand a scroll gesture that runs out of room here up to the window,
        which has nowhere to go and would only rubber-band. */
     overscroll-behavior: contain;
