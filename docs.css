@@ -386,6 +386,23 @@
      `align-items: start` came off the shell above: it start-aligned all three
      children, and the rails are the only two that want it. They say so
      themselves now, one rule below. */
+  /* A SHELL WITH NO RAILS IS ONE COLUMN, and it has to say so or the grid puts
+     the text where a rail would have gone.
+
+     The track lists above are written for the pages that HAVE apparatus: at
+     1024 the first track is a rail's width, at 1312 the first and last are. A
+     page with only a column to place — a short one, or one with nothing to list
+     — auto-places it into the first of those, so 768 of prose lands in 224 of
+     track and the page reads as broken rather than as bare.
+
+     :only-child rather than a modifier class, because the condition IS "there is
+     nothing beside it". A class would be a second way of saying the same thing
+     and a second thing to keep in step: remove a rail and forget the class, and
+     the fault comes back with nothing in the markup to explain it. */
+  .docs-shell > .docs-column:only-child {
+    grid-column: 1 / -1;
+  }
+
   .docs-column {
     display: grid;
     /* ONE row now. It was `1fr auto` — the text taking the slack and the footer
