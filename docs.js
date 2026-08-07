@@ -278,7 +278,21 @@ setScheme("auto");
    because a stale link still looks like a link.
 
    Ids are generated where a heading has none, so an author does not have to
-   remember to add one for the rail to work. */
+   remember to add one for the rail to work. Every heading on this page now
+   carries its own, written in the markup — see the note on the guard below for
+   why that changed.
+
+   AN ALREADY-FILLED LIST IS LEFT ALONE. This page builds its rail after the
+   document loads, which is correct here: it is one static file and there is no
+   earlier moment to build it in. A host that renders these documents through a
+   server has an earlier moment, and should use it — a contents list that is
+   missing from the served HTML is a rail that appears a beat after the text and
+   moves it, and one that no reader without JavaScript ever gets at all.
+
+   So the rule is: whoever can build it earliest owns it. If the list arrives
+   with children, this leaves them; if it arrives empty, this fills it, exactly
+   as it always has. Without the guard the two would both run and the rail would
+   list every heading twice. */
 const toc = document.querySelector("#docs-toc");
 
 function slug(text) {
@@ -328,7 +342,7 @@ function anchorFor(heading, fallback) {
   return heading.id;
 }
 
-if (toc) {
+if (toc && !toc.children.length) {
   const headings = [...document.querySelectorAll("main :is(h1, h2, h3)")];
 
   for (const h of headings) {
