@@ -469,6 +469,30 @@
     text-decoration: underline;
   }
 
+  /* WHERE YOU ARE IN THE DOCUMENT — the entry whose heading you are reading,
+     marked as the page scrolls (see docs.js).
+
+     UNDERLINED, WHICH IS THE SAME MARK HOVER USES, and that is a deliberate
+     collision rather than an oversight. The two never mean different things at
+     the same moment: hover says "the one under your pointer", this says "the
+     one under your eye", and a reader pointing at the entry they are already
+     reading has been told the truth twice. What it buys is that the rail keeps
+     ONE mark. Giving "current" a second signal — a colour, a bar in the margin,
+     a weight — would put two vocabularies in a list of twelve short words, and
+     the rail is chrome: it can afford one.
+
+     NOT COLOUR, though --accent is documented as "you are here". Every link in
+     this rail is already ink-on-recessed by choice, precisely so a column of
+     destinations does not read as a column of citations. Colouring one of them
+     would reintroduce exactly the noise that decision removed, for one row.
+
+     [aria-current] with no value test, so it matches whatever the script sets
+     and keeps working if that ever becomes `true`. The state is the platform's;
+     this rule only draws it. */
+  .docs-rail a[aria-current] {
+    text-decoration: underline;
+  }
+
   /* One unit of indent. It was a grid column once — 64 of a 192 rail — which
      pushed the nested entries a third of the way across and read as a second
      list rather than as children of the line above. The rail is chrome and its
