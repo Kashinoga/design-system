@@ -876,25 +876,33 @@
   }
 
   /* --- The lockup: mark, name, rule, descriptor ---
-     ONE number sets this whole assembly: the rule is inset from the bar by 12 on
-     all four sides. That fixes its height at 42 - 24 = 18 and its side spacing
-     at 12, so the space around it and the length of it are the same decision
-     rather than two that have to be kept in agreement.
+     ONE GAP ACROSS THE WHOLE BAR. Everything in this row is one unit from its
+     neighbour: the bar's own frame spaces the lockup from the controls at
+     --space, the nav spaces one destination from the next at --space, and this
+     spaces the name from the rule and the rule from what follows it at --space.
+     A reader crossing the bar meets one rhythm rather than three.
 
-     Taken from the superbar on kashinoga.com/about/work, measured rather than
-     eyeballed: a 1px rule, 18 tall, 12 from the top of a 42px bar and 12 from
-     each neighbour. That page reaches the 12s a different way — a 32px flex gap
-     with a -20 inline margin pulling the rule back in — and the arithmetic is
-     what matters, not the route to it.
+     IT WAS 12, TIED TO THE RULE'S HEIGHT, and that is worth recording because
+     the argument for it was good. The rule is inset from the bar by 12 top and
+     bottom, which fixes its height at 42 - 24 = 18; setting the side spacing to
+     12 as well made the space around it and the length of it one decision
+     instead of two that have to be kept in agreement. Measured off the superbar
+     on kashinoga.com/about/work: a 1px rule, 18 tall, 12 from the top of a 42px
+     bar and 12 from each neighbour.
 
-     12 is under the [s] floor, and the floor permits it for the reason it always
-     does: this is not a separation. The RULE is the boundary. Space is not being
-     asked to carry anything here, so it is free to be tight, and the floor
-     exists for the case where space is the only thing carrying it. */
+     What that elegance cost was visible the moment the bar gained a second
+     destination: the gap either side of the rule was 12 and the gap between menu
+     items was 16, so the bar had two spacings four pixels apart — close enough
+     to read as a mistake rather than as a distinction, because it is one.
+
+     The two numbers were never really one decision. They run on different axes.
+     The vertical inset is about the rule not reading as a column divider, and it
+     stays at 12 for that reason; the horizontal gap is about grouping words in a
+     row, and belongs to the same rhythm the rest of the row keeps. */
   .docs-lockup {
     display: flex;
     align-items: baseline;
-    gap: var(--space-12);
+    gap: var(--space);
   }
 
   /* THE ONE LINE ON THIS PAGE, and the third step of the escalation used where

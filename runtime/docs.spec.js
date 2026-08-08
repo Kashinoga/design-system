@@ -335,8 +335,22 @@ test("the wordmark separator is a rule, inset from the bar on all four sides", a
      follows the words because words are what it separates. */
   expect(Math.abs(sep.fromTop - 12), "the rule's block inset").toBeLessThan(1);
   expect(Math.abs(sep.fromBottom - 12), "the rule's block inset").toBeLessThan(1);
-  expect(sep.before).toBe(12);
-  expect(sep.after).toBe(12);
+
+  /* THE INLINE PAIR IS ONE UNIT, NOT THE BLOCK INSET'S 12, and this test used to
+     assert 12 on all four sides because the construction used to be one number:
+     inset the rule by 12 and its height and its side spacing fall out together.
+
+     That held while the bar carried a wordmark, a rule and one descriptor. Add a
+     second destination after the rule and the bar has two horizontal spacings —
+     12 around the rule, one unit between menu items — four pixels apart, which
+     reads as a mistake rather than as a distinction, because it is one.
+
+     So the axes were separated. The rule's LENGTH still answers to the bar, at
+     12 top and bottom, so it cannot read as a column edge. Its side spacing
+     answers to the row it sits in, like everything else in that row. One
+     rhythm across the bar; the rule's height is not part of it. */
+  expect(sep.before, "the rule takes the row's own gap").toBe(16);
+  expect(sep.after, "the rule takes the row's own gap").toBe(16);
 
   /* Not full-height. Run it the whole 42 and it stops being punctuation between
      two labels and starts reading as the edge of a column — the finding
