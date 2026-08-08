@@ -19,7 +19,8 @@
     "./docs.css": "./docs.css",
     "./docs.js": "./docs.js",
     "./docs.html": "./index.html",
-    "./favicon.svg": "./favicon.svg"
+    "./favicon.svg": "./favicon.svg",
+    "./docs-rail.js": "./docs-rail.js"
   },
   "files": [
     "styles.css",
@@ -27,7 +28,8 @@
     "docs.css",
     "docs.js",
     "index.html",
-    "favicon.svg"
+    "favicon.svg",
+    "docs-rail.js"
   ],
   "scripts": {
     "dev": "node tools/serve.js",

@@ -10,6 +10,8 @@
  * Token NAMES are listed here; token VALUES are never written here.
  */
 
+import { markCurrentEntry } from "./docs-rail.js";
+
 const root = document.documentElement;
 
 /* --- Colour --------------------------------------------------------------- */
@@ -389,96 +391,17 @@ addEventListener("resize", measureScrollbar);
 addEventListener("load", paintResolvedValues);
 
 /* --- Which entry you are actually reading ---------------------------------
-   The rail says what is in the document; this says where in it you are. Without
-   it a long page gives a reader twelve identical links and no answer to the one
-   question they are asking, which is "where am I".
+   Moved to ./docs-rail.js, and imported rather than inlined, because it is the
+   one behaviour on this page that a page WITHOUT this page’s furniture can
+   want. Everything else in this file assumes a #swatches element and three
+   token tables; a site rendering these documents has its own pages, with
+   contents rails and no tables, and reaching for this file to get a rail gets
+   a null dereference instead.
 
-   MARKED WITH aria-current, NOT WITH A CLASS OF ITS OWN. The platform has a
-   word for this state and the styling hangs off that word, so the thing a
-   screen reader announces and the thing the eye sees cannot drift apart. The
-   value is `location` rather than `page` on purpose: `page` means this link
-   points at the page you are on, which is a different claim and one the site's
-   own navigation is already making elsewhere.
-
-   THE RAIL IS THE SOURCE OF THE LIST, not the document. Every entry names its
-   target in its own href, so resolving those is the one reading that cannot
-   fall out of step with what is on screen — and it works whether the rail was
-   built above or served ready-made by a host that rendered it earlier.
-
-   THE READING LINE IS THE ANCHOR LINE, and that matters more than it sounds.
-   docs.css lands an anchored heading at the bar plus one gap, so a heading you
-   have just jumped to sits exactly there. Measuring "current" against any other
-   line means clicking an entry can fail to light the entry you clicked, which
-   is the one moment a reader is watching this feature closely. */
-/* THE READING LINE IS READ OFF THE ANCHOR ITSELF, not rebuilt from the tokens
-   that set it. docs.css gives every anchor target a scroll-margin-block-start of
-   the bar plus one gap; the browser resolves that to pixels, and asking the
-   element for it returns the very number the browser will use to land a jump.
-   There is no second copy of the arithmetic and nothing to keep in step.
-
-   It was computed from the tokens first, and that was wrong twice over.
-   --docs-bar-height does not resolve on :root at all — it is declared further in
-   — so getPropertyValue returned "" and the guard turned it into 0; and a custom
-   property comes back as its written text anyway, so parseFloat("2.625rem") is
-   2.625, not 42. The line landed at 1px instead of 58 and the rail lit the entry
-   ABOVE the one you clicked. Both faults are invisible in the source and obvious
-   the moment the number is measured. */
-const readingLine = (el) => parseFloat(getComputedStyle(el).scrollMarginBlockStart) || 0;
-
-if (toc && scrollRegion) {
-  const entries = [...toc.querySelectorAll("a[href^='#']")]
-    .map((a) => ({ a, target: document.getElementById(a.getAttribute("href").slice(1)) }))
-    .filter((e) => e.target);
-
-  if (entries.length) {
-    let marked = null;
-
-    const update = () => {
-      const line = scrollRegion.getBoundingClientRect().top + readingLine(entries[0].target);
-
-      /* The last heading whose top has reached the line. Before the first one
-         does, the first entry stands — a reader at the top of a document is
-         reading its opening, not nothing. */
-      let current = entries[0];
-      for (const e of entries) {
-        if (e.target.getBoundingClientRect().top <= line + 1) current = e;
-        else break;
-      }
-
-      /* AT THE BOTTOM, THE LAST ENTRY WINS, whatever the arithmetic says. The
-         final heading may sit above the line and never reach it, because there
-         is not a screenful of document left to push it up there. Without this
-         the last entries in a rail can never light at all — and they are the
-         ones a reader scrolling to the end is looking at. */
-      const room = scrollRegion.scrollHeight - scrollRegion.clientHeight;
-      if (room > 0 && scrollRegion.scrollTop >= room - 2) current = entries.at(-1);
-
-      if (current.a === marked) return;
-      marked?.removeAttribute("aria-current");
-      current.a.setAttribute("aria-current", "location");
-      marked = current.a;
-    };
-
-    /* Coalesced to one read per frame. A scroll handler that measures on every
-       event measures many times per frame and forces a layout each time. */
-    let queued = false;
-    const onScroll = () => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(() => {
-        queued = false;
-        update();
-      });
-    };
-
-    scrollRegion.addEventListener("scroll", onScroll, { passive: true });
-    /* A resize reflows the document, so every heading is somewhere else. */
-    addEventListener("resize", onScroll);
-    /* And once now, because a reload can restore a scroll position partway down
-       a document the rail would otherwise describe as unstarted. */
-    update();
-  }
-}
+   Imported at the top would read better and would be wrong: the module reads
+   the DOM when it runs, and everything above has to have run first — the rail
+   may not exist until the block above builds it. */
+markCurrentEntry({ toc, region: scrollRegion });
 
 
 /* --- The bar frosts only what is actually behind it ------------------------
