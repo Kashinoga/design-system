@@ -19,6 +19,7 @@ blob-report/
 !/styles.css
 !/docs.css
 !/docs.js
+!/docs-rail.js
 !/package.json
 !/package-lock.json
 !/playwright.config.js
